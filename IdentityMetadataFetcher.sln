@@ -2,14 +2,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityMetadataFetcher", "IdentityMetadataFetcher.csproj", "{C56B6742-A0AD-A0D4-EAA5-B088EFAE1B68}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityMetadataFetcher", "src\IdentityMetadataFetcher\IdentityMetadataFetcher.csproj", "{C56B6742-A0AD-A0D4-EAA5-B088EFAE1B68}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityMetadataFetcher.Tests", "IdentityMetadataFetcher.Tests.csproj", "{9F3B6C8D-AE4F-5B3C-9G6D-2F0E5B3C8D9E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityMetadataFetcher.Tests", "tests\IdentityMetadataFetcher.Tests\IdentityMetadataFetcher.Tests.csproj", "{9F3B6C8D-AE4F-5B3C-9G6D-2F0E5B3C8D9E}"
 EndProject
-Global
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityMetadataFetcher.Iis", "IdentityMetadataFetcher.Iis.csproj", "{A1B2C3D4-E5F6-7A8B-9C0D-E1F2A3B4C5D6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityMetadataFetcher.Iis", "src\IdentityMetadataFetcher.Iis\IdentityMetadataFetcher.Iis.csproj", "{A1B2C3D4-E5F6-7A8B-9C0D-E1F2A3B4C5D6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityMetadataFetcher.Iis.Tests", "IdentityMetadataFetcher.Iis.Tests\IdentityMetadataFetcher.Iis.Tests.csproj", "{C8D4E9A2-5F3B-4D1C-9E2A-B7F6D9C3E1A5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityMetadataFetcher.Iis.Tests", "tests\IdentityMetadataFetcher.Iis.Tests\IdentityMetadataFetcher.Iis.Tests.csproj", "{C8D4E9A2-5F3B-4D1C-9E2A-B7F6D9C3E1A5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

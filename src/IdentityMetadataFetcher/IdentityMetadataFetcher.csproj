@@ -18,10 +18,4 @@
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Remove="IdentityMetadataFetcher.Iis/**" />
-    <Compile Remove="IdentityMetadataFetcher.Iis.Tests/**" />
-    <Compile Remove="IdentityMetadataFetcher.Tests/**" />
-  </ItemGroup>
-
 </Project>

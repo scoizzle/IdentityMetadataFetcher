@@ -22,8 +22,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\IdentityMetadataFetcher.csproj" />
-    <ProjectReference Include="..\IdentityMetadataFetcher.Iis.csproj" />
+    <ProjectReference Include="..\..\src\IdentityMetadataFetcher\IdentityMetadataFetcher.csproj" />
+    <ProjectReference Include="..\..\src\IdentityMetadataFetcher.Iis\IdentityMetadataFetcher.Iis.csproj" />
   </ItemGroup>
 
 </Project>
