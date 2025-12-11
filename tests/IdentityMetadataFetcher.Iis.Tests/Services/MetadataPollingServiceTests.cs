@@ -25,8 +25,8 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
             
             _endpoints = new List<IssuerEndpoint>
             {
-                new IssuerEndpoint { Id = "issuer-1", Endpoint = "https://example1.com/metadata", Name = "Example 1", MetadataType = MetadataType.Saml },
-                new IssuerEndpoint { Id = "issuer-2", Endpoint = "https://example2.com/metadata", Name = "Example 2", MetadataType = MetadataType.WsFed }
+                new IssuerEndpoint { Id = "issuer-1", Endpoint = "https://example1.com/metadata", Name = "Example 1", MetadataType = MetadataType.SAML },
+                new IssuerEndpoint { Id = "issuer-2", Endpoint = "https://example2.com/metadata", Name = "Example 2", MetadataType = MetadataType.WSFED }
             };
 
             _service = new MetadataPollingService(_fetcher, _cache, _endpoints, pollingIntervalMinutes: 60);

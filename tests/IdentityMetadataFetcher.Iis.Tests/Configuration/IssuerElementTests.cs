@@ -68,7 +68,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
             Assert.AreEqual("issuer-1", endpoint.Id);
             Assert.AreEqual("https://example.com/metadata", endpoint.Endpoint);
             Assert.AreEqual("Example", endpoint.Name);
-            Assert.AreEqual(MetadataType.Saml, endpoint.MetadataType);
+            Assert.AreEqual(MetadataType.SAML, endpoint.MetadataType);
             Assert.AreEqual(20000, endpoint.Timeout); // TimeoutSeconds converted to milliseconds
         }
 
@@ -81,7 +81,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
 
             var endpoint = _element.ToIssuerEndpoint();
 
-            Assert.AreEqual(MetadataType.WsFed, endpoint.MetadataType);
+            Assert.AreEqual(MetadataType.WSFED, endpoint.MetadataType);
         }
 
         [Test]
@@ -135,7 +135,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
 
             var endpoint = _element.ToIssuerEndpoint();
 
-            Assert.AreEqual(MetadataType.Saml, endpoint.MetadataType);
+            Assert.AreEqual(MetadataType.SAML, endpoint.MetadataType);
         }
     }
 }

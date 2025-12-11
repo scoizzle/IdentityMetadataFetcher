@@ -49,6 +49,44 @@ namespace IdentityMetadataFetcher.Iis.Configuration
         }
 
         /// <summary>
+        /// Adds an issuer element to the collection.
+        /// </summary>
+        public void Add(IssuerElement element)
+        {
+            if (element == null)
+                throw new ArgumentNullException(nameof(element));
+            BaseAdd(element);
+        }
+
+        /// <summary>
+        /// Removes an issuer element from the collection.
+        /// </summary>
+        public void Remove(IssuerElement element)
+        {
+            if (element == null)
+                throw new ArgumentNullException(nameof(element));
+            BaseRemove(element.Id);
+        }
+
+        /// <summary>
+        /// Clears all issuer elements from the collection.
+        /// </summary>
+        public void Clear()
+        {
+            BaseClear();
+        }
+
+        /// <summary>
+        /// Determines whether the collection contains the specified element.
+        /// </summary>
+        public bool Contains(IssuerElement element)
+        {
+            if (element == null)
+                throw new ArgumentNullException(nameof(element));
+            return BaseIndexOf(element) >= 0;
+        }
+
+        /// <summary>
         /// Converts all configuration elements to IssuerEndpoint objects.
         /// </summary>
         public IEnumerable<IssuerEndpoint> ToIssuerEndpoints()

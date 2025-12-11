@@ -201,6 +201,11 @@ namespace IdentityMetadataFetcher.Iis.Services
         public int SuccessCount { get; set; }
         public int FailureCount { get; set; }
 
+        public int TotalCount
+        {
+            get { return SuccessCount + FailureCount; }
+        }
+
         public TimeSpan? Duration
         {
             get
