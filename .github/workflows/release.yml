@@ -1,0 +1,82 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v2
+    
+    - name: Restore dependencies
+      run: nuget restore IdentityMetadataFetcher.sln
+    
+    - name: Build Release
+      run: msbuild IdentityMetadataFetcher.sln /p:Configuration=Release /p:Platform="Any CPU" /m
+    
+    - name: Run tests
+      run: |
+        dotnet test IdentityMetadataFetcher.Tests.csproj --configuration Release --logger "trx" --framework net48
+        dotnet test IdentityMetadataFetcher.Iis.Tests/IdentityMetadataFetcher.Iis.Tests.csproj --configuration Release --logger "trx" --framework net48
+    
+    - name: Package binaries
+      run: |
+        mkdir -p release/net45
+        mkdir -p release/net46
+        mkdir -p release/net47
+        mkdir -p release/net48
+        
+        # Copy core library
+        copy bin/Release/net45/IdentityMetadataFetcher.dll release/net45/
+        copy bin/Release/net45/IdentityMetadataFetcher.pdb release/net45/
+        copy bin/Release/net46/IdentityMetadataFetcher.dll release/net46/
+        copy bin/Release/net46/IdentityMetadataFetcher.pdb release/net46/
+        copy bin/Release/net47/IdentityMetadataFetcher.dll release/net47/
+        copy bin/Release/net47/IdentityMetadataFetcher.pdb release/net47/
+        copy bin/Release/net48/IdentityMetadataFetcher.dll release/net48/
+        copy bin/Release/net48/IdentityMetadataFetcher.pdb release/net48/
+        
+        # Copy IIS module
+        copy IdentityMetadataFetcher.Iis/bin/Release/net45/IdentityMetadataFetcher.Iis.dll release/net45/
+        copy IdentityMetadataFetcher.Iis/bin/Release/net45/IdentityMetadataFetcher.Iis.pdb release/net45/
+        copy IdentityMetadataFetcher.Iis/bin/Release/net46/IdentityMetadataFetcher.Iis.dll release/net46/
+        copy IdentityMetadataFetcher.Iis/bin/Release/net46/IdentityMetadataFetcher.Iis.pdb release/net46/
+        copy IdentityMetadataFetcher.Iis/bin/Release/net47/IdentityMetadataFetcher.Iis.dll release/net47/
+        copy IdentityMetadataFetcher.Iis/bin/Release/net47/IdentityMetadataFetcher.Iis.pdb release/net47/
+        copy IdentityMetadataFetcher.Iis/bin/Release/net48/IdentityMetadataFetcher.Iis.dll release/net48/
+        copy IdentityMetadataFetcher.Iis/bin/Release/net48/IdentityMetadataFetcher.Iis.pdb release/net48/
+        
+        # Copy documentation
+        copy README.md release/
+        copy QUICKREF.md release/
+        copy IIS_MODULE_USAGE.md release/
+      shell: pwsh
+    
+    - name: Create ZIP archive
+      run: |
+        Compress-Archive -Path release/* -DestinationPath IdentityMetadataFetcher-${{ github.ref_name }}.zip
+      shell: pwsh
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          IdentityMetadataFetcher-${{ github.ref_name }}.zip
+        generate_release_notes: true
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

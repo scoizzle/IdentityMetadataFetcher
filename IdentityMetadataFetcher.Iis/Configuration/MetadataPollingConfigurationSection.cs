@@ -1,0 +1,101 @@
+using System;
+using System.Configuration;
+
+namespace IdentityMetadataFetcher.Iis.Configuration
+{
+    /// <summary>
+    /// Configuration section for SAML metadata polling in IIS applications.
+    /// 
+    /// Usage in Web.config:
+    /// <code>
+    /// <![CDATA[
+    /// <configuration>
+    ///   <configSections>
+    ///     <section name="samlMetadataPolling" type="IdentityMetadataFetcher.Iis.Configuration.MetadataPollingConfigurationSection, IdentityMetadataFetcher.Iis" />
+    ///   </configSections>
+    ///   
+    ///   <samlMetadataPolling enabled="true" pollingIntervalMinutes="60" httpTimeoutSeconds="30">
+    ///     <issuers>
+    ///       <add id="azure-ad" 
+    ///            endpoint="https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml" 
+    ///            name="Azure AD" 
+    ///            metadataType="WSFED" />
+    ///       <add id="auth0" 
+    ///            endpoint="https://example.auth0.com/samlp/metadata" 
+    ///            name="Auth0" 
+    ///            metadataType="SAML" />
+    ///     </issuers>
+    ///   </samlMetadataPolling>
+    /// </configuration>
+    /// ]]>
+    /// </code>
+    /// </summary>
+    public class MetadataPollingConfigurationSection : ConfigurationSection
+    {
+        /// <summary>
+        /// Gets or sets a value indicating whether metadata polling is enabled.
+        /// </summary>
+        [ConfigurationProperty("enabled", DefaultValue = true, IsRequired = false)]
+        public bool Enabled
+        {
+            get { return (bool)this["enabled"]; }
+            set { this["enabled"] = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the polling interval in minutes.
+        /// Default is 60 minutes.
+        /// </summary>
+        [ConfigurationProperty("pollingIntervalMinutes", DefaultValue = 60, IsRequired = false)]
+        [IntegerValidator(MinValue = 1, MaxValue = 10080)] // Max 7 days
+        public int PollingIntervalMinutes
+        {
+            get { return (int)this["pollingIntervalMinutes"]; }
+            set { this["pollingIntervalMinutes"] = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the HTTP timeout in seconds for metadata requests.
+        /// Default is 30 seconds.
+        /// </summary>
+        [ConfigurationProperty("httpTimeoutSeconds", DefaultValue = 30, IsRequired = false)]
+        [IntegerValidator(MinValue = 5, MaxValue = 300)]
+        public int HttpTimeoutSeconds
+        {
+            get { return (int)this["httpTimeoutSeconds"]; }
+            set { this["httpTimeoutSeconds"] = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to validate SSL/TLS certificates.
+        /// Default is true.
+        /// </summary>
+        [ConfigurationProperty("validateServerCertificate", DefaultValue = true, IsRequired = false)]
+        public bool ValidateServerCertificate
+        {
+            get { return (bool)this["validateServerCertificate"]; }
+            set { this["validateServerCertificate"] = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the maximum number of retries for failed metadata requests.
+        /// Default is 1.
+        /// </summary>
+        [ConfigurationProperty("maxRetries", DefaultValue = 1, IsRequired = false)]
+        [IntegerValidator(MinValue = 0, MaxValue = 5)]
+        public int MaxRetries
+        {
+            get { return (int)this["maxRetries"]; }
+            set { this["maxRetries"] = value; }
+        }
+
+        /// <summary>
+        /// Gets the collection of issuer endpoints to poll.
+        /// </summary>
+        [ConfigurationProperty("issuers", IsDefaultCollection = false, IsRequired = true)]
+        public IssuerElementCollection Issuers
+        {
+            get { return (IssuerElementCollection)this["issuers"]; }
+        }
+    }
+}

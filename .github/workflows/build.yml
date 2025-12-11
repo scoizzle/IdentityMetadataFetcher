@@ -1,0 +1,54 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: windows-latest
+    
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v2
+    
+    - name: Restore dependencies
+      run: nuget restore IdentityMetadataFetcher.sln
+    
+    - name: Build solution
+      run: msbuild IdentityMetadataFetcher.sln /p:Configuration=${{ matrix.configuration }} /p:Platform="Any CPU" /m
+    
+    - name: Run tests
+      run: |
+        dotnet test IdentityMetadataFetcher.Tests.csproj --configuration ${{ matrix.configuration }} --logger "trx;LogFileName=test-results.trx" --framework net48
+        dotnet test IdentityMetadataFetcher.Iis.Tests/IdentityMetadataFetcher.Iis.Tests.csproj --configuration ${{ matrix.configuration }} --logger "trx;LogFileName=test-results-iis.trx" --framework net48
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-${{ matrix.configuration }}
+        path: '**/test-results.trx'
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      if: matrix.configuration == 'Release'
+      with:
+        name: build-artifacts
+        path: |
+          **/bin/Release/**/*.dll
+          **/bin/Release/**/*.pdb
