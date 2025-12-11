@@ -24,4 +24,8 @@
     <ProjectReference Include="IdentityMetadataFetcher.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="IdentityMetadataFetcher.Iis.Tests/**" />
+  </ItemGroup>
+
 </Project>
