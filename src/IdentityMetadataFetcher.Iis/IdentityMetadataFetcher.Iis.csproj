@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net45;net46;net47;net48</TargetFrameworks>
-    <RootNamespace>IdentityMetadataFetcher.Iis.Tests</RootNamespace>
-    <AssemblyName>IdentityMetadataFetcher.Iis.Tests</AssemblyName>
+    <TargetFrameworks>net46;net47;net48</TargetFrameworks>
+    <RootNamespace>IdentityMetadataFetcher.Iis</RootNamespace>
+    <AssemblyName>IdentityMetadataFetcher.Iis</AssemblyName>
     <LangVersion>latest</LangVersion>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
@@ -12,16 +12,12 @@
     <Reference Include="System.Configuration" />
     <Reference Include="System.IdentityModel" />
     <Reference Include="System.IdentityModel.Metadata" />
+    <Reference Include="System.IdentityModel.Services" />
     <Reference Include="System.Web" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NUnit" Version="3.13.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\IdentityMetadataFetcher.csproj" />
-    <ProjectReference Include="..\IdentityMetadataFetcher.Iis.csproj" />
+    <ProjectReference Include="..\IdentityMetadataFetcher\IdentityMetadataFetcher.csproj" />
   </ItemGroup>
 
 </Project>

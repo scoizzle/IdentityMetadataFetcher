@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using IdentityMetadataFetcher.Models;
+using IdentityMetadataFetcher.Services;
 
 namespace IdentityMetadataFetcher.Iis.Tests.Mocks
 {
@@ -32,7 +33,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Mocks
             _errorMap.Clear();
         }
 
-        public MetadataFetchResult FetchMetadataFromEndpoint(IssuerEndpoint endpoint, MetadataFetchOptions options = null)
+        public MetadataFetchResult FetchMetadata(IssuerEndpoint endpoint)
         {
             if (_failureMap.ContainsKey(endpoint.Id))
             {
@@ -51,20 +52,20 @@ namespace IdentityMetadataFetcher.Iis.Tests.Mocks
             return MetadataFetchResult.Success(endpoint, metadata, rawXml);
         }
 
-        public async Task<MetadataFetchResult> FetchMetadataFromEndpointAsync(IssuerEndpoint endpoint, MetadataFetchOptions options = null)
+        public async Task<MetadataFetchResult> FetchMetadataAsync(IssuerEndpoint endpoint)
         {
             await Task.Delay(10); // Simulate async work
-            return FetchMetadataFromEndpoint(endpoint, options);
+            return FetchMetadata(endpoint);
         }
 
-        public IEnumerable<MetadataFetchResult> FetchMetadataFromMultipleEndpoints(IEnumerable<IssuerEndpoint> endpoints, MetadataFetchOptions options = null)
+        public IEnumerable<MetadataFetchResult> FetchMetadataFromMultipleEndpoints(IEnumerable<IssuerEndpoint> endpoints)
         {
-            return endpoints.Select(ep => FetchMetadataFromEndpoint(ep, options)).ToList();
+            return endpoints.Select(ep => FetchMetadata(ep)).ToList();
         }
 
-        public async Task<IEnumerable<MetadataFetchResult>> FetchMetadataFromMultipleEndpointsAsync(IEnumerable<IssuerEndpoint> endpoints, MetadataFetchOptions options = null)
+        public async Task<IEnumerable<MetadataFetchResult>> FetchMetadataFromMultipleEndpointsAsync(IEnumerable<IssuerEndpoint> endpoints)
         {
-            var tasks = endpoints.Select(ep => FetchMetadataFromEndpointAsync(ep, options)).ToList();
+            var tasks = endpoints.Select(ep => FetchMetadataAsync(ep)).ToList();
             var results = await Task.WhenAll(tasks);
             return results;
         }

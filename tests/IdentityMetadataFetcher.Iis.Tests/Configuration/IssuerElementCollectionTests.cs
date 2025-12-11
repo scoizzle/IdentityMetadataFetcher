@@ -102,8 +102,8 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
 
             var endpoints = _collection.ToIssuerEndpoints().ToList();
 
-            Assert.AreEqual(MetadataType.Saml, endpoints[0].MetadataType);
-            Assert.AreEqual(MetadataType.WsFed, endpoints[1].MetadataType);
+            Assert.AreEqual(MetadataType.SAML, endpoints[0].MetadataType);
+            Assert.AreEqual(MetadataType.WSFED, endpoints[1].MetadataType);
         }
 
         [Test]

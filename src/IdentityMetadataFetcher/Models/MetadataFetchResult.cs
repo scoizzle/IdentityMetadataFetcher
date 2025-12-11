@@ -47,5 +47,33 @@ namespace IdentityMetadataFetcher.Models
         {
             FetchedAt = DateTime.UtcNow;
         }
+
+        /// <summary>
+        /// Creates a successful result.
+        /// </summary>
+        public static MetadataFetchResult Success(IssuerEndpoint endpoint, MetadataBase metadata, string rawMetadata)
+        {
+            return new MetadataFetchResult
+            {
+                Endpoint = endpoint,
+                IsSuccess = true,
+                Metadata = metadata,
+                RawMetadata = rawMetadata
+            };
+        }
+
+        /// <summary>
+        /// Creates a failed result.
+        /// </summary>
+        public static MetadataFetchResult Failure(IssuerEndpoint endpoint, string errorMessage, Exception exception = null)
+        {
+            return new MetadataFetchResult
+            {
+                Endpoint = endpoint,
+                IsSuccess = false,
+                ErrorMessage = errorMessage,
+                Exception = exception
+            };
+        }
     }
 }
