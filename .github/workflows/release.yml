@@ -29,35 +29,30 @@ jobs:
     
     - name: Run tests
       run: |
-        dotnet test IdentityMetadataFetcher.Tests.csproj --configuration Release --logger "trx" --framework net48
-        dotnet test IdentityMetadataFetcher.Iis.Tests/IdentityMetadataFetcher.Iis.Tests.csproj --configuration Release --logger "trx" --framework net48
+        dotnet test tests/IdentityMetadataFetcher.Tests/IdentityMetadataFetcher.Tests.csproj --configuration Release --logger "trx" --framework net48
+        dotnet test tests/IdentityMetadataFetcher.Iis.Tests/IdentityMetadataFetcher.Iis.Tests.csproj --configuration Release --logger "trx" --framework net48
     
     - name: Package binaries
       run: |
-        mkdir -p release/net45
         mkdir -p release/net46
         mkdir -p release/net47
         mkdir -p release/net48
         
         # Copy core library
-        copy bin/Release/net45/IdentityMetadataFetcher.dll release/net45/
-        copy bin/Release/net45/IdentityMetadataFetcher.pdb release/net45/
-        copy bin/Release/net46/IdentityMetadataFetcher.dll release/net46/
-        copy bin/Release/net46/IdentityMetadataFetcher.pdb release/net46/
-        copy bin/Release/net47/IdentityMetadataFetcher.dll release/net47/
-        copy bin/Release/net47/IdentityMetadataFetcher.pdb release/net47/
-        copy bin/Release/net48/IdentityMetadataFetcher.dll release/net48/
-        copy bin/Release/net48/IdentityMetadataFetcher.pdb release/net48/
+        copy src/IdentityMetadataFetcher/bin/Release/net46/IdentityMetadataFetcher.dll release/net46/
+        copy src/IdentityMetadataFetcher/bin/Release/net46/IdentityMetadataFetcher.pdb release/net46/
+        copy src/IdentityMetadataFetcher/bin/Release/net47/IdentityMetadataFetcher.dll release/net47/
+        copy src/IdentityMetadataFetcher/bin/Release/net47/IdentityMetadataFetcher.pdb release/net47/
+        copy src/IdentityMetadataFetcher/bin/Release/net48/IdentityMetadataFetcher.dll release/net48/
+        copy src/IdentityMetadataFetcher/bin/Release/net48/IdentityMetadataFetcher.pdb release/net48/
         
         # Copy IIS module
-        copy IdentityMetadataFetcher.Iis/bin/Release/net45/IdentityMetadataFetcher.Iis.dll release/net45/
-        copy IdentityMetadataFetcher.Iis/bin/Release/net45/IdentityMetadataFetcher.Iis.pdb release/net45/
-        copy IdentityMetadataFetcher.Iis/bin/Release/net46/IdentityMetadataFetcher.Iis.dll release/net46/
-        copy IdentityMetadataFetcher.Iis/bin/Release/net46/IdentityMetadataFetcher.Iis.pdb release/net46/
-        copy IdentityMetadataFetcher.Iis/bin/Release/net47/IdentityMetadataFetcher.Iis.dll release/net47/
-        copy IdentityMetadataFetcher.Iis/bin/Release/net47/IdentityMetadataFetcher.Iis.pdb release/net47/
-        copy IdentityMetadataFetcher.Iis/bin/Release/net48/IdentityMetadataFetcher.Iis.dll release/net48/
-        copy IdentityMetadataFetcher.Iis/bin/Release/net48/IdentityMetadataFetcher.Iis.pdb release/net48/
+        copy src/IdentityMetadataFetcher.Iis/bin/Release/net46/IdentityMetadataFetcher.Iis.dll release/net46/
+        copy src/IdentityMetadataFetcher.Iis/bin/Release/net46/IdentityMetadataFetcher.Iis.pdb release/net46/
+        copy src/IdentityMetadataFetcher.Iis/bin/Release/net47/IdentityMetadataFetcher.Iis.dll release/net47/
+        copy src/IdentityMetadataFetcher.Iis/bin/Release/net47/IdentityMetadataFetcher.Iis.pdb release/net47/
+        copy src/IdentityMetadataFetcher.Iis/bin/Release/net48/IdentityMetadataFetcher.Iis.dll release/net48/
+        copy src/IdentityMetadataFetcher.Iis/bin/Release/net48/IdentityMetadataFetcher.Iis.pdb release/net48/
         
         # Copy documentation
         copy README.md release/

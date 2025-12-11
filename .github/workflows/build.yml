@@ -34,8 +34,8 @@ jobs:
     
     - name: Run tests
       run: |
-        dotnet test IdentityMetadataFetcher.Tests.csproj --configuration ${{ matrix.configuration }} --logger "trx;LogFileName=test-results.trx" --framework net48
-        dotnet test IdentityMetadataFetcher.Iis.Tests/IdentityMetadataFetcher.Iis.Tests.csproj --configuration ${{ matrix.configuration }} --logger "trx;LogFileName=test-results-iis.trx" --framework net48
+        dotnet test tests/IdentityMetadataFetcher.Tests/IdentityMetadataFetcher.Tests.csproj --configuration ${{ matrix.configuration }} --logger "trx;LogFileName=test-results.trx" --framework net48
+        dotnet test tests/IdentityMetadataFetcher.Iis.Tests/IdentityMetadataFetcher.Iis.Tests.csproj --configuration ${{ matrix.configuration }} --logger "trx;LogFileName=test-results-iis.trx" --framework net48
     
     - name: Upload test results
       uses: actions/upload-artifact@v4
