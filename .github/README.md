@@ -82,5 +82,5 @@ The release workflow will automatically:
 Add this badge to your README.md:
 
 ```markdown
-![Build Status](https://github.com/YOUR_USERNAME/IdentityMetadataFetcher/workflows/Build%20and%20Test/badge.svg)
+![Build Status](https://github.com/scoizzle/IdentityMetadataFetcher/actions/workflows/build.yml/badge.svg)
 ```
