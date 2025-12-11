@@ -1,16 +1,19 @@
 # SAML Metadata Fetcher
 
-A .NET class library for fetching and parsing metadata for WS-Federation (WSFED) and SAML issuers from multiple endpoints. Built with support for .NET Framework 4.5 and higher.
+[![Build Status](https://github.com/scoizzle/IdentityMetadataFetcher/actions/workflows/build.yml/badge.svg)](https://github.com/scoizzle/IdentityMetadataFetcher/actions/workflows/build.yml)
+
+A production-ready .NET class library for fetching and parsing SAML and WS-Federation (WSFED) metadata from multiple identity provider endpoints. Includes an IIS module for automatic metadata polling and caching.
 
 ## Features
 
-- **Multiple Metadata Types**: Supports both WSFED and SAML metadata formats
-- **Multiple Endpoint Support**: Fetch metadata from multiple issuing authorities in a single operation
-- **Synchronous & Asynchronous APIs**: Choose between blocking and async/await patterns
-- **System.IdentityModel.Metadata Integration**: Leverages the robust `MetadataSerializer` class from the .NET Framework
-- **Configurable Options**: Control timeouts, retries, SSL validation, caching preferences, and error handling behavior
-- **Error Handling**: Comprehensive exception handling with detailed error information
-- **Resilient**: Optional retry logic and continue-on-error configuration for batch operations
+- **📦 Dual Components**: Core library for direct usage + IIS HTTP module for ASP.NET applications
+- **🔄 Multiple Metadata Types**: Support for both WSFED and SAML metadata formats
+- **🚀 Sync & Async APIs**: Choose between blocking and async/await patterns for optimal performance
+- **⚙️ Highly Configurable**: Control timeouts, retries, SSL validation, and error handling
+- **🛡️ Production-Ready**: Comprehensive error handling, thread-safe design, and full unit test coverage
+- **🔌 Zero Dependencies**: Uses only .NET Framework built-in assemblies
+- **♻️ IIS Auto-Polling**: Automatic background metadata refresh with configurable intervals
+- **💾 In-Memory Caching**: Fast access to cached metadata in ASP.NET applications
 
 ## Requirements
 
@@ -19,31 +22,59 @@ A .NET class library for fetching and parsing metadata for WS-Federation (WSFED)
 - System.IdentityModel.Metadata (built-in to .NET Framework)
 - System.IdentityModel.Services (built-in to .NET Framework)
 
-> **⚠️ Windows Only**: This library targets .NET Framework and uses Windows-specific assemblies (System.IdentityModel). It requires a Windows environment to build and run. Use Windows, Visual Studio, or GitHub Actions with `windows-latest` runners.
+> **⚠️ Windows Only**: This library targets .NET Framework and uses Windows-specific assemblies (System.IdentityModel). It requires a Windows environment to build and run.
 
-## Installation
+---
 
-### Using the Library
+## 📚 Table of Contents
 
-1. Build the `IdentityMetadataFetcher.csproj` project
-2. Reference the resulting DLL in your application
-3. Add a reference to `System.IdentityModel.Metadata` in your project
+- [Library Usage](#-library-usage)
+  - [Installation](#installation)
+  - [Basic Examples](#basic-examples)
+  - [Configuration Options](#configuration-options)
+- [IIS Module](#-iis-module)
+  - [Installation & Setup](#iis-module-installation)
+  - [Configuration](#iis-module-configuration)
+  - [Usage in Code](#usage-in-code)
+- [Building from Source](#-building-from-source)
+  - [Prerequisites](#prerequisites)
+  - [Build Instructions](#build-instructions)
+  - [Running Tests](#running-tests)
+- [Additional Resources](#additional-resources)
 
-### From Source
+---
 
-Clone or extract the source code and build using MSBuild, Visual Studio 2015+, or dotnet CLI:
+## 📖 Library Usage
+
+### Installation
+
+#### Option 1: Build from Source
+
+1. Clone the repository
+2. Build the `IdentityMetadataFetcher.csproj` project
+3. Reference the resulting DLL in your application
+4. Add a reference to `System.IdentityModel.Metadata` in your project
 
 ```bash
 # Using dotnet CLI (requires Windows)
-dotnet build IdentityMetadataFetcher.sln
+dotnet build src/IdentityMetadataFetcher/IdentityMetadataFetcher.csproj
 
 # Or using MSBuild
-msbuild IdentityMetadataFetcher.sln
+msbuild src/IdentityMetadataFetcher/IdentityMetadataFetcher.csproj
 ```
 
-## Quick Start
+#### Option 2: Reference the DLL
 
-### Basic Usage - Single Endpoint
+Add a reference to `IdentityMetadataFetcher.dll` in your project and include the required using statements:
+
+```csharp
+using IdentityMetadataFetcher.Models;
+using IdentityMetadataFetcher.Services;
+```
+
+### Basic Examples
+
+#### Synchronous - Single Endpoint
 
 ```csharp
 using IdentityMetadataFetcher.Models;
@@ -61,45 +92,51 @@ var endpoint = new IssuerEndpoint
     MetadataType = MetadataType.WSFED
 };
 
-// Fetch metadata
+// Fetch metadata synchronously
 var result = fetcher.FetchMetadata(endpoint);
 
 if (result.IsSuccess)
 {
     // Use the metadata
     var metadata = result.Metadata;
-    Console.WriteLine($"Successfully fetched metadata from {result.Endpoint.Name}");
+    Console.WriteLine($"✓ Successfully fetched metadata from {result.Endpoint.Name}");
+    Console.WriteLine($"  Fetched at: {result.FetchedAt:O}");
 }
 else
 {
-    Console.WriteLine($"Error: {result.ErrorMessage}");
+    Console.WriteLine($"✗ Error: {result.ErrorMessage}");
 }
 ```
 
-### Asynchronous Usage
+#### Asynchronous - Single Endpoint
 
 ```csharp
 // Async fetch from single endpoint
 var result = await fetcher.FetchMetadataAsync(endpoint);
+
+if (result.IsSuccess)
+{
+    Console.WriteLine($"✓ Metadata retrieved successfully");
+}
 ```
 
-### Multiple Endpoints
+#### Synchronous - Multiple Endpoints
 
 ```csharp
 var endpoints = new[]
 {
     new IssuerEndpoint
     {
-        Id = "issuer1",
+        Id = "saml-provider",
         Endpoint = "https://issuer1.example.com/metadata",
-        Name = "Issuer 1",
+        Name = "SAML Identity Provider",
         MetadataType = MetadataType.SAML
     },
     new IssuerEndpoint
     {
-        Id = "issuer2",
+        Id = "wsfed-provider",
         Endpoint = "https://issuer2.example.com/metadata",
-        Name = "Issuer 2",
+        Name = "WS-Fed Identity Provider",
         MetadataType = MetadataType.WSFED
     }
 };
@@ -120,117 +157,86 @@ foreach (var result in results)
 }
 ```
 
-### Async Multiple Endpoints
+#### Asynchronous - Multiple Endpoints
 
 ```csharp
-// Fetch from all endpoints asynchronously
+// Fetch from all endpoints asynchronously for better performance
 var results = await fetcher.FetchMetadataFromMultipleEndpointsAsync(endpoints);
+
+// Process results
+var successCount = results.Count(r => r.IsSuccess);
+var failureCount = results.Count(r => !r.IsSuccess);
+Console.WriteLine($"Completed: {successCount} succeeded, {failureCount} failed");
 ```
 
-## Configuration
+#### Processing Retrieved Metadata
+
+```csharp
+var result = await fetcher.FetchMetadataAsync(endpoint);
+
+if (result.IsSuccess)
+{
+    // Cast to appropriate type based on metadata type
+    if (result.Metadata is EntityDescriptor entityDescriptor)
+    {
+        var entityId = entityDescriptor.EntityId?.Id;
+        Console.WriteLine($"Entity ID: {entityId}");
+        
+        // Access SAML/WSFED-specific information
+        foreach (var role in entityDescriptor.RoleDescriptors)
+        {
+            Console.WriteLine($"Role: {role.GetType().Name}");
+            // Process role descriptor (IDPSSODescriptor, SPSSODescriptor, etc.)
+        }
+    }
+    
+    // Access raw XML metadata if needed
+    var rawXml = result.RawMetadata;
+}
+```
+
+### Configuration Options
 
 Control the behavior of metadata fetching using `MetadataFetchOptions`:
 
 ```csharp
 var options = new MetadataFetchOptions
 {
-    DefaultTimeoutMs = 30000,              // 30 second timeout
+    DefaultTimeoutMs = 30000,              // 30 second timeout (default)
     ContinueOnError = true,                // Keep fetching even if one endpoint fails
-    ValidateServerCertificate = true,      // Validate SSL/TLS certificates
+    ValidateServerCertificate = true,      // Validate SSL/TLS certificates (recommended)
     MaxRetries = 2,                        // Retry failed requests up to 2 times
-    CacheMetadata = false,                 // Don't cache results
-    CacheDurationMinutes = 60              // Cache duration (if enabled)
+    CacheMetadata = false,                 // Disable caching (reserved for future use)
+    CacheDurationMinutes = 60              // Cache duration if enabled (future)
 };
 
 var fetcher = new MetadataFetcher(options);
 ```
 
-## API Reference
+#### Configuration Reference
 
-### MetadataFetcher Class
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `DefaultTimeoutMs` | int | 30000 | HTTP request timeout in milliseconds |
+| `ContinueOnError` | bool | true | Continue fetching remaining endpoints if one fails |
+| `ValidateServerCertificate` | bool | true | Validate SSL/TLS certificates (disable only for dev/test) |
+| `MaxRetries` | int | 0 | Number of retry attempts on failure (0-5) |
+| `CacheMetadata` | bool | false | Reserved for future caching implementation |
+| `CacheDurationMinutes` | int | 60 | Cache TTL in minutes (reserved for future) |
 
-#### Constructor
+#### Advanced Configuration Examples
 
-```csharp
-// Default constructor with standard options
-public MetadataFetcher()
-
-// Constructor with custom options
-public MetadataFetcher(MetadataFetchOptions options)
-```
-
-#### Methods
-
-```csharp
-// Synchronous methods
-MetadataFetchResult FetchMetadata(IssuerEndpoint endpoint)
-IEnumerable<MetadataFetchResult> FetchMetadataFromMultipleEndpoints(IEnumerable<IssuerEndpoint> endpoints)
-
-// Asynchronous methods
-Task<MetadataFetchResult> FetchMetadataAsync(IssuerEndpoint endpoint)
-Task<IEnumerable<MetadataFetchResult>> FetchMetadataFromMultipleEndpointsAsync(IEnumerable<IssuerEndpoint> endpoints)
-```
-
-### IssuerEndpoint Class
-
-Properties:
-
-- `string Id` - Unique identifier for the endpoint
-- `string Endpoint` - The URL endpoint to fetch metadata from
-- `string Name` - Human-readable name for the issuer
-- `MetadataType MetadataType` - Type of metadata (WSFED or SAML)
-- `int? Timeout` - Optional timeout in milliseconds (overrides default)
-
-### MetadataFetchResult Class
-
-Properties:
-
-- `IssuerEndpoint Endpoint` - The endpoint that was queried
-- `bool IsSuccess` - Whether the fetch was successful
-- `MetadataBase Metadata` - The parsed metadata (if successful)
-- `string RawMetadata` - The raw XML metadata (if successful)
-- `Exception Exception` - The exception that occurred (if failed)
-- `string ErrorMessage` - Description of the error (if failed)
-- `DateTime FetchedAt` - When the metadata was fetched (UTC)
-
-### MetadataType Enum
+**Development with Self-Signed Certificates:**
 
 ```csharp
-public enum MetadataType
-{
-    WSFED,  // WS-Federation metadata
-    SAML    // SAML metadata
-}
-```
-
-### MetadataFetchException
-
-Exception thrown when metadata operations fail:
-
-```csharp
-public class MetadataFetchException : Exception
-{
-    public string Endpoint { get; set; }      // The endpoint that failed
-    public int? HttpStatusCode { get; set; }  // HTTP status code if applicable
-}
-```
-
-## Examples
-
-### Example 1: Handling Certificate Validation Issues
-
-For development or testing with self-signed certificates:
-
-```csharp
-var options = new MetadataFetchOptions
-{
+var options = new MetadataFetchOptions 
+{ 
     ValidateServerCertificate = false  // ⚠️ WARNING: Only for development!
 };
-
 var fetcher = new MetadataFetcher(options);
 ```
 
-### Example 2: Resilient Fetching with Retries
+**Resilient Fetching with Retries:**
 
 ```csharp
 var options = new MetadataFetchOptions
@@ -239,12 +245,10 @@ var options = new MetadataFetchOptions
     DefaultTimeoutMs = 15000, // 15 second timeout
     ContinueOnError = true    // Don't stop on first failure
 };
-
 var fetcher = new MetadataFetcher(options);
-var results = fetcher.FetchMetadataFromMultipleEndpoints(endpoints);
 ```
 
-### Example 3: Per-Endpoint Timeout Override
+**Per-Endpoint Timeout Override:**
 
 ```csharp
 var endpoint = new IssuerEndpoint
@@ -259,67 +263,407 @@ var endpoint = new IssuerEndpoint
 var result = fetcher.FetchMetadata(endpoint);
 ```
 
-### Example 4: Processing Metadata
+---
+
+## 🔌 IIS Module
+
+The `IdentityMetadataFetcher.Iis` module is an ASP.NET HTTP Module that automatically polls SAML/WSFED metadata endpoints and maintains an in-memory cache. This enables ASP.NET applications to use up-to-date metadata for identity validation without manual intervention.
+
+### IIS Module Installation
+
+#### 1. Deploy Assemblies
+
+Copy both DLLs to your ASP.NET application's `bin` directory:
+- `IdentityMetadataFetcher.dll` (core library)
+- `IdentityMetadataFetcher.Iis.dll` (IIS module)
+
+#### 2. Register Module in Web.config
+
+Add the module registration to your `Web.config` in the `<system.webServer>` section:
+
+```xml
+<configuration>
+  <system.webServer>
+    <modules>
+      <add name="SamlMetadataPollingModule" 
+           type="IdentityMetadataFetcher.Iis.Modules.MetadataPollingHttpModule, IdentityMetadataFetcher.Iis" />
+    </modules>
+  </system.webServer>
+</configuration>
+```
+
+### IIS Module Configuration
+
+Add configuration sections to define metadata endpoints and polling behavior:
+
+```xml
+<configuration>
+  <configSections>
+    <section name="samlMetadataPolling" 
+             type="IdentityMetadataFetcher.Iis.Configuration.MetadataPollingConfigurationSection, IdentityMetadataFetcher.Iis" />
+  </configSections>
+  
+  <samlMetadataPolling enabled="true" 
+                        pollingIntervalMinutes="60" 
+                        httpTimeoutSeconds="30"
+                        validateServerCertificate="true"
+                        maxRetries="1">
+    <issuers>
+      <!-- Azure AD -->
+      <add id="azure-ad" 
+           endpoint="https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml" 
+           name="Azure Active Directory" 
+           metadataType="WSFED" />
+      
+      <!-- Auth0 with custom timeout -->
+      <add id="auth0" 
+           endpoint="https://example.auth0.com/samlp/metadata" 
+           name="Auth0" 
+           metadataType="SAML" 
+           timeoutSeconds="45" />
+      
+      <!-- Okta -->
+      <add id="okta" 
+           endpoint="https://dev-12345.okta.com/app/123/sso/saml/metadata" 
+           name="Okta" 
+           metadataType="SAML" />
+    </issuers>
+  </samlMetadataPolling>
+</configuration>
+```
+
+#### Configuration Reference
+
+**Root Element: `<samlMetadataPolling>`**
+
+| Attribute | Type | Default | Required | Description |
+|-----------|------|---------|----------|-------------|
+| `enabled` | bool | true | No | Enable/disable the polling service |
+| `pollingIntervalMinutes` | int | 60 | No | How often to poll (1-10080 minutes) |
+| `httpTimeoutSeconds` | int | 30 | No | HTTP request timeout (5-300 seconds) |
+| `validateServerCertificate` | bool | true | No | Validate SSL/TLS certificates |
+| `maxRetries` | int | 1 | No | Retry failed requests (0-5) |
+
+**Child Element: `<issuers>` Collection**
+
+Each `<add>` element defines an issuer endpoint:
+
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | string | Yes | Unique identifier for the issuer |
+| `endpoint` | string | Yes | Full URL to the metadata endpoint |
+| `name` | string | Yes | Human-readable issuer name |
+| `metadataType` | enum | Yes | Either "WSFED" or "SAML" |
+| `timeoutSeconds` | int | No | Override default timeout for this endpoint (5-300) |
+
+#### Complete Web.config Example
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <configSections>
+    <section name="samlMetadataPolling" 
+             type="IdentityMetadataFetcher.Iis.Configuration.MetadataPollingConfigurationSection, IdentityMetadataFetcher.Iis" />
+  </configSections>
+
+  <!-- SAML Metadata Polling Configuration -->
+  <samlMetadataPolling enabled="true" 
+                        pollingIntervalMinutes="60" 
+                        httpTimeoutSeconds="30"
+                        validateServerCertificate="true"
+                        maxRetries="1">
+    <issuers>
+      <!-- Azure AD -->
+      <add id="azure-ad" 
+           endpoint="https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml" 
+           name="Azure Active Directory" 
+           metadataType="WSFED" />
+      
+      <!-- Auth0 with custom timeout -->
+      <add id="auth0" 
+           endpoint="https://example.auth0.com/samlp/metadata" 
+           name="Auth0" 
+           metadataType="SAML" 
+           timeoutSeconds="45" />
+      
+      <!-- Okta -->
+      <add id="okta" 
+           endpoint="https://dev-12345.okta.com/app/123/sso/saml/metadata" 
+           name="Okta" 
+           metadataType="SAML" />
+    </issuers>
+  </samlMetadataPolling>
+
+  <system.webServer>
+    <modules>
+      <add name="SamlMetadataPollingModule" 
+           type="IdentityMetadataFetcher.Iis.Modules.MetadataPollingHttpModule, IdentityMetadataFetcher.Iis" />
+    </modules>
+  </system.webServer>
+
+  <startup>
+    <supportedRuntime version="v4.0" sku=".NETFramework,Version=v4.5" />
+  </startup>
+</configuration>
+```
+
+### Usage in Code
+
+Once the IIS module is initialized, access cached metadata from anywhere in your ASP.NET application:
+
+#### Accessing Cached Metadata
 
 ```csharp
-var result = await fetcher.FetchMetadataAsync(endpoint);
+using IdentityMetadataFetcher.Iis.Modules;
+using System.IdentityModel.Metadata;
 
-if (result.IsSuccess)
+// Get the cache instance
+var cache = MetadataPollingHttpModule.MetadataCache;
+
+// Retrieve metadata for an issuer by ID
+var metadata = cache.GetMetadata("azure-ad");
+
+if (metadata is EntityDescriptor entity)
 {
-    // Cast to appropriate type based on metadata type
-    if (result.Metadata is EntityDescriptor entityDescriptor)
-    {
-        var entityId = entityDescriptor.EntityId;
-        
-        // Access SAML/WSFED-specific information
-        foreach (var role in entityDescriptor.RoleDescriptors)
-        {
-            // Process role descriptor
-        }
-    }
+    var entityId = entity.EntityId?.Id;
+    Console.WriteLine($"Entity ID: {entityId}");
+    // Use the metadata for authentication/authorization
+}
+
+// Check if metadata is available
+if (cache.HasMetadata("auth0"))
+{
+    var auth0Metadata = cache.GetMetadata("auth0");
+    // Process Auth0 metadata...
+}
+
+// Get cache entry with timestamp
+var entry = cache.GetCacheEntry("okta");
+if (entry != null)
+{
+    Console.WriteLine($"Metadata cached at: {entry.CachedAt:O}");
+    var age = DateTime.UtcNow - entry.CachedAt;
+    Console.WriteLine($"Metadata age: {age.TotalMinutes:F2} minutes");
 }
 ```
 
-## Testing
+#### Manually Triggering Polling
 
-The solution includes a test project (`IdentityMetadataFetcher.Tests`) with unit tests using NUnit.
+```csharp
+using IdentityMetadataFetcher.Iis.Modules;
 
-### Run Tests
+var pollingService = MetadataPollingHttpModule.PollingService;
+
+if (pollingService != null)
+{
+    // Manually trigger polling (useful for manual refresh)
+    await pollingService.PollNowAsync();
+    Console.WriteLine("Manual polling triggered");
+}
+```
+
+#### Subscribing to Events
+
+The polling service raises events for monitoring and diagnostics:
+
+```csharp
+var service = MetadataPollingHttpModule.PollingService;
+
+// Fired when polling starts
+service.PollingStarted += (sender, e) =>
+{
+    System.Diagnostics.Trace.TraceInformation($"Polling started at {e.StartTime:O}");
+};
+
+// Fired when polling completes
+service.PollingCompleted += (sender, e) =>
+{
+    System.Diagnostics.Trace.TraceInformation(
+        $"Polling completed: {e.SuccessCount} success, {e.FailureCount} failures, " +
+        $"Duration: {e.Duration?.TotalSeconds:F2}s");
+};
+
+// Fired when an individual endpoint fails
+service.PollingError += (sender, e) =>
+{
+    System.Diagnostics.Trace.TraceWarning(
+        $"Error polling {e.IssuerName}: {e.ErrorMessage}");
+    
+    // Log to your monitoring system
+    logger.LogWarning($"Metadata polling failed: {e.IssuerName}", e.Exception);
+};
+
+// Fired when metadata is successfully updated
+service.MetadataUpdated += (sender, e) =>
+{
+    System.Diagnostics.Trace.TraceInformation(
+        $"Metadata updated: {e.IssuerName} at {e.UpdatedAt:O}");
+    
+    // Trigger cache invalidation or other actions
+    logger.LogInformation($"Metadata refreshed: {e.IssuerName}");
+};
+```
+
+#### IIS Module Features
+
+- ✅ **Automatic Polling**: Starts when application initializes, performs immediate initial fetch, then polls at configured intervals
+- ✅ **Thread-Safe Caching**: All caching operations are thread-safe for concurrent requests
+- ✅ **Non-Blocking**: Uses async/await for non-blocking background operations
+- ✅ **Resilient**: Continues polling other endpoints if one fails
+- ✅ **Event-Driven**: Subscribe to events for monitoring and diagnostics
+- ✅ **Configuration Validation**: Validates configuration on startup with clear error messages
+
+---
+
+## 🔨 Building from Source
+
+### Prerequisites
+
+Before building the project, ensure you have the following installed:
+
+- **Windows OS** (required for .NET Framework)
+- **.NET Framework 4.5 or higher** - [Download](https://dotnet.microsoft.com/download/dotnet-framework)
+- **Visual Studio 2015+** (recommended) or **MSBuild 14.0+**
+- **NUnit 3.x** (for running tests, optional)
+
+### Build Instructions
+
+#### Option 1: Visual Studio (Easiest)
+
+1. Open the solution file:
+   ```powershell
+   start IdentityMetadataFetcher.sln
+   ```
+
+2. In Visual Studio:
+   - Select **Build > Build Solution** (or press `Ctrl+Shift+B`)
+   - Output appears in `bin/Debug` or `bin/Release`
+
+#### Option 2: MSBuild Command Line
 
 ```bash
-# Using NUnit console runner
-nunit3-console IdentityMetadataFetcher.Tests.dll
+# Navigate to repository root
+cd /path/to/IdentityMetadataFetcher
 
-# Or using Visual Studio Test Explorer
-# Build the solution and run tests from Test > Run All Tests
+# Restore NuGet packages (if needed)
+nuget restore IdentityMetadataFetcher.sln
+
+# Debug build
+msbuild IdentityMetadataFetcher.sln /p:Configuration=Debug
+
+# Release build
+msbuild IdentityMetadataFetcher.sln /p:Configuration=Release
+
+# Clean build
+msbuild IdentityMetadataFetcher.sln /t:Clean /p:Configuration=Debug
+msbuild IdentityMetadataFetcher.sln /p:Configuration=Debug
 ```
 
-### Test Coverage
+#### Option 3: dotnet CLI
 
-- Constructor validation
-- Null/empty parameter handling
-- Single endpoint fetching (sync and async)
-- Multiple endpoint fetching (sync and async)
-- Error handling and resilience
-- Configuration options
-- Model serialization
+```bash
+# Build entire solution
+dotnet build IdentityMetadataFetcher.sln
 
-## Architecture
+# Build specific project
+dotnet build src/IdentityMetadataFetcher/IdentityMetadataFetcher.csproj
 
-```
-IdentityMetadataFetcher/
-├── Models/
-│   ├── IssuerEndpoint.cs          # Endpoint configuration
-│   ├── MetadataFetchResult.cs     # Result container
-│   └── MetadataFetchOptions.cs    # Fetch options
-├── Services/
-│   ├── IMetadataFetcher.cs        # Service interface
-│   └── MetadataFetcher.cs         # Service implementation
-└── Exceptions/
-    └── MetadataFetchException.cs  # Custom exceptions
+# Build for Release
+dotnet build IdentityMetadataFetcher.sln --configuration Release
 ```
 
-## Security Considerations
+### Running Tests
+
+#### In Visual Studio
+
+1. Open **Test Explorer**: `Test > Windows > Test Explorer`
+2. Tests appear in the list
+3. Click **Run All** or select individual tests
+4. View results in the Test Explorer window
+
+#### Command Line with NUnit
+
+```bash
+# Install NUnit console runner (first time only)
+nuget install NUnit.ConsoleRunner -Version 3.16.3 -OutputDirectory packages
+
+# Run all tests
+./packages/NUnit.ConsoleRunner.3.16.3/tools/nunit3-console.exe \
+  tests/IdentityMetadataFetcher.Tests/bin/Debug/IdentityMetadataFetcher.Tests.dll
+
+# Run tests with XML output
+./packages/NUnit.ConsoleRunner.3.16.3/tools/nunit3-console.exe \
+  tests/IdentityMetadataFetcher.Tests/bin/Debug/IdentityMetadataFetcher.Tests.dll \
+  --result=TestResults.xml
+```
+
+#### Using dotnet test
+
+```bash
+# Run all tests in solution
+dotnet test IdentityMetadataFetcher.sln
+
+# Run with detailed output
+dotnet test IdentityMetadataFetcher.sln --verbosity detailed
+
+# Run specific test project
+dotnet test tests/IdentityMetadataFetcher.Tests/IdentityMetadataFetcher.Tests.csproj
+```
+
+### Build Output
+
+After building, find the compiled assemblies:
+
+```
+src/IdentityMetadataFetcher/bin/Debug/IdentityMetadataFetcher.dll
+src/IdentityMetadataFetcher/bin/Release/IdentityMetadataFetcher.dll
+src/IdentityMetadataFetcher.Iis/bin/Debug/IdentityMetadataFetcher.Iis.dll
+src/IdentityMetadataFetcher.Iis/bin/Release/IdentityMetadataFetcher.Iis.dll
+```
+
+### Verification
+
+Verify the build was successful:
+
+```bash
+# Check if DLLs were created
+ls src/IdentityMetadataFetcher/bin/Debug/IdentityMetadataFetcher.dll
+ls src/IdentityMetadataFetcher.Iis/bin/Debug/IdentityMetadataFetcher.Iis.dll
+
+# Run quick test
+dotnet test tests/IdentityMetadataFetcher.Tests/IdentityMetadataFetcher.Tests.csproj
+```
+
+---
+
+## Additional Resources
+
+### Documentation
+
+- **[IIS_MODULE_USAGE.md](IIS_MODULE_USAGE.md)** - Detailed IIS module documentation
+- **[BUILD.md](BUILD.md)** - Advanced build instructions and CI/CD examples
+- **[QUICKREF.md](QUICKREF.md)** - Quick reference guide with code snippets
+- **[DESIGN.md](DESIGN.md)** - Architecture and design documentation
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and changes
+
+### API Reference
+
+#### Core Classes
+
+- **`MetadataFetcher`** - Main service for fetching metadata
+- **`IMetadataFetcher`** - Service interface for dependency injection
+- **`IssuerEndpoint`** - Endpoint configuration model
+- **`MetadataFetchResult`** - Result container with success/failure information
+- **`MetadataFetchOptions`** - Configuration options for fetcher behavior
+- **`MetadataType`** - Enum: `WSFED` or `SAML`
+
+#### IIS Module Classes
+
+- **`MetadataPollingHttpModule`** - HTTP module for ASP.NET
+- **`MetadataCache`** - Thread-safe metadata cache
+- **`MetadataPollingService`** - Background polling service
+
+### Security Considerations
 
 1. **SSL/TLS Certificate Validation**: By default, the library validates server certificates. Only disable validation (`ValidateServerCertificate = false`) in development/test environments.
 
@@ -329,59 +673,36 @@ IdentityMetadataFetcher/
 
 4. **Timeout Configuration**: Set appropriate timeouts to prevent resource exhaustion from slow or unresponsive endpoints.
 
-## Performance Tips
+### Performance Tips
 
-1. **Async Operations**: Use async methods for better scalability when fetching from multiple endpoints
-2. **Batching**: Fetch from multiple endpoints in a single operation rather than individual calls
-3. **Caching**: Consider implementing metadata caching at the application level for frequently accessed data
-4. **Timeout Tuning**: Adjust timeout values based on your network conditions and endpoint responsiveness
+1. **Use Async Methods**: For better scalability when fetching from multiple endpoints
+2. **Batch Operations**: Fetch from multiple endpoints in a single operation rather than individual calls
+3. **IIS Module**: Use the IIS module for ASP.NET applications to avoid repeated fetching
+4. **Appropriate Timeouts**: Set realistic timeout values based on network conditions
 
-## Troubleshooting
+### Troubleshooting
 
-### Common Issues
+| Problem | Solution |
+|---------|----------|
+| **HttpRequestException** | Verify endpoint URL, check network/firewall, validate SSL certificate, increase timeout |
+| **MetadataFetchException** | Ensure endpoint returns valid metadata, verify `MetadataType` is correct |
+| **TimeoutException** | Increase `DefaultTimeoutMs` or per-endpoint `Timeout`, check endpoint responsiveness |
+| **Build Errors** | Ensure .NET Framework 4.5+ is installed, restore NuGet packages, clean and rebuild |
+| **IIS Module Not Loading** | Verify DLLs are in bin directory, check Web.config registration, review IIS logs |
 
-**HttpRequestException when fetching metadata**
-- Verify the endpoint URL is correct and accessible
-- Check network connectivity and firewall rules
-- Validate SSL/TLS certificate if using HTTPS
-- Increase timeout if endpoints are slow
-
-**MetadataFetchException: Failed to parse metadata**
-- Ensure the endpoint returns valid WSFED or SAML metadata
-- Verify the MetadataType is set correctly
-- Check that metadata is well-formed XML
-
-**TimeoutException**
-- Increase DefaultTimeoutMs in MetadataFetchOptions
-- Check endpoint responsiveness
-- Verify network latency
-
-## Dependencies
-
-The library uses only the .NET Framework Class Library:
-- System (core types)
-- System.IdentityModel (WIF - Windows Identity Foundation)
-- System.IdentityModel.Metadata (MetadataSerializer)
-- System.IdentityModel.Services (Federation services)
-- System.Net.Http (HTTP client)
-- System.Xml (XML parsing)
-
-No third-party NuGet packages are required for the main library.
-
-## License
+### License
 
 This library is provided as-is for use in your applications.
 
-## Support
+### Support
 
-For issues, questions, or suggestions, please refer to the source code documentation and unit tests for usage examples.
+For issues, questions, or contributions, please refer to:
+- Source code documentation and inline comments
+- Unit tests for usage examples
+- Additional documentation files in the repository
 
-## Changelog
+---
 
-### Version 1.0.0
-- Initial release
-- Support for WSFED and SAML metadata fetching
-- Multiple endpoint support
-- Synchronous and asynchronous APIs
-- Comprehensive configuration options
-- Full unit test coverage
+**Version**: 1.0.0  
+**Target Framework**: .NET Framework 4.5+  
+**Status**: Production Ready ✅
