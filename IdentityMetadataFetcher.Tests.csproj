@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net45;net46;net47;net48</TargetFrameworks>
+    <TargetFrameworks>net46;net47;net48</TargetFrameworks>
     <RootNamespace>IdentityMetadataFetcher.Tests</RootNamespace>
     <AssemblyName>IdentityMetadataFetcher.Tests</AssemblyName>
     <LangVersion>latest</LangVersion>
