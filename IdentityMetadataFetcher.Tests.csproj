@@ -25,6 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="IdentityMetadataFetcher.Iis/**" />
     <Compile Remove="IdentityMetadataFetcher.Iis.Tests/**" />
   </ItemGroup>
 
