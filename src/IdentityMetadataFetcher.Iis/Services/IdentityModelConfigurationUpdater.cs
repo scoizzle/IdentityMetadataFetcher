@@ -65,9 +65,11 @@ namespace IdentityMetadataFetcher.Iis.Services
                         FederatedAuthentication.WSFederationAuthenticationModule.Issuer = issuerEndpoint;
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
                     // Best-effort; some apps may restrict runtime changes
+                    System.Diagnostics.Trace.TraceWarning(
+                        $"IdentityModelConfigurationUpdater: Failed to update WS-Federation issuer endpoint to '{issuerEndpoint}': {ex.Message}");
                 }
             }
         }
