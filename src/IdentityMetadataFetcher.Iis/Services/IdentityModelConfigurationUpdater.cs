@@ -74,15 +74,9 @@ namespace IdentityMetadataFetcher.Iis.Services
             var result = new List<X509Certificate2>();
 
             var entity = metadata as EntityDescriptor;
-            if (entity != null)
+            if (entity != null && entity.RoleDescriptors != null)
             {
-                var roles = new List<RoleDescriptor>();
-                if (entity.SecurityTokenServiceDescriptor != null)
-                    roles.Add(entity.SecurityTokenServiceDescriptor);
-                if (entity.IDPSSODescriptor != null)
-                    roles.Add(entity.IDPSSODescriptor);
-
-                foreach (var role in roles)
+                foreach (var role in entity.RoleDescriptors)
                 {
                     foreach (var key in role.Keys.Where(k => k.Use == KeyType.Signing || k.Use == KeyType.Unspecified))
                     {
@@ -107,7 +101,7 @@ namespace IdentityMetadataFetcher.Iis.Services
                                         try
                                         {
                                             store.Open(OpenFlags.OpenExistingOnly | OpenFlags.ReadOnly);
-                                            var found = store.Certificates.Find(X509FindType.FindByThumbprint, NormalizeThumbprint(x509Thumb.GetThumbprint()), false);
+                                            var found = store.Certificates.Find(X509FindType.FindByThumbprint, NormalizeThumbprint(x509Thumb.GetX509Thumbprint()), false);
                                             if (found != null && found.Count > 0)
                                             {
                                                 result.AddRange(found.Cast<X509Certificate2>());
@@ -130,12 +124,15 @@ namespace IdentityMetadataFetcher.Iis.Services
         private static string TryGetPassiveStsEndpoint(MetadataBase metadata)
         {
             var entity = metadata as EntityDescriptor;
-            if (entity != null && entity.SecurityTokenServiceDescriptor != null)
+            if (entity != null && entity.RoleDescriptors != null)
             {
-                var sts = entity.SecurityTokenServiceDescriptor;
-                var passive = sts.PassiveRequestorEndpoints?.FirstOrDefault();
-                if (passive != null && passive.Uri != null)
-                    return passive.Uri.ToString();
+                var sts = entity.RoleDescriptors.OfType<SecurityTokenServiceDescriptor>().FirstOrDefault();
+                if (sts != null)
+                {
+                    var passive = sts.PassiveRequestorEndpoints?.FirstOrDefault();
+                    if (passive != null && passive.Uri != null)
+                        return passive.Uri.ToString();
+                }
             }
             return null;
         }
@@ -144,6 +141,12 @@ namespace IdentityMetadataFetcher.Iis.Services
         {
             if (string.IsNullOrEmpty(thumbprint)) return thumbprint;
             return new string(thumbprint.Where(c => !char.IsWhiteSpace(c)).ToArray()).ToUpperInvariant();
+        }
+
+        private static string NormalizeThumbprint(byte[] thumbprint)
+        {
+            if (thumbprint == null || thumbprint.Length == 0) return null;
+            return BitConverter.ToString(thumbprint).Replace("-", "").ToUpperInvariant();
         }
     }
 }
