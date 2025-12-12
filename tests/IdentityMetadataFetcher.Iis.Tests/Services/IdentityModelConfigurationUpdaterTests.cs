@@ -403,7 +403,8 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
             }
             catch
             {
-                // If creating invalid clause fails, just leave KeyInfo empty
+                // Expected: Creating a clause with invalid thumbprint may throw
+                // Leave KeyInfo empty to test error handling in the updater
             }
             
             role.Keys.Add(keyDescriptor);
@@ -433,7 +434,8 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
             }
             catch
             {
-                // If creating corrupted clause fails, leave KeyInfo empty
+                // Expected: Creating a clause with corrupted data may throw
+                // Leave KeyInfo empty to test error handling in the updater
             }
             
             role.Keys.Add(keyDescriptor);
@@ -471,6 +473,8 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         {
             // Use a real self-signed test certificate (generated with OpenSSL)
             // This is a minimal valid X.509 certificate for testing purposes only
+            // NOTE: This is a test-only certificate with no sensitive data.
+            // In production code, certificates should be loaded from secure storage or key vaults.
             var certBytes = Convert.FromBase64String(
                 "MIIDFzCCAf+gAwIBAgIUJFDuEHUIo9jyTEp/H3EX2logxicwDQYJKoZIhvcNAQEL" +
                 "BQAwGzEZMBcGA1UEAwwQVGVzdCBDZXJ0aWZpY2F0ZTAeFw0yNTEyMTIxNTA4MjVa" +
