@@ -1,0 +1,149 @@
+using System;
+using System.Collections.Generic;
+using System.IdentityModel.Metadata;
+using System.IdentityModel.Services;
+using System.IdentityModel.Tokens;
+using System.Linq;
+using System.Security.Cryptography.X509Certificates;
+
+namespace IdentityMetadataFetcher.Iis.Services
+{
+    /// <summary>
+    /// Applies fetched metadata to System.IdentityModel runtime configuration.
+    /// Updates the IssuerNameRegistry with current signing certificates and, when available,
+    /// refreshes WS-Federation passive endpoints.
+    /// </summary>
+    public class IdentityModelConfigurationUpdater
+    {
+        /// <summary>
+        /// Applies a single cache entry's metadata to the current FederationConfiguration.
+        /// </summary>
+        /// <param name="entry">The metadata cache entry.</param>
+        /// <param name="issuerDisplayName">Human-friendly issuer name for registry mapping.</param>
+        public void Apply(MetadataCacheEntry entry, string issuerDisplayName)
+        {
+            if (entry == null || entry.Metadata == null)
+                return;
+
+            var fedConfig = FederatedAuthentication.FederationConfiguration;
+            if (fedConfig == null || fedConfig.IdentityConfiguration == null)
+                return; // Federation not initialized in this app
+
+            // Ensure we have a configuration-based issuer name registry to receive cert thumbprints
+            var registry = fedConfig.IdentityConfiguration.IssuerNameRegistry as ConfigurationBasedIssuerNameRegistry;
+            if (registry == null)
+            {
+                registry = new ConfigurationBasedIssuerNameRegistry();
+                fedConfig.IdentityConfiguration.IssuerNameRegistry = registry;
+            }
+
+            // Extract signing certificates from the metadata
+            var signingCerts = ExtractSigningCertificates(entry.Metadata);
+
+            // Register each certificate thumbprint as trusted for this issuer
+            foreach (var cert in signingCerts)
+            {
+                try
+                {
+                    // Avoid duplicate entries
+                    registry.AddTrustedIssuer(NormalizeThumbprint(cert.Thumbprint), issuerDisplayName ?? entry.IssuerId);
+                }
+                catch (ArgumentException)
+                {
+                    // Already present; ignore
+                }
+            }
+
+            // Optionally refresh WS-Fed issuer endpoint if metadata provides it
+            var issuerEndpoint = TryGetPassiveStsEndpoint(entry.Metadata);
+            if (!string.IsNullOrWhiteSpace(issuerEndpoint))
+            {
+                try
+                {
+                    FederatedAuthentication.WSFederationAuthenticationModule.Issuer = issuerEndpoint;
+                }
+                catch
+                {
+                    // Best-effort; some apps may restrict runtime changes
+                }
+            }
+        }
+
+        private static IEnumerable<X509Certificate2> ExtractSigningCertificates(MetadataBase metadata)
+        {
+            var result = new List<X509Certificate2>();
+
+            var entity = metadata as EntityDescriptor;
+            if (entity != null)
+            {
+                var roles = new List<RoleDescriptor>();
+                if (entity.SecurityTokenServiceDescriptor != null)
+                    roles.Add(entity.SecurityTokenServiceDescriptor);
+                if (entity.IDPSSODescriptor != null)
+                    roles.Add(entity.IDPSSODescriptor);
+
+                foreach (var role in roles)
+                {
+                    foreach (var key in role.Keys.Where(k => k.Use == KeyType.Signing || k.Use == KeyType.Unspecified))
+                    {
+                        foreach (var clause in key.KeyInfo)
+                        {
+                            // Common clause types in WIF metadata
+                            var x509Raw = clause as X509RawDataKeyIdentifierClause;
+                            if (x509Raw != null)
+                            {
+                                try { result.Add(new X509Certificate2(x509Raw.GetX509RawData())); } catch { }
+                                continue;
+                            }
+
+                            var x509Thumb = clause as X509ThumbprintKeyIdentifierClause;
+                            if (x509Thumb != null)
+                            {
+                                try
+                                {
+                                    // We don't have raw data; attempt to resolve via store if available
+                                    using (var store = new X509Store(StoreName.My, StoreLocation.LocalMachine))
+                                    {
+                                        try
+                                        {
+                                            store.Open(OpenFlags.OpenExistingOnly | OpenFlags.ReadOnly);
+                                            var found = store.Certificates.Find(X509FindType.FindByThumbprint, NormalizeThumbprint(x509Thumb.GetThumbprint()), false);
+                                            if (found != null && found.Count > 0)
+                                            {
+                                                result.AddRange(found.Cast<X509Certificate2>());
+                                            }
+                                        }
+                                        catch { }
+                                    }
+                                }
+                                catch { }
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        private static string TryGetPassiveStsEndpoint(MetadataBase metadata)
+        {
+            var entity = metadata as EntityDescriptor;
+            if (entity != null && entity.SecurityTokenServiceDescriptor != null)
+            {
+                var sts = entity.SecurityTokenServiceDescriptor;
+                var passive = sts.PassiveRequestorEndpoints?.FirstOrDefault();
+                if (passive != null && passive.Uri != null)
+                    return passive.Uri.ToString();
+            }
+            return null;
+        }
+
+        private static string NormalizeThumbprint(string thumbprint)
+        {
+            if (string.IsNullOrEmpty(thumbprint)) return thumbprint;
+            return new string(thumbprint.Where(c => !char.IsWhiteSpace(c)).ToArray()).ToUpperInvariant();
+        }
+    }
+}

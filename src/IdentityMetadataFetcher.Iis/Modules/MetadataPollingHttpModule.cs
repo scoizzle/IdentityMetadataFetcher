@@ -29,8 +29,10 @@ namespace IdentityMetadataFetcher.Iis.Modules
     {
         private static MetadataPollingService _pollingService;
         private static MetadataCache _metadataCache;
+        private static IdentityModelConfigurationUpdater _identityUpdater;
         private static readonly object _lockObject = new object();
         private static bool _initialized = false;
+        private static bool _autoApplyEnabled = false;
 
         /// <summary>
         /// Gets the current metadata cache instance.
@@ -131,6 +133,23 @@ namespace IdentityMetadataFetcher.Iis.Modules
                         endpoints,
                         config.PollingIntervalMinutes);
 
+                    // Configure auto-apply behavior from config
+                    _autoApplyEnabled = config.AutoApplyIdentityModel;
+                    if (_autoApplyEnabled)
+                    {
+                        if (_identityUpdater == null)
+                        {
+                            _identityUpdater = new IdentityModelConfigurationUpdater();
+                        }
+                        System.Diagnostics.Trace.TraceInformation(
+                            "SamlMetadataPollingModule: auto-apply to System.IdentityModel is ENABLED");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Trace.TraceInformation(
+                            "SamlMetadataPollingModule: auto-apply to System.IdentityModel is DISABLED");
+                    }
+
                     // Subscribe to events for diagnostics
                     _pollingService.PollingStarted += OnPollingStarted;
                     _pollingService.PollingCompleted += OnPollingCompleted;
@@ -188,6 +207,33 @@ namespace IdentityMetadataFetcher.Iis.Modules
         {
             System.Diagnostics.Trace.TraceInformation(
                 $"SamlMetadataPollingModule: Metadata updated for {e.IssuerName} ({e.IssuerId}) at {e.UpdatedAt:O}");
+
+            if (_autoApplyEnabled)
+            {
+                try
+                {
+                    if (_identityUpdater != null && _metadataCache != null)
+                    {
+                        var entry = _metadataCache.GetCacheEntry(e.IssuerId);
+                        if (entry != null)
+                        {
+                            _identityUpdater.Apply(entry, e.IssuerName);
+                            System.Diagnostics.Trace.TraceInformation(
+                                $"SamlMetadataPollingModule: Applied metadata to System.IdentityModel for {e.IssuerName} ({e.IssuerId})");
+                        }
+                        else
+                        {
+                            System.Diagnostics.Trace.TraceWarning(
+                                $"SamlMetadataPollingModule: Cache entry missing when applying metadata for {e.IssuerName} ({e.IssuerId})");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Trace.TraceError(
+                        $"SamlMetadataPollingModule: Error applying metadata for {e.IssuerName} ({e.IssuerId}): {ex.Message}");
+                }
+            }
         }
     }
 }
