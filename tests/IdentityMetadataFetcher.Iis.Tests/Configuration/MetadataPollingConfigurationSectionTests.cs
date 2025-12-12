@@ -109,5 +109,18 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
             _section.ValidateServerCertificate = false;
             Assert.IsFalse(_section.ValidateServerCertificate);
         }
+
+        [Test]
+        public void AutoApplyIdentityModel_DefaultValueIsFalse()
+        {
+            Assert.IsFalse(_section.AutoApplyIdentityModel);
+        }
+
+        [Test]
+        public void AutoApplyIdentityModel_CanBeSetToTrue()
+        {
+            _section.AutoApplyIdentityModel = true;
+            Assert.IsTrue(_section.AutoApplyIdentityModel);
+        }
     }
 }

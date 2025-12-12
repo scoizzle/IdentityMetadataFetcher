@@ -14,7 +14,9 @@ namespace IdentityMetadataFetcher.Iis.Configuration
     ///     <section name="samlMetadataPolling" type="IdentityMetadataFetcher.Iis.Configuration.MetadataPollingConfigurationSection, IdentityMetadataFetcher.Iis" />
     ///   </configSections>
     ///   
-    ///   <samlMetadataPolling enabled="true" pollingIntervalMinutes="60" httpTimeoutSeconds="30">
+    ///   <samlMetadataPolling enabled="true" autoApplyIdentityModel="false" pollingIntervalMinutes="60" httpTimeoutSeconds="30">
+    ///     <!-- Set autoApplyIdentityModel to true to enable runtime IdentityModel updates -->
+    ///     <!-- Default is false (no automatic application). -->
     ///     <issuers>
     ///       <add id="azure-ad" 
     ///            endpoint="https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml" 
@@ -32,6 +34,17 @@ namespace IdentityMetadataFetcher.Iis.Configuration
     /// </summary>
     public class MetadataPollingConfigurationSection : ConfigurationSection
     {
+        /// <summary>
+        /// Gets or sets a value indicating whether to automatically apply fetched metadata
+        /// to System.IdentityModel at runtime. Default is false.
+        /// </summary>
+        [ConfigurationProperty("autoApplyIdentityModel", DefaultValue = false, IsRequired = false)]
+        public bool AutoApplyIdentityModel
+        {
+            get { return (bool)this["autoApplyIdentityModel"]; }
+            set { this["autoApplyIdentityModel"] = value; }
+        }
+
         /// <summary>
         /// Gets or sets a value indicating whether metadata polling is enabled.
         /// </summary>
