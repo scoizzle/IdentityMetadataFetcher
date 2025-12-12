@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IdentityModel.Metadata;
 using System.IdentityModel.Services;
 using System.IdentityModel.Tokens;
@@ -69,7 +68,7 @@ namespace IdentityMetadataFetcher.Iis.Services
                 catch (Exception ex)
                 {
                     // Best-effort; some apps may restrict runtime changes
-                    Trace.TraceWarning(
+                    System.Diagnostics.Trace.TraceWarning(
                         $"IdentityModelConfigurationUpdater: Failed to update WS-Federation issuer endpoint to '{issuerEndpoint}': {ex.Message}");
                 }
             }
