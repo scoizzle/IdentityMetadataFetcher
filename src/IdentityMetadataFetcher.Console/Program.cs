@@ -4,6 +4,9 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using System.IdentityModel.Metadata;
+using System.IdentityModel.Tokens;
+using System.Security.Cryptography.X509Certificates;
+using System.Collections.Generic;
 using IdentityMetadataFetcher.Models;
 using IdentityMetadataFetcher.Services;
 
@@ -15,7 +18,22 @@ namespace IdentityMetadataFetcher.ConsoleApp
         {
             PrintHeader();
 
-            if (args.Length == 0 || args.Contains("-h") || args.Contains("--help"))
+#if DEBUG
+            // If no args, in Debug build, and console input is attached, prompt for URL
+            if (args.Length == 0 && !Console.IsInputRedirected) {
+                Console.Write("Enter metadata URL: ");
+                var inputUrl = Console.ReadLine();
+                if (string.IsNullOrWhiteSpace(inputUrl))
+                {
+                    PrintUsage();
+                    return 1;
+                }
+
+                args = [inputUrl.Trim()];
+            }
+#endif
+
+            if (args.Length == 0 || args.Contains("-h") || args.Contains("--help") || args.All(string.IsNullOrEmpty))
             {
                 PrintUsage();
                 return 1;
@@ -117,9 +135,10 @@ namespace IdentityMetadataFetcher.ConsoleApp
             Console.WriteLine(new string('-', 80));
             Console.WriteLine($"Entity ID: {entity.EntityId?.Id}");
 
-            if (entity.SecurityTokenServiceDescriptor != null)
+            // WS-Fed STS role
+            var sts = entity.RoleDescriptors?.OfType<SecurityTokenServiceDescriptor>().FirstOrDefault();
+            if (sts != null)
             {
-                var sts = entity.SecurityTokenServiceDescriptor;
                 Console.WriteLine("Role: Security Token Service (WS-Fed)");
 
                 if (sts.PassiveRequestorEndpoints != null && sts.PassiveRequestorEndpoints.Any())
@@ -134,20 +153,14 @@ namespace IdentityMetadataFetcher.ConsoleApp
                 if (sts.Keys != null && sts.Keys.Any())
                 {
                     Console.WriteLine("Signing Keys:");
-                    foreach (var key in sts.Keys)
-                    {
-                        Console.WriteLine($"  - Use: {key.Use}");
-                        foreach (var clause in key.KeyInfo)
-                        {
-                            Console.WriteLine($"    * {clause.GetType().Name}");
-                        }
-                    }
+                    PrintKeyInformation(sts.Keys);
                 }
             }
 
-            if (entity.IDPSSODescriptor != null)
+            // SAML IdP role
+            var idp = entity.RoleDescriptors?.OfType<IdentityProviderSingleSignOnDescriptor>().FirstOrDefault();
+            if (idp != null)
             {
-                var idp = entity.IDPSSODescriptor;
                 Console.WriteLine("Role: Identity Provider (SAML)");
 
                 if (idp.SingleSignOnServices != null && idp.SingleSignOnServices.Any())
@@ -162,14 +175,79 @@ namespace IdentityMetadataFetcher.ConsoleApp
                 if (idp.Keys != null && idp.Keys.Any())
                 {
                     Console.WriteLine("Signing Keys:");
-                    foreach (var key in idp.Keys)
+                    PrintKeyInformation(idp.Keys);
+                }
+            }
+        }
+
+        private static void PrintKeyInformation(ICollection<KeyDescriptor> keys)
+        {
+            var keyIndex = 1;
+            foreach (var key in keys)
+            {
+                Console.WriteLine($"  Key #{keyIndex}:");
+                Console.WriteLine($"    Use: {key.Use}");
+
+                foreach (var clause in key.KeyInfo)
+                {
+                    if (clause is X509RawDataKeyIdentifierClause rawDataClause)
                     {
-                        Console.WriteLine($"  - Use: {key.Use}");
-                        foreach (var clause in key.KeyInfo)
+                        try
                         {
-                            Console.WriteLine($"    * {clause.GetType().Name}");
+                            var cert = new X509Certificate2(rawDataClause.GetX509RawData());
+                            PrintCertificateInfo(cert);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"    Error reading certificate: {ex.Message}");
                         }
                     }
+                    else
+                    {
+                        Console.WriteLine($"    Key Type: {clause.GetType().Name}");
+                    }
+                }
+
+                keyIndex++;
+            }
+        }
+
+        private static void PrintCertificateInfo(X509Certificate2 cert)
+        {
+            Console.WriteLine("    Certificate:");
+            Console.WriteLine($"      Subject: {cert.Subject}");
+            Console.WriteLine($"      Issuer: {cert.Issuer}");
+            Console.WriteLine($"      Thumbprint: {cert.Thumbprint}");
+            Console.WriteLine($"      Valid From: {cert.NotBefore:yyyy-MM-dd HH:mm:ss}");
+            Console.WriteLine($"      Valid To: {cert.NotAfter:yyyy-MM-dd HH:mm:ss}");
+            
+            var now = DateTime.Now;
+            if (now < cert.NotBefore)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("      Status: Not yet valid");
+                Console.ResetColor();
+            }
+            else if (now > cert.NotAfter)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("      Status: EXPIRED");
+                Console.ResetColor();
+            }
+            else
+            {
+                var daysRemaining = (cert.NotAfter - now).Days;
+                if (daysRemaining < 30)
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine($"      Status: Expires in {daysRemaining} days");
+                    Console.ResetColor();
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine($"      Status: Valid (expires in {daysRemaining} days)");
+                    Console.ResetColor();
                 }
             }
         }

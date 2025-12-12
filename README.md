@@ -32,6 +32,7 @@ See full details in the Console Utility section below.
 - **🔌 Zero Dependencies**: Uses only .NET Framework built-in assemblies
 - **♻️ IIS Auto-Polling**: Automatic background metadata refresh with configurable intervals
 - **💾 In-Memory Caching**: Fast access to cached metadata in ASP.NET applications
+- **🔒 Auto-Apply to IdentityModel**: Optional runtime updates to System.IdentityModel configuration
 
 ## Requirements
 
@@ -53,6 +54,7 @@ See full details in the Console Utility section below.
 - [IIS Module](#-iis-module)
   - [Installation & Setup](#iis-module-installation)
   - [Configuration](#iis-module-configuration)
+  - [Auto-Apply to IdentityModel](#auto-apply-to-identitymodel)
   - [Usage in Code](#usage-in-code)
 - [Building from Source](#-building-from-source)
   - [Prerequisites](#prerequisites)
@@ -310,61 +312,6 @@ Add the module registration to your `Web.config` in the `<system.webServer>` sec
 </configuration>
 ```
 
----
-
-## 🖥️ Console Utility
-
-A Windows-only console tool is included to fetch metadata from a URL and display a friendly summary.
-
-- Project: `src/IdentityMetadataFetcher.Console`
-- Target: `.NET Framework 4.8`
-- Usage: `IdentityMetadataFetcher.Console <metadata-url> [--raw]`
-
-### Example
-
-```powershell
-# Build (Windows)
-msbuild /t:restore
-msbuild /t:build /p:GenerateFullPaths=true /consoleloggerparameters:NoSummary
-
-# Run: Azure AD federation metadata
-IdentityMetadataFetcher.Console.exe https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml
-
-# Include raw XML output
-IdentityMetadataFetcher.Console.exe https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml --raw
-```
-
-### Output
-
-- Entity ID
-- Roles discovered (STS / IDP)
-- Endpoints (Passive Requestor / Single Sign-On)
-- Signing Keys (key info types)
-
----
-
-## 🔒 IdentityModel Auto-Apply Toggle
-
-You can optionally apply fetched metadata to System.IdentityModel at runtime in IIS by enabling a configuration toggle.
-
-Add `autoApplyIdentityModel="true"` to the `samlMetadataPolling` section to enable; it is `false` by default for safety.
-
-```xml
-<samlMetadataPolling enabled="true"
-                     autoApplyIdentityModel="true"
-                     pollingIntervalMinutes="60"
-                     httpTimeoutSeconds="30"
-                     validateServerCertificate="true"
-                     maxRetries="1">
-  <issuers>
-    <add id="azure-ad" 
-         endpoint="https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml" 
-         name="Azure Active Directory" 
-         metadataType="WSFED" />
-  </issuers>
-</samlMetadataPolling>
-```
-
 ### IIS Module Configuration
 
 Add configuration sections to define metadata endpoints and polling behavior:
@@ -377,6 +324,7 @@ Add configuration sections to define metadata endpoints and polling behavior:
   </configSections>
   
   <samlMetadataPolling enabled="true" 
+                        autoApplyIdentityModel="false"
                         pollingIntervalMinutes="60" 
                         httpTimeoutSeconds="30"
                         validateServerCertificate="true"
@@ -412,6 +360,7 @@ Add configuration sections to define metadata endpoints and polling behavior:
 | Attribute | Type | Default | Required | Description |
 |-----------|------|---------|----------|-------------|
 | `enabled` | bool | true | No | Enable/disable the polling service |
+| `autoApplyIdentityModel` | bool | false | No | Automatically update System.IdentityModel with fetched metadata |
 | `pollingIntervalMinutes` | int | 60 | No | How often to poll (1-10080 minutes) |
 | `httpTimeoutSeconds` | int | 30 | No | HTTP request timeout (5-300 seconds) |
 | `validateServerCertificate` | bool | true | No | Validate SSL/TLS certificates |
@@ -429,162 +378,142 @@ Each `<add>` element defines an issuer endpoint:
 | `metadataType` | enum | Yes | Either "WSFED" or "SAML" |
 | `timeoutSeconds` | int | No | Override default timeout for this endpoint (5-300) |
 
-#### Complete Web.config Example
+---
+
+## 🔒 Auto-Apply to IdentityModel
+
+The IIS module can optionally apply fetched metadata directly to `System.IdentityModel` configuration at runtime. This feature automatically updates your application's identity configuration with the latest certificates and endpoints from your identity providers.
+
+### Enabling Auto-Apply
+
+Set `autoApplyIdentityModel="true"` in your configuration:
 
 ```xml
-<?xml version="1.0" encoding="utf-8"?>
-<configuration>
-  <configSections>
-    <section name="samlMetadataPolling" 
-             type="IdentityMetadataFetcher.Iis.Configuration.MetadataPollingConfigurationSection, IdentityMetadataFetcher.Iis" />
-  </configSections>
-
-  <!-- SAML Metadata Polling Configuration -->
-  <samlMetadataPolling enabled="true" 
-                        pollingIntervalMinutes="60" 
-                        httpTimeoutSeconds="30"
-                        validateServerCertificate="true"
-                        maxRetries="1">
-    <issuers>
-      <!-- Azure AD -->
-      <add id="azure-ad" 
-           endpoint="https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml" 
-           name="Azure Active Directory" 
-           metadataType="WSFED" />
-      
-      <!-- Auth0 with custom timeout -->
-      <add id="auth0" 
-           endpoint="https://example.auth0.com/samlp/metadata" 
-           name="Auth0" 
-           metadataType="SAML" 
-           timeoutSeconds="45" />
-      
-      <!-- Okta -->
-      <add id="okta" 
-           endpoint="https://dev-12345.okta.com/app/123/sso/saml/metadata" 
-           name="Okta" 
-           metadataType="SAML" />
-    </issuers>
-  </samlMetadataPolling>
-
-  <system.webServer>
-    <modules>
-      <add name="SamlMetadataPollingModule" 
-           type="IdentityMetadataFetcher.Iis.Modules.MetadataPollingHttpModule, IdentityMetadataFetcher.Iis" />
-    </modules>
-  </system.webServer>
-
-  <startup>
-    <supportedRuntime version="v4.0" sku=".NETFramework,Version=v4.5" />
-  </startup>
-</configuration>
+<samlMetadataPolling enabled="true"
+                     autoApplyIdentityModel="true"
+                     pollingIntervalMinutes="60"
+                     httpTimeoutSeconds="30">
+  <issuers>
+    <add id="azure-ad" 
+         endpoint="https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml" 
+         name="Azure Active Directory" 
+         metadataType="WSFED" />
+  </issuers>
+</samlMetadataPolling>
 ```
 
-### Usage in Code
+### What Gets Updated
 
-Once the IIS module is initialized, access cached metadata from anywhere in your ASP.NET application:
+When `autoApplyIdentityModel` is enabled, the module automatically:
 
-#### Accessing Cached Metadata
+1. **Updates Signing Certificates**: Extracts X.509 certificates from metadata and applies them to the IdentityModel configuration
+2. **Updates Issuer Information**: Configures valid issuers based on EntityID from metadata
+3. **Updates Endpoints**: Applies SSO and other service endpoints from the metadata
+4. **Maintains Security**: Only applies valid, properly signed metadata
 
-```csharp
-using IdentityMetadataFetcher.Iis.Modules;
-using System.IdentityModel.Metadata;
+### Security Considerations
 
-// Get the cache instance
-var cache = MetadataPollingHttpModule.MetadataCache;
+> **⚠️ Important**: The `autoApplyIdentityModel` feature is **disabled by default** for security reasons.
 
-// Retrieve metadata for an issuer by ID
-var metadata = cache.GetMetadata("azure-ad");
+Before enabling this feature in production:
 
-if (metadata is EntityDescriptor entity)
-{
-    var entityId = entity.EntityId?.Id;
-    Console.WriteLine($"Entity ID: {entityId}");
-    // Use the metadata for authentication/authorization
-}
+- **Verify Metadata Sources**: Ensure all configured endpoints are from trusted identity providers
+- **Use HTTPS**: Only fetch metadata from HTTPS endpoints
+- **Certificate Validation**: Keep `validateServerCertificate="true"` (the default) to prevent man-in-the-middle attacks
+- **Monitor Changes**: Subscribe to the `MetadataUpdated` event to log configuration changes
+- **Test Thoroughly**: Test in a staging environment first to ensure proper behavior
 
-// Check if metadata is available
-if (cache.HasMetadata("auth0"))
-{
-    var auth0Metadata = cache.GetMetadata("auth0");
-    // Process Auth0 metadata...
-}
+### Example: Production Configuration with Auto-Apply
 
-// Get cache entry with timestamp
-var entry = cache.GetCacheEntry("okta");
-if (entry != null)
-{
-    Console.WriteLine($"Metadata cached at: {entry.CachedAt:O}");
-    var age = DateTime.UtcNow - entry.CachedAt;
-    Console.WriteLine($"Metadata age: {age.TotalMinutes:F2} minutes");
-}
+```xml
+<samlMetadataPolling enabled="true"
+                     autoApplyIdentityModel="true"
+                     pollingIntervalMinutes="120"
+                     httpTimeoutSeconds="30"
+                     validateServerCertificate="true"
+                     maxRetries="2">
+  <issuers>
+    <!-- Only trusted, HTTPS endpoints -->
+    <add id="azure-ad" 
+         endpoint="https://login.microsoftonline.com/your-tenant-id/federationmetadata/2007-06/federationmetadata.xml" 
+         name="Azure Active Directory" 
+         metadataType="WSFED" />
+  </issuers>
+</samlMetadataPolling>
 ```
 
-#### Manually Triggering Polling
+### Monitoring Auto-Apply Operations
 
-```csharp
-using IdentityMetadataFetcher.Iis.Modules;
-
-var pollingService = MetadataPollingHttpModule.PollingService;
-
-if (pollingService != null)
-{
-    // Manually trigger polling (useful for manual refresh)
-    await pollingService.PollNowAsync();
-    Console.WriteLine("Manual polling triggered");
-}
-```
-
-#### Subscribing to Events
-
-The polling service raises events for monitoring and diagnostics:
+Use event handlers to monitor when IdentityModel configuration is updated:
 
 ```csharp
 var service = MetadataPollingHttpModule.PollingService;
 
-// Fired when polling starts
-service.PollingStarted += (sender, e) =>
-{
-    System.Diagnostics.Trace.TraceInformation($"Polling started at {e.StartTime:O}");
-};
-
-// Fired when polling completes
-service.PollingCompleted += (sender, e) =>
-{
-    System.Diagnostics.Trace.TraceInformation(
-        $"Polling completed: {e.SuccessCount} success, {e.FailureCount} failures, " +
-        $"Duration: {e.Duration?.TotalSeconds:F2}s");
-};
-
-// Fired when an individual endpoint fails
-service.PollingError += (sender, e) =>
-{
-    System.Diagnostics.Trace.TraceWarning(
-        $"Error polling {e.IssuerName}: {e.ErrorMessage}");
-    
-    // Log to your monitoring system
-    logger.LogWarning($"Metadata polling failed: {e.IssuerName}", e.Exception);
-};
-
-// Fired when metadata is successfully updated
 service.MetadataUpdated += (sender, e) =>
 {
-    System.Diagnostics.Trace.TraceInformation(
-        $"Metadata updated: {e.IssuerName} at {e.UpdatedAt:O}");
-    
-    // Trigger cache invalidation or other actions
-    logger.LogInformation($"Metadata refreshed: {e.IssuerName}");
+    if (e.AutoApplied)
+    {
+        logger.LogInformation($"IdentityModel configuration updated for {e.IssuerName} at {e.UpdatedAt:O}");
+        
+        // Optionally trigger cache invalidation or other actions
+        InvalidateAuthenticationCache();
+    }
 };
 ```
 
-#### IIS Module Features
+### Disabling Auto-Apply (Default)
 
-- ✅ **Automatic Polling**: Starts when application initializes, performs immediate initial fetch, then polls at configured intervals
-- ✅ **Thread-Safe Caching**: All caching operations are thread-safe for concurrent requests
-- ✅ **Non-Blocking**: Uses async/await for non-blocking background operations
-- ✅ **Resilient**: Continues polling other endpoints if one fails
-- ✅ **Event-Driven**: Subscribe to events for monitoring and diagnostics
-- ✅ **Configuration Validation**: Validates configuration on startup with clear error messages
+If you prefer manual control over IdentityModel configuration, keep the default setting or explicitly disable:
+
+```xml
+<samlMetadataPolling enabled="true"
+                     autoApplyIdentityModel="false"
+                     pollingIntervalMinutes="60">
+  <!-- Metadata will be fetched and cached but NOT applied to IdentityModel -->
+  <issuers>
+    <add id="azure-ad" 
+         endpoint="https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml" 
+         name="Azure Active Directory" 
+         metadataType="WSFED" />
+  </issuers>
+</samlMetadataPolling>
+```
+
+With auto-apply disabled, you can still:
+- Access cached metadata via `MetadataPollingHttpModule.MetadataCache`
+- Manually apply configuration changes when needed
+- Implement custom validation logic before applying updates
+
+---
+
+## 🖥️ Console Utility
+
+A Windows-only console tool is included to fetch metadata from a URL and display a friendly summary.
+
+- Project: `src/IdentityMetadataFetcher.Console`
+- Target: `.NET Framework 4.8`
+- Usage: `IdentityMetadataFetcher.Console <metadata-url> [--raw]`
+
+### Example
+
+```powershell
+# Build (Windows)
+msbuild /t:restore
+msbuild /t:build /p:GenerateFullPaths=true /consoleloggerparameters:NoSummary
+
+# Run: Azure AD federation metadata
+IdentityMetadataFetcher.Console.exe https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml
+
+# Include raw XML output
+IdentityMetadataFetcher.Console.exe https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml --raw
+```
+
+### Output
+
+- Entity ID
+- Roles discovered (STS / IDP)
+- Endpoints (Passive Requestor / Single Sign-On)
+- Signing Keys (key info types)
 
 ---
 
@@ -742,9 +671,11 @@ dotnet test tests/IdentityMetadataFetcher.Tests/IdentityMetadataFetcher.Tests.cs
 
 2. **Metadata Sources**: Only fetch metadata from trusted issuer endpoints.
 
-3. **Error Information**: Exception details may contain sensitive information about endpoints. Handle exceptions carefully in production environments.
+3. **Auto-Apply Feature**: The `autoApplyIdentityModel` setting is disabled by default. Only enable it for trusted metadata sources over HTTPS.
 
-4. **Timeout Configuration**: Set appropriate timeouts to prevent resource exhaustion from slow or unresponsive endpoints.
+4. **Error Information**: Exception details may contain sensitive information about endpoints. Handle exceptions carefully in production environments.
+
+5. **Timeout Configuration**: Set appropriate timeouts to prevent resource exhaustion from slow or unresponsive endpoints.
 
 ### Performance Tips
 
