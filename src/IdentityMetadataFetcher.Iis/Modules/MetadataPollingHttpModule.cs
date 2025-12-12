@@ -212,12 +212,21 @@ namespace IdentityMetadataFetcher.Iis.Modules
             {
                 try
                 {
-                    if (_identityUpdater != null && _metadataCache != null)
+                    IdentityModelConfigurationUpdater updater;
+                    MetadataCache cache;
+                    
+                    lock (_lockObject)
                     {
-                        var entry = _metadataCache.GetCacheEntry(e.IssuerId);
+                        updater = _identityUpdater;
+                        cache = _metadataCache;
+                    }
+                    
+                    if (updater != null && cache != null)
+                    {
+                        var entry = cache.GetCacheEntry(e.IssuerId);
                         if (entry != null)
                         {
-                            _identityUpdater.Apply(entry, e.IssuerName);
+                            updater.Apply(entry, e.IssuerName);
                             System.Diagnostics.Trace.TraceInformation(
                                 $"SamlMetadataPollingModule: Applied metadata to System.IdentityModel for {e.IssuerName} ({e.IssuerId})");
                         }
