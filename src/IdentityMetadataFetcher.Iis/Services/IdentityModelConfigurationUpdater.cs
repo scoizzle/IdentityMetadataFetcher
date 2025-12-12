@@ -142,7 +142,10 @@ namespace IdentityMetadataFetcher.Iis.Services
 
         private static string NormalizeThumbprint(string thumbprint)
         {
-            if (string.IsNullOrEmpty(thumbprint)) return thumbprint;
+            if (thumbprint == null)
+                throw new ArgumentNullException(nameof(thumbprint), "Thumbprint cannot be null.");
+            if (thumbprint.Length == 0)
+                throw new ArgumentException("Thumbprint cannot be empty.", nameof(thumbprint));
             return new string(thumbprint.Where(c => !char.IsWhiteSpace(c)).ToArray()).ToUpperInvariant();
         }
 
