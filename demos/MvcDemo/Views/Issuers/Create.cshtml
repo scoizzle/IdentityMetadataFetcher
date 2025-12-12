@@ -1,0 +1,204 @@
+@using MvcDemo.Models
+
+@model IssuerViewModel
+
+@{
+    ViewBag.Title = "Add New Identity Provider";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Add New Identity Provider</h2>
+
+<div class="form-container" style="margin: 20px 0;">
+    <div class="alert alert-info">
+        <strong>Note:</strong> The issuer you add here will be immediately added to the metadata polling service and begin being monitored. No application restart required.
+    </div>
+
+    @using (Html.BeginForm("Create", "Issuers", FormMethod.Post))
+    {
+        @Html.AntiForgeryToken()
+
+        if (ViewData.ModelState.ContainsKey("") && ViewData.ModelState[""].Errors.Count > 0)
+        {
+            <div class="alert alert-danger">
+                @foreach (var error in ViewData.ModelState[""].Errors)
+                {
+                    <div>@error.ErrorMessage</div>
+                }
+            </div>
+        }
+
+        <div class="form-group">
+            <label for="Id">Issuer ID <span class="text-danger">*</span></label>
+            @Html.TextBoxFor(m => m.Id, new { @class = "form-control" + (ViewData.ModelState.ContainsKey("Id") && ViewData.ModelState["Id"].Errors.Count > 0 ? " is-invalid" : ""), @placeholder = "e.g., demo-idp", required = "required" })
+            @Html.ValidationMessageFor(m => m.Id, "", new { @class = "invalid-feedback" })
+            <small class="form-text text-muted">A unique identifier for this issuer</small>
+        </div>
+
+        <div class="form-group">
+            <label for="Name">Name <span class="text-danger">*</span></label>
+            @Html.TextBoxFor(m => m.Name, new { @class = "form-control" + (ViewData.ModelState.ContainsKey("Name") && ViewData.ModelState["Name"].Errors.Count > 0 ? " is-invalid" : ""), @placeholder = "e.g., My Identity Provider", required = "required" })
+            @Html.ValidationMessageFor(m => m.Name, "", new { @class = "invalid-feedback" })
+            <small class="form-text text-muted">A display name for this issuer</small>
+        </div>
+
+        <div class="form-group">
+            <label for="Endpoint">Metadata Endpoint <span class="text-danger">*</span></label>
+            @Html.TextBoxFor(m => m.Endpoint, new { @class = "form-control" + (ViewData.ModelState.ContainsKey("Endpoint") && ViewData.ModelState["Endpoint"].Errors.Count > 0 ? " is-invalid" : ""), @placeholder = "https://example.com/federationmetadata/2007-06/federationmetadata.xml", @type = "url", required = "required" })
+            @Html.ValidationMessageFor(m => m.Endpoint, "", new { @class = "invalid-feedback" })
+            <small class="form-text text-muted">The URL where the issuer publishes its metadata</small>
+        </div>
+
+        <div class="form-group">
+            <label for="MetadataType">Metadata Type <span class="text-danger">*</span></label>
+            @Html.DropDownListFor(m => m.MetadataType, new SelectList(new[] { "SAML", "WSFED" }), new { @class = "form-control", required = "required" })
+            @Html.ValidationMessageFor(m => m.MetadataType, "", new { @class = "invalid-feedback" })
+            <small class="form-text text-muted">The format of the metadata (SAML or WSFED)</small>
+        </div>
+
+        <div class="alert alert-warning">
+            <strong>Example Web.config entry:</strong>
+            <pre>&lt;add id="@Model.Id" endpoint="@Model.Endpoint" name="@Model.Name" metadataType="@Model.MetadataType" /&gt;</pre>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Prepare Configuration</button>
+            @Html.ActionLink("Cancel", "Index", "Issuers", null, new { @class = "btn btn-secondary" })
+        </div>
+    }
+</div>
+
+<style>
+    .form-container {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 20px;
+        max-width: 600px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    .form-control.is-invalid {
+        border-color: #dc3545;
+    }
+
+    .form-control.is-invalid:focus {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+
+    .invalid-feedback {
+        color: #dc3545;
+        font-size: 12px;
+        margin-top: 5px;
+        display: block;
+    }
+
+    .form-text {
+        font-size: 12px;
+        color: #6c757d;
+        margin-top: 5px;
+        display: block;
+    }
+
+    .text-danger {
+        color: #dc3545;
+    }
+
+    .text-muted {
+        color: #6c757d;
+    }
+
+    .form-actions {
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 1px solid #dee2e6;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        margin-right: 10px;
+        text-decoration: none;
+        border-radius: 4px;
+        display: inline-block;
+        cursor: pointer;
+        font-size: 14px;
+        border: none;
+        font-weight: 600;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background-color: #5a6268;
+    }
+
+    .alert {
+        padding: 12px;
+        margin-bottom: 15px;
+        border: 1px solid transparent;
+        border-radius: 4px;
+    }
+
+    .alert-info {
+        background-color: #d1ecf1;
+        border-color: #bee5eb;
+        color: #0c5460;
+    }
+
+    .alert-warning {
+        background-color: #fff3cd;
+        border-color: #ffeeba;
+        color: #856404;
+    }
+
+    .alert-danger {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+
+    pre {
+        background-color: #f4f4f4;
+        padding: 10px;
+        border-radius: 4px;
+        overflow-x: auto;
+        font-size: 12px;
+    }
+</style>

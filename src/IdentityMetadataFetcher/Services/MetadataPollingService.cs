@@ -15,7 +15,7 @@ namespace IdentityMetadataFetcher.Services
     {
         private readonly IMetadataFetcher _metadataFetcher;
         private readonly MetadataCache _metadataCache;
-        private readonly IEnumerable<IssuerEndpoint> _endpoints;
+        private IEnumerable<IssuerEndpoint> _endpoints;
         private readonly int _pollingIntervalMs;
         private readonly int _minimumPollIntervalMinutes;
         private readonly Dictionary<string, DateTime> _lastPollTimestamps;
@@ -303,6 +303,109 @@ namespace IdentityMetadataFetcher.Services
             lock (_pollLockObject)
             {
                 _lastPollTimestamps[issuerId] = timestamp;
+            }
+        }
+
+        /// <summary>
+        /// Adds a new issuer to the running polling service.
+        /// </summary>
+        public bool AddIssuer(IssuerEndpoint endpoint)
+        {
+            if (endpoint == null || string.IsNullOrWhiteSpace(endpoint.Id))
+                return false;
+
+            lock (_pollLockObject)
+            {
+                // Check if issuer already exists
+                var endpointsList = _endpoints as List<IssuerEndpoint>;
+                if (endpointsList == null)
+                {
+                    // Convert to list if needed
+                    endpointsList = _endpoints.ToList();
+                }
+                else if (endpointsList.Any(e => e.Id == endpoint.Id))
+                {
+                    return false; // Already exists
+                }
+
+                endpointsList.Add(endpoint);
+                _endpoints = endpointsList;
+
+                System.Diagnostics.Trace.TraceInformation(
+                    $"MetadataPollingService: Added issuer '{endpoint.Id}' ({endpoint.Name})");
+
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Updates an existing issuer in the running polling service.
+        /// </summary>
+        public bool UpdateIssuer(IssuerEndpoint endpoint)
+        {
+            if (endpoint == null || string.IsNullOrWhiteSpace(endpoint.Id))
+                return false;
+
+            lock (_pollLockObject)
+            {
+                var endpointsList = _endpoints as List<IssuerEndpoint>;
+                if (endpointsList == null)
+                {
+                    endpointsList = _endpoints.ToList();
+                }
+
+                var existingIndex = endpointsList.FindIndex(e => e.Id == endpoint.Id);
+                if (existingIndex < 0)
+                    return false; // Not found
+
+                endpointsList[existingIndex] = endpoint;
+                _endpoints = endpointsList;
+
+                System.Diagnostics.Trace.TraceInformation(
+                    $"MetadataPollingService: Updated issuer '{endpoint.Id}' ({endpoint.Name})");
+
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Removes an issuer from the running polling service.
+        /// </summary>
+        public bool RemoveIssuer(string issuerId)
+        {
+            if (string.IsNullOrWhiteSpace(issuerId))
+                return false;
+
+            lock (_pollLockObject)
+            {
+                var endpointsList = _endpoints as List<IssuerEndpoint>;
+                if (endpointsList == null)
+                {
+                    endpointsList = _endpoints.ToList();
+                }
+
+                var removed = endpointsList.RemoveAll(e => e.Id == issuerId) > 0;
+                if (removed)
+                {
+                    _endpoints = endpointsList;
+                    _lastPollTimestamps.Remove(issuerId);
+
+                    System.Diagnostics.Trace.TraceInformation(
+                        $"MetadataPollingService: Removed issuer '{issuerId}'");
+                }
+
+                return removed;
+            }
+        }
+
+        /// <summary>
+        /// Gets the current list of issuer endpoints being polled.
+        /// </summary>
+        public IEnumerable<IssuerEndpoint> GetCurrentEndpoints()
+        {
+            lock (_pollLockObject)
+            {
+                return _endpoints.ToList();
             }
         }
 

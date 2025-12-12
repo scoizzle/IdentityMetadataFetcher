@@ -43,7 +43,7 @@ namespace IdentityMetadataFetcher.Iis.Configuration
         /// <summary>
         /// Gets the issuer element with the specified id.
         /// </summary>
-        public IssuerElement this[string id]
+        public new IssuerElement this[string id]
         {
             get { return (IssuerElement)BaseGet(id); }
         }

@@ -36,6 +36,7 @@ namespace IdentityMetadataFetcher.Iis.Modules
         private static bool _initialized = false;
         private static bool _autoApplyEnabled = false;
         private static bool _enableSynchronousRecovery = false;
+        private static bool _eventsSubscribed = false;
 
         /// <summary>
         /// Gets the current metadata cache instance.
@@ -184,11 +185,15 @@ namespace IdentityMetadataFetcher.Iis.Modules
                             "SamlMetadataPollingModule: auto-apply to System.IdentityModel is DISABLED");
                     }
 
-                    // Subscribe to events for diagnostics
-                    _pollingService.PollingStarted += OnPollingStarted;
-                    _pollingService.PollingCompleted += OnPollingCompleted;
-                    _pollingService.PollingError += OnPollingError;
-                    _pollingService.MetadataUpdated += OnMetadataUpdated;
+                    // Subscribe to events for diagnostics (only once)
+                    if (!_eventsSubscribed)
+                    {
+                        _pollingService.PollingStarted += OnPollingStarted;
+                        _pollingService.PollingCompleted += OnPollingCompleted;
+                        _pollingService.PollingError += OnPollingError;
+                        _pollingService.MetadataUpdated += OnMetadataUpdated;
+                        _eventsSubscribed = true;
+                    }
 
                     // Start the service
                     _pollingService.Start();
@@ -214,11 +219,14 @@ namespace IdentityMetadataFetcher.Iis.Modules
 
         public void Dispose()
         {
-            if (_pollingService != null)
-            {
-                _pollingService.Dispose();
-                _pollingService = null;
-            }
+            // Note: We do NOT unsubscribe from _pollingService events here because:
+            // 1. _pollingService is a static field shared across all HttpApplication instances
+            // 2. Multiple HttpApplication instances exist in IIS for thread pooling
+            // 3. Unsubscribing in one instance's Dispose() would break polling for all others
+            // 4. _pollingService disposal is handled by the application domain shutdown
+            
+            // Only dispose if this is the last instance (rarely happens in practice)
+            // The static _pollingService will be cleaned up by the GC when the app domain unloads
         }
 
         private static void OnAuthenticateRequest(object sender, EventArgs e)

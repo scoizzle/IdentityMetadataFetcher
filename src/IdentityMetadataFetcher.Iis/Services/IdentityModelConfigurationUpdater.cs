@@ -108,21 +108,19 @@ namespace IdentityMetadataFetcher.Iis.Services
                                 try
                                 {
                                     // We don't have raw data; attempt to resolve via store if available
-                                    using (var store = new X509Store(StoreName.My, StoreLocation.LocalMachine))
+                                    using var store = new X509Store(StoreName.My, StoreLocation.LocalMachine);
+                                    try
                                     {
-                                        try
+                                        store.Open(OpenFlags.OpenExistingOnly | OpenFlags.ReadOnly);
+                                        var found = store.Certificates.Find(X509FindType.FindByThumbprint, NormalizeThumbprint(x509Thumb.GetX509Thumbprint()), false);
+                                        if (found != null && found.Count > 0)
                                         {
-                                            store.Open(OpenFlags.OpenExistingOnly | OpenFlags.ReadOnly);
-                                            var found = store.Certificates.Find(X509FindType.FindByThumbprint, NormalizeThumbprint(x509Thumb.GetX509Thumbprint()), false);
-                                            if (found != null && found.Count > 0)
-                                            {
-                                                result.AddRange(found.Cast<X509Certificate2>());
-                                            }
+                                            result.AddRange(found.Cast<X509Certificate2>());
                                         }
-                                        catch (Exception ex)
-                                        {
-                                            System.Diagnostics.Trace.TraceWarning($"IdentityModelConfigurationUpdater: Failed to open certificate store or find certificate by thumbprint: {ex.GetType().Name}: {ex.Message}");
-                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        System.Diagnostics.Trace.TraceWarning($"IdentityModelConfigurationUpdater: Failed to open certificate store or find certificate by thumbprint: {ex.GetType().Name}: {ex.Message}");
                                     }
                                 }
                                 catch (Exception ex)

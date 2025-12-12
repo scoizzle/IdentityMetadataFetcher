@@ -1,0 +1,196 @@
+@using System.Collections.Generic
+@using MvcDemo.Models
+
+@model List<IssuerViewModel>
+
+@{
+    ViewBag.Title = "Identity Providers";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Identity Providers (Issuers)</h2>
+
+<div class="issuers-container" style="margin: 20px 0;">
+    <div style="margin-bottom: 15px;">
+        @Html.ActionLink("Add New Issuer", "Create", "Issuers", null, new { @class = "btn btn-success" })
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @Html.Raw(TempData["SuccessMessage"].ToString().Replace("\n", "<br/>"))
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="alert alert-warning" role="alert">
+        <strong>Important:</strong> This view shows the identity providers currently being monitored by the metadata polling service. To add, modify, or delete providers, edit the <code>samlMetadataPolling</code> section in Web.config and restart the application.
+    </div>
+
+    <div class="alert alert-info" role="alert">
+        <strong>Info:</strong> This view shows the identity providers currently being monitored by the metadata polling service. You can add, edit, or remove providers using the buttons below. Changes take effect immediately.
+    </div>
+
+    @if (Model == null || Model.Count == 0)
+    {
+        <div class="alert alert-info">
+            No identity providers are currently configured. Edit Web.config to add identity providers.
+        </div>
+    }
+    else
+    {
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Endpoint</th>
+                    <th>Type</th>
+                    <th style="width: 200px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var issuer in Model)
+                {
+                    <tr>
+                        <td><code>@issuer.Id</code></td>
+                        <td>@issuer.Name</td>
+                        <td style="word-break: break-all;">
+                            <small><a href="@issuer.Endpoint" target="_blank">@issuer.Endpoint</a></small>
+                        </td>
+                        <td><span class="badge bg-info">@issuer.MetadataType</span></td>
+                        <td>
+                            @Html.ActionLink("Edit", "Edit", "Issuers", new { id = issuer.Id }, new { @class = "btn btn-sm btn-primary" })
+                            <form method="post" action="@Url.Action("Delete", "Issuers")" style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                @Html.Hidden("id", issuer.Id)
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to remove this issuer from monitoring?');">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+<style>
+    .issuers-container {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 15px;
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+        border: 1px solid #28a745;
+        padding: 6px 12px;
+        text-decoration: none;
+        border-radius: 4px;
+        display: inline-block;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .btn-success:hover {
+        background-color: #218838;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #f5f5f5;
+    }
+
+    .badge {
+        padding: 4px 8px;
+        border-radius: 3px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .bg-info {
+        background-color: #17a2b8 !important;
+        color: white;
+    }
+
+    .btn {
+        padding: 6px 12px;
+        margin-right: 5px;
+        text-decoration: none;
+        border-radius: 4px;
+        display: inline-block;
+        cursor: pointer;
+        font-size: 14px;
+        border: none;
+    }
+
+    .btn-info {
+        background-color: #17a2b8;
+        color: white;
+        border: 1px solid #17a2b8;
+    }
+
+    .btn-info:hover {
+        background-color: #138496;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+        border: 1px solid #007bff;
+    }
+
+    .btn-primary:hover {
+        background-color: #0069d9;
+    }
+
+    .btn-sm {
+        padding: 4px 8px;
+        font-size: 12px;
+    }
+
+    .alert {
+        padding: 12px;
+        margin-bottom: 15px;
+        border: 1px solid transparent;
+        border-radius: 4px;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+
+    .alert-danger {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+
+    .alert-warning {
+        background-color: #fff3cd;
+        border-color: #ffeeba;
+        color: #856404;
+    }
+
+    .alert-info {
+        background-color: #d1ecf1;
+        border-color: #bee5eb;
+        color: #0c5460;
+    }
+
+    .table-dark {
+        background-color: #343a40;
+        color: white;
+    }
+</style>

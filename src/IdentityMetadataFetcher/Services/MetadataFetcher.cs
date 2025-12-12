@@ -141,7 +141,6 @@ namespace IdentityMetadataFetcher.Services
             if (endpoints == null)
                 throw new ArgumentNullException(nameof(endpoints));
 
-            var results = new List<MetadataFetchResult>();
             var tasks = new List<Task<MetadataFetchResult>>();
 
             foreach (var endpoint in endpoints)
@@ -171,95 +170,91 @@ namespace IdentityMetadataFetcher.Services
 
         private string DownloadMetadataXml(string endpoint, int timeoutMs)
         {
-            using (var client = new HttpClient(_httpClientHandler, false))
-            {
-                client.Timeout = TimeSpan.FromMilliseconds(timeoutMs);
-                
-                for (int i = 0; i <= _options.MaxRetries; i++)
-                {
-                    try
-                    {
-                        var response = client.GetAsync(endpoint).Result;
-                        
-                        if (!response.IsSuccessStatusCode)
-                        {
-                            throw new MetadataFetchException(
-                                $"HTTP request failed with status code {response.StatusCode}",
-                                endpoint,
-                                (int)response.StatusCode,
-                                null
-                            );
-                        }
+            using var client = new HttpClient(_httpClientHandler, false);
+            client.Timeout = TimeSpan.FromMilliseconds(timeoutMs);
 
-                        return response.Content.ReadAsStringAsync().Result;
-                    }
-                    catch (HttpRequestException ex) when (i < _options.MaxRetries)
-                    {
-                        // Retry on failure
-                        continue;
-                    }
-                    catch (HttpRequestException ex)
+            for (int i = 0; i <= _options.MaxRetries; i++)
+            {
+                try
+                {
+                    var response = client.GetAsync(endpoint).Result;
+
+                    if (!response.IsSuccessStatusCode)
                     {
                         throw new MetadataFetchException(
-                            $"Failed to download metadata from {endpoint}",
+                            $"HTTP request failed with status code {response.StatusCode}",
                             endpoint,
-                            ex
+                            (int)response.StatusCode,
+                            null
                         );
                     }
-                }
 
-                throw new MetadataFetchException(
-                    $"Failed to download metadata from {endpoint} after {_options.MaxRetries + 1} attempts",
-                    endpoint
-                );
+                    return response.Content.ReadAsStringAsync().Result;
+                }
+                catch (HttpRequestException) when (i < _options.MaxRetries)
+                {
+                    // Retry on failure
+                    continue;
+                }
+                catch (HttpRequestException ex)
+                {
+                    throw new MetadataFetchException(
+                        $"Failed to download metadata from {endpoint}",
+                        endpoint,
+                        ex
+                    );
+                }
             }
+
+            throw new MetadataFetchException(
+                $"Failed to download metadata from {endpoint} after {_options.MaxRetries + 1} attempts",
+                endpoint
+            );
         }
 
         private async Task<string> DownloadMetadataXmlAsync(string endpoint, int timeoutMs)
         {
-            using (var client = new HttpClient(_httpClientHandler, false))
-            {
-                client.Timeout = TimeSpan.FromMilliseconds(timeoutMs);
-                
-                for (int i = 0; i <= _options.MaxRetries; i++)
-                {
-                    try
-                    {
-                        var response = await client.GetAsync(endpoint);
-                        
-                        if (!response.IsSuccessStatusCode)
-                        {
-                            throw new MetadataFetchException(
-                                $"HTTP request failed with status code {response.StatusCode}",
-                                endpoint,
-                                (int)response.StatusCode,
-                                null
-                            );
-                        }
+            using var client = new HttpClient(_httpClientHandler, false);
+            client.Timeout = TimeSpan.FromMilliseconds(timeoutMs);
 
-                        return await response.Content.ReadAsStringAsync();
-                    }
-                    catch (HttpRequestException ex) when (i < _options.MaxRetries)
-                    {
-                        // Retry on failure
-                        await Task.Delay(100 * (i + 1)); // Exponential backoff
-                        continue;
-                    }
-                    catch (HttpRequestException ex)
+            for (int i = 0; i <= _options.MaxRetries; i++)
+            {
+                try
+                {
+                    var response = await client.GetAsync(endpoint);
+
+                    if (!response.IsSuccessStatusCode)
                     {
                         throw new MetadataFetchException(
-                            $"Failed to download metadata from {endpoint}",
+                            $"HTTP request failed with status code {response.StatusCode}",
                             endpoint,
-                            ex
+                            (int)response.StatusCode,
+                            null
                         );
                     }
-                }
 
-                throw new MetadataFetchException(
-                    $"Failed to download metadata from {endpoint} after {_options.MaxRetries + 1} attempts",
-                    endpoint
-                );
+                    return await response.Content.ReadAsStringAsync();
+                }
+                catch (HttpRequestException) when (i < _options.MaxRetries)
+                {
+                    // Retry on failure
+                    await Task.Delay(100 * (i + 1)); // Exponential backoff
+                    continue;
+                }
+                catch (HttpRequestException ex)
+                {
+                    throw new MetadataFetchException(
+                        $"Failed to download metadata from {endpoint}",
+                        endpoint,
+                        ex
+                    );
+                }
             }
+
+            throw new MetadataFetchException(
+                $"Failed to download metadata from {endpoint} after {_options.MaxRetries + 1} attempts",
+                endpoint
+            );
         }
 
         private MetadataBase ParseMetadata(string metadataXml, MetadataType metadataType)
@@ -269,12 +264,10 @@ namespace IdentityMetadataFetcher.Services
 
             try
             {
-                using (var reader = XmlReader.Create(new StringReader(metadataXml)))
-                {
-                    var serializer = new MetadataSerializer();
-                    var metadata = serializer.ReadMetadata(reader);
-                    return metadata;
-                }
+                using var reader = XmlReader.Create(new StringReader(metadataXml));
+                var serializer = new MetadataSerializer();
+                var metadata = serializer.ReadMetadata(reader);
+                return metadata;
             }
             catch (Exception ex)
             {
