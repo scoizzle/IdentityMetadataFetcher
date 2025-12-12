@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IdentityModel.Metadata;
 using System.IdentityModel.Services;
 using System.IdentityModel.Tokens;
@@ -96,7 +95,7 @@ namespace IdentityMetadataFetcher.Iis.Services
                                 } 
                                 catch (Exception ex) 
                                 { 
-                                    Trace.TraceWarning($"IdentityModelConfigurationUpdater: Failed to parse X509 raw data from key identifier clause: {ex.GetType().Name}: {ex.Message}");
+                                    System.Diagnostics.Trace.TraceWarning($"IdentityModelConfigurationUpdater: Failed to parse X509 raw data from key identifier clause: {ex.GetType().Name}: {ex.Message}");
                                 }
                                 continue;
                             }
@@ -120,13 +119,13 @@ namespace IdentityMetadataFetcher.Iis.Services
                                         }
                                         catch (Exception ex)
                                         {
-                                            Trace.TraceWarning($"IdentityModelConfigurationUpdater: Failed to open certificate store or find certificate by thumbprint: {ex.GetType().Name}: {ex.Message}");
+                                            System.Diagnostics.Trace.TraceWarning($"IdentityModelConfigurationUpdater: Failed to open certificate store or find certificate by thumbprint: {ex.GetType().Name}: {ex.Message}");
                                         }
                                     }
                                 }
                                 catch (Exception ex)
                                 {
-                                    Trace.TraceWarning($"IdentityModelConfigurationUpdater: Failed to retrieve certificate from thumbprint key identifier clause: {ex.GetType().Name}: {ex.Message}");
+                                    System.Diagnostics.Trace.TraceWarning($"IdentityModelConfigurationUpdater: Failed to retrieve certificate from thumbprint key identifier clause: {ex.GetType().Name}: {ex.Message}");
                                 }
                                 continue;
                             }
