@@ -91,7 +91,14 @@ namespace IdentityMetadataFetcher.Iis.Services
                             var x509Raw = clause as X509RawDataKeyIdentifierClause;
                             if (x509Raw != null)
                             {
-                                try { result.Add(new X509Certificate2(x509Raw.GetX509RawData())); } catch { }
+                                try 
+                                { 
+                                    result.Add(new X509Certificate2(x509Raw.GetX509RawData())); 
+                                } 
+                                catch (Exception ex) 
+                                { 
+                                    System.Diagnostics.Trace.TraceWarning($"IdentityModelConfigurationUpdater: Failed to parse X509 raw data from key identifier clause: {ex.GetType().Name}: {ex.Message}");
+                                }
                                 continue;
                             }
 
@@ -112,10 +119,16 @@ namespace IdentityMetadataFetcher.Iis.Services
                                                 result.AddRange(found.Cast<X509Certificate2>());
                                             }
                                         }
-                                        catch { }
+                                        catch (Exception ex)
+                                        {
+                                            System.Diagnostics.Trace.TraceWarning($"IdentityModelConfigurationUpdater: Failed to open certificate store or find certificate by thumbprint: {ex.GetType().Name}: {ex.Message}");
+                                        }
                                     }
                                 }
-                                catch { }
+                                catch (Exception ex)
+                                {
+                                    System.Diagnostics.Trace.TraceWarning($"IdentityModelConfigurationUpdater: Failed to retrieve certificate from thumbprint key identifier clause: {ex.GetType().Name}: {ex.Message}");
+                                }
                                 continue;
                             }
                         }
