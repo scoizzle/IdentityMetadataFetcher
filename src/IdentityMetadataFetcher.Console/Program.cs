@@ -57,12 +57,12 @@ namespace IdentityMetadataFetcher.ConsoleApp
 
                 PrintMetadataSummary(result.Metadata);
 
-                if (showRaw && !string.IsNullOrWhiteSpace(result.RawXml))
+                if (showRaw && !string.IsNullOrWhiteSpace(result.RawMetadata))
                 {
                     Console.WriteLine();
                     Console.WriteLine("Raw XML:");
                     Console.WriteLine(new string('-', 80));
-                    Console.WriteLine(result.RawXml);
+                    Console.WriteLine(result.RawMetadata);
                 }
 
                 Console.WriteLine();
@@ -115,7 +115,7 @@ namespace IdentityMetadataFetcher.ConsoleApp
             Console.WriteLine();
             Console.WriteLine("Summary:");
             Console.WriteLine(new string('-', 80));
-            Console.WriteLine($"Entity ID: {entity.EntityId}");
+            Console.WriteLine($"Entity ID: {entity.EntityId?.Id}");
 
             if (entity.SecurityTokenServiceDescriptor != null)
             {
