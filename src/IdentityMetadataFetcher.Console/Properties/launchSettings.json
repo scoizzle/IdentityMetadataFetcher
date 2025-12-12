@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "IdentityMetadataFetcher.Console": {
+      "commandName": "Project",
+      "commandLineArgs": "--poll --interval-min=1"
+    }
+  }
+}

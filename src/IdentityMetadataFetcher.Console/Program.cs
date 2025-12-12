@@ -20,7 +20,7 @@ namespace IdentityMetadataFetcher.ConsoleApp
 
 #if DEBUG
             // If no args, in Debug build, and console input is attached, prompt for URL
-            if (args.Length == 0 && !Console.IsInputRedirected) {
+            if (!args.Any(e => Uri.TryCreate(e, UriKind.Absolute, out _)) && !Console.IsInputRedirected) {
                 Console.Write("Enter metadata URL: ");
                 var inputUrl = Console.ReadLine();
                 if (string.IsNullOrWhiteSpace(inputUrl))
@@ -29,7 +29,8 @@ namespace IdentityMetadataFetcher.ConsoleApp
                     return 1;
                 }
 
-                args = [inputUrl.Trim()];
+                List<string> arguments = [inputUrl, .. args];
+                args = arguments.ToArray();
             }
 #endif
 
@@ -41,6 +42,20 @@ namespace IdentityMetadataFetcher.ConsoleApp
 
             var url = args[0];
             var showRaw = args.Skip(1).Any(a => a.Equals("--raw", StringComparison.OrdinalIgnoreCase));
+            var enablePolling = args.Skip(1).Any(a => a.Equals("--poll", StringComparison.OrdinalIgnoreCase));
+
+            // Optional: polling interval in minutes
+            var intervalArg = args.Skip(1)
+                                  .FirstOrDefault(a => a.StartsWith("--interval-min=", StringComparison.OrdinalIgnoreCase));
+            int pollingIntervalMinutes = 15; // default
+            if (intervalArg != null)
+            {
+                var parts = intervalArg.Split('=');
+                if (parts.Length == 2 && int.TryParse(parts[1], out var parsed) && parsed >= 1)
+                {
+                    pollingIntervalMinutes = parsed;
+                }
+            }
 
             try
             {
@@ -52,9 +67,6 @@ namespace IdentityMetadataFetcher.ConsoleApp
                     ContinueOnError = false
                 };
 
-                var fetcher = new MetadataFetcher(options);
-                Console.WriteLine($"Fetching metadata from: {url}");
-
                 var endpoint = new IssuerEndpoint
                 {
                     Id = url,
@@ -63,31 +75,111 @@ namespace IdentityMetadataFetcher.ConsoleApp
                     MetadataType = MetadataType.SAML // best-effort; parser supports both
                 };
 
-                var result = await fetcher.FetchMetadataAsync(endpoint);
-
-                if (result.Metadata == null)
+                if (enablePolling)
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("No metadata returned.");
-                    Console.ResetColor();
-                    return 2;
+                    // Set up cache and poller
+                    var cache = new MetadataCache();
+                    var fetcher = new MetadataFetcher(options);
+                    var endpoints = new List<IssuerEndpoint> { endpoint };
+                    var poller = new MetadataPollingService(fetcher, cache, endpoints, pollingIntervalMinutes);
+
+                    // Wire up simple console logging for events
+                    poller.PollingStarted += (s, e) =>
+                    {
+                        Console.WriteLine($"Polling started at {e.StartTime:u}");
+                    };
+                    poller.PollingCompleted += (s, e) =>
+                    {
+                        Console.WriteLine($"Polling completed at {e.EndTime:u} (success={e.SuccessCount}, failure={e.FailureCount})");
+                    };
+                    poller.PollingError += (s, e) =>
+                    {
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        Console.WriteLine($"Polling error for '{e.IssuerName}': {e.ErrorMessage}");
+                        if (e.Exception != null)
+                        {
+                            Console.WriteLine(e.Exception.Message);
+                        }
+                        Console.ResetColor();
+                    };
+                    poller.MetadataUpdated += (s, e) =>
+                    {
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine($"Metadata updated for '{e.IssuerName}' at {e.UpdatedAt:u}");
+                        Console.ResetColor();
+
+                        // Print summary of latest metadata in cache
+                        var entry = cache.GetCacheEntry(e.IssuerId);
+                        if (entry != null && entry.Metadata != null)
+                        {
+                            PrintMetadataSummary(entry.Metadata);
+                            if (showRaw && !string.IsNullOrWhiteSpace(entry.RawXml))
+                            {
+                                Console.WriteLine();
+                                Console.WriteLine("Raw XML:");
+                                Console.WriteLine(new string('-', 80));
+                                Console.WriteLine(entry.RawXml);
+                            }
+                        }
+                    };
+
+                    // Start polling and keep the app alive until user quits
+                    poller.Start();
+                    Console.WriteLine($"Polling enabled (interval={pollingIntervalMinutes} min). Press Ctrl+C or 'q' then Enter to quit.");
+
+                    var quit = false;
+                    Console.CancelKeyPress += (sender, eventArgs) =>
+                    {
+                        eventArgs.Cancel = true; // prevent immediate process termination
+                        quit = true;
+                    };
+
+                    while (!quit)
+                    {
+                        var line = Console.ReadLine();
+                        if (line != null && line.Trim().Equals("q", StringComparison.OrdinalIgnoreCase))
+                        {
+                            quit = true;
+                        }
+                    }
+
+                    poller.Stop();
+                    poller.Dispose();
+                    Console.WriteLine("Stopped.");
+
+                    return 0;
                 }
-
-                PrintMetadataSummary(result.Metadata);
-
-                if (showRaw && !string.IsNullOrWhiteSpace(result.RawMetadata))
+                else
                 {
+                    var fetcher = new MetadataFetcher(options);
+                    Console.WriteLine($"Fetching metadata from: {url}");
+
+                    var result = await fetcher.FetchMetadataAsync(endpoint);
+
+                    if (result.Metadata == null)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("No metadata returned.");
+                        Console.ResetColor();
+                        return 2;
+                    }
+
+                    PrintMetadataSummary(result.Metadata);
+
+                    if (showRaw && !string.IsNullOrWhiteSpace(result.RawMetadata))
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Raw XML:");
+                        Console.WriteLine(new string('-', 80));
+                        Console.WriteLine(result.RawMetadata);
+                    }
+
                     Console.WriteLine();
-                    Console.WriteLine("Raw XML:");
-                    Console.WriteLine(new string('-', 80));
-                    Console.WriteLine(result.RawMetadata);
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("Done.");
+                    Console.ResetColor();
+                    return 0;
                 }
-
-                Console.WriteLine();
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Done.");
-                Console.ResetColor();
-                return 0;
             }
             catch (WebException wex)
             {
@@ -115,10 +207,12 @@ namespace IdentityMetadataFetcher.ConsoleApp
         private static void PrintUsage()
         {
             Console.WriteLine("Usage:");
-            Console.WriteLine("  IdentityMetadataFetcher.Console <metadata-url> [--raw]");
+            Console.WriteLine("  IdentityMetadataFetcher.Console <metadata-url> [--raw] [--poll] [--interval-min=N]");
             Console.WriteLine();
             Console.WriteLine("Options:");
-            Console.WriteLine("  --raw    Print raw XML metadata after the summary");
+            Console.WriteLine("  --raw           Print raw XML metadata after the summary");
+            Console.WriteLine("  --poll          Enable continuous polling and keep the app running until quit");
+            Console.WriteLine("  --interval-min  Polling interval in minutes (default 15, minimum 1)");
         }
 
         private static void PrintMetadataSummary(MetadataBase metadata)
