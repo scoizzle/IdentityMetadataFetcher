@@ -5,21 +5,21 @@ using System.IdentityModel.Services;
 using System.IdentityModel.Tokens;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using IdentityMetadataFetcher.Services; // Core library
 
 namespace IdentityMetadataFetcher.Iis.Services
 {
     /// <summary>
-    /// Applies fetched metadata to System.IdentityModel runtime configuration.
-    /// Updates the IssuerNameRegistry with current signing certificates and, when available,
-    /// refreshes WS-Federation passive endpoints.
+    /// Updates System.IdentityModel configuration with metadata from cache.
+    /// This is Windows/.NET Framework specific functionality.
     /// </summary>
     public class IdentityModelConfigurationUpdater
     {
         /// <summary>
-        /// Applies a single cache entry's metadata to the current FederationConfiguration.
+        /// Applies metadata from a cache entry to System.IdentityModel's issuer name registry.
         /// </summary>
-        /// <param name="entry">The metadata cache entry.</param>
-        /// <param name="issuerDisplayName">Human-friendly issuer name for registry mapping.</param>
+        /// <param name="entry">The metadata cache entry containing updated metadata.</param>
+        /// <param name="issuerDisplayName">Display name for the issuer (for logging).</param>
         public void Apply(MetadataCacheEntry entry, string issuerDisplayName)
         {
             if (entry == null || entry.Metadata == null)

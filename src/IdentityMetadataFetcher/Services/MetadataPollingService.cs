@@ -4,12 +4,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using IdentityMetadataFetcher.Models;
-using IdentityMetadataFetcher.Services;
 
-namespace IdentityMetadataFetcher.Iis.Services
+namespace IdentityMetadataFetcher.Services
 {
     /// <summary>
     /// Background service that periodically polls issuer endpoints for metadata updates.
+    /// Can be used in any .NET Framework application (console, Windows Service, web, etc.)
     /// </summary>
     public class MetadataPollingService : IDisposable
     {
@@ -17,10 +17,14 @@ namespace IdentityMetadataFetcher.Iis.Services
         private readonly MetadataCache _metadataCache;
         private readonly IEnumerable<IssuerEndpoint> _endpoints;
         private readonly int _pollingIntervalMs;
+        private readonly int _minimumPollIntervalMinutes;
+        private readonly Dictionary<string, DateTime> _lastPollTimestamps;
+        private readonly object _pollLockObject = new object();
 
         private Timer _pollingTimer;
         private bool _isPolling;
         private bool _disposed;
+        private DateTime? _lastGlobalPoll;
 
         public event EventHandler<PollingEventArgs> PollingStarted;
         public event EventHandler<PollingEventArgs> PollingCompleted;
@@ -32,6 +36,16 @@ namespace IdentityMetadataFetcher.Iis.Services
             MetadataCache metadataCache,
             IEnumerable<IssuerEndpoint> endpoints,
             int pollingIntervalMinutes)
+            : this(metadataFetcher, metadataCache, endpoints, pollingIntervalMinutes, 0)
+        {
+        }
+
+        public MetadataPollingService(
+            IMetadataFetcher metadataFetcher,
+            MetadataCache metadataCache,
+            IEnumerable<IssuerEndpoint> endpoints,
+            int pollingIntervalMinutes,
+            int minimumPollIntervalMinutes)
         {
             if (metadataFetcher == null)
                 throw new ArgumentNullException(nameof(metadataFetcher));
@@ -49,6 +63,8 @@ namespace IdentityMetadataFetcher.Iis.Services
             _metadataCache = metadataCache;
             _endpoints = endpoints.ToList();
             _pollingIntervalMs = pollingIntervalMinutes * 60 * 1000;
+            _minimumPollIntervalMinutes = minimumPollIntervalMinutes;
+            _lastPollTimestamps = new Dictionary<string, DateTime>();
             _isPolling = false;
         }
 
@@ -64,11 +80,11 @@ namespace IdentityMetadataFetcher.Iis.Services
                 return; // Already started
 
             // Perform initial poll immediately
-            PollMetadataAsync();
+            _ = PollMetadataAsync();
 
             // Schedule periodic polling
             _pollingTimer = new Timer(
-                callback: state => PollMetadataAsync(),
+                callback: state => _ = PollMetadataAsync(),
                 state: null,
                 dueTime: TimeSpan.FromMilliseconds(_pollingIntervalMs),
                 period: TimeSpan.FromMilliseconds(_pollingIntervalMs));
@@ -92,6 +108,83 @@ namespace IdentityMetadataFetcher.Iis.Services
         public async Task PollNowAsync()
         {
             await PollMetadataAsync();
+        }
+
+        /// <summary>
+        /// Manually triggers a metadata poll for a specific issuer if the minimum interval has elapsed.
+        /// </summary>
+        /// <param name="issuerId">The issuer identifier to poll.</param>
+        /// <returns>True if polling was performed; false if throttled.</returns>
+        public async Task<bool> PollIssuerNowAsync(string issuerId)
+        {
+            if (string.IsNullOrEmpty(issuerId))
+                throw new ArgumentNullException(nameof(issuerId));
+
+            // Check if we should throttle this poll
+            if (!ShouldPollIssuer(issuerId))
+            {
+                System.Diagnostics.Trace.TraceInformation(
+                    $"MetadataPollingService: Skipping throttled poll for issuer '{issuerId}'");
+                return false;
+            }
+
+            // Find the endpoint
+            var endpoint = _endpoints.FirstOrDefault(e => e.Id.Equals(issuerId, StringComparison.OrdinalIgnoreCase));
+            if (endpoint == null)
+            {
+                System.Diagnostics.Trace.TraceWarning(
+                    $"MetadataPollingService: Issuer '{issuerId}' not found in configured endpoints");
+                return false;
+            }
+
+            // Poll just this endpoint
+            await PollSingleEndpointAsync(endpoint);
+            return true;
+        }
+
+        /// <summary>
+        /// Checks if sufficient time has elapsed since the last poll for a specific issuer.
+        /// </summary>
+        /// <param name="issuerId">The issuer identifier.</param>
+        /// <returns>True if polling should proceed; false if throttled.</returns>
+        public bool ShouldPollIssuer(string issuerId)
+        {
+            if (_minimumPollIntervalMinutes <= 0)
+                return true; // No throttling configured
+
+            lock (_pollLockObject)
+            {
+                if (!_lastPollTimestamps.ContainsKey(issuerId))
+                    return true;
+
+                var lastPoll = _lastPollTimestamps[issuerId];
+                var elapsed = DateTime.UtcNow - lastPoll;
+
+                return elapsed.TotalMinutes >= _minimumPollIntervalMinutes;
+            }
+        }
+
+        /// <summary>
+        /// Gets the timestamp of the last poll for a specific issuer.
+        /// </summary>
+        /// <param name="issuerId">The issuer identifier.</param>
+        /// <returns>The last poll timestamp, or null if never polled.</returns>
+        public DateTime? GetLastPollTimestamp(string issuerId)
+        {
+            lock (_pollLockObject)
+            {
+                return _lastPollTimestamps.ContainsKey(issuerId)
+                    ? _lastPollTimestamps[issuerId]
+                    : (DateTime?)null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the timestamp of the last global poll (all endpoints).
+        /// </summary>
+        public DateTime? GetLastGlobalPollTimestamp()
+        {
+            return _lastGlobalPoll;
         }
 
         private async Task PollMetadataAsync()
@@ -123,6 +216,9 @@ namespace IdentityMetadataFetcher.Iis.Services
                             result.Metadata,
                             result.RawMetadata);
 
+                        // Update poll timestamp for this issuer
+                        UpdatePollTimestamp(result.Endpoint.Id, result.FetchedAt);
+
                         successCount++;
 
                         OnMetadataUpdated(new MetadataUpdatedEventArgs
@@ -146,6 +242,8 @@ namespace IdentityMetadataFetcher.Iis.Services
                     }
                 }
 
+                _lastGlobalPoll = now;
+
                 OnPollingCompleted(new PollingEventArgs
                 {
                     StartTime = now,
@@ -157,6 +255,54 @@ namespace IdentityMetadataFetcher.Iis.Services
             finally
             {
                 _isPolling = false;
+            }
+        }
+
+        private async Task PollSingleEndpointAsync(IssuerEndpoint endpoint)
+        {
+            var now = DateTime.UtcNow;
+
+            System.Diagnostics.Trace.TraceInformation(
+                $"MetadataPollingService: Polling single endpoint '{endpoint.Name}' ({endpoint.Id})");
+
+            var result = await _metadataFetcher.FetchMetadataAsync(endpoint);
+
+            if (result.IsSuccess && result.Metadata != null)
+            {
+                // Update cache with new metadata
+                _metadataCache.AddOrUpdateMetadata(
+                    result.Endpoint.Id,
+                    result.Metadata,
+                    result.RawMetadata);
+
+                // Update poll timestamp for this issuer
+                UpdatePollTimestamp(result.Endpoint.Id, result.FetchedAt);
+
+                OnMetadataUpdated(new MetadataUpdatedEventArgs
+                {
+                    IssuerId = result.Endpoint.Id,
+                    IssuerName = result.Endpoint.Name,
+                    UpdatedAt = result.FetchedAt
+                });
+            }
+            else
+            {
+                OnPollingError(new PollingErrorEventArgs
+                {
+                    IssuerId = result.Endpoint.Id,
+                    IssuerName = result.Endpoint.Name,
+                    ErrorMessage = result.ErrorMessage,
+                    Exception = result.Exception,
+                    OccurredAt = DateTime.UtcNow
+                });
+            }
+        }
+
+        private void UpdatePollTimestamp(string issuerId, DateTime timestamp)
+        {
+            lock (_pollLockObject)
+            {
+                _lastPollTimestamps[issuerId] = timestamp;
             }
         }
 

@@ -14,9 +14,11 @@ namespace IdentityMetadataFetcher.Iis.Configuration
     ///     <section name="samlMetadataPolling" type="IdentityMetadataFetcher.Iis.Configuration.MetadataPollingConfigurationSection, IdentityMetadataFetcher.Iis" />
     ///   </configSections>
     ///   
-    ///   <samlMetadataPolling enabled="true" autoApplyIdentityModel="false" pollingIntervalMinutes="60" httpTimeoutSeconds="30">
+    ///   <samlMetadataPolling enabled="true" autoApplyIdentityModel="false" pollingIntervalMinutes="60" 
+    ///                         httpTimeoutSeconds="30" authFailureRecoveryIntervalMinutes="5">
     ///     <!-- Set autoApplyIdentityModel to true to enable runtime IdentityModel updates -->
     ///     <!-- Default is false (no automatic application). -->
+    ///     <!-- authFailureRecoveryIntervalMinutes controls minimum time between forced metadata refreshes on auth failures -->
     ///     <issuers>
     ///       <add id="azure-ad" 
     ///            endpoint="https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml" 
@@ -100,6 +102,35 @@ namespace IdentityMetadataFetcher.Iis.Configuration
         {
             get { return (int)this["maxRetries"]; }
             set { this["maxRetries"] = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the minimum interval in minutes between forced metadata refreshes
+        /// triggered by authentication failures. This prevents excessive polling when
+        /// authentication failures occur in rapid succession.
+        /// Default is 5 minutes.
+        /// </summary>
+        [ConfigurationProperty("authFailureRecoveryIntervalMinutes", DefaultValue = 5, IsRequired = false)]
+        [IntegerValidator(MinValue = 1, MaxValue = 60)]
+        public int AuthFailureRecoveryIntervalMinutes
+        {
+            get { return (int)this["authFailureRecoveryIntervalMinutes"]; }
+            set { this["authFailureRecoveryIntervalMinutes"] = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to attempt synchronous recovery
+        /// for authentication failures, allowing the current request to potentially succeed.
+        /// When true, the module will wait (up to 10 seconds) for metadata refresh before
+        /// failing the request, then redirect to retry authentication.
+        /// When false (default), recovery happens asynchronously and only benefits subsequent requests.
+        /// Default is false for better performance and to avoid request timeouts.
+        /// </summary>
+        [ConfigurationProperty("enableSynchronousRecovery", DefaultValue = false, IsRequired = false)]
+        public bool EnableSynchronousRecovery
+        {
+            get { return (bool)this["enableSynchronousRecovery"]; }
+            set { this["enableSynchronousRecovery"] = value; }
         }
 
         /// <summary>

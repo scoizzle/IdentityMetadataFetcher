@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.IdentityModel.Metadata;
 using System.Linq;
 
-namespace IdentityMetadataFetcher.Iis.Services
+namespace IdentityMetadataFetcher.Services
 {
     /// <summary>
-    /// Manages caching and retrieval of metadata for System.IdentityModel.
+    /// Thread-safe cache for metadata objects from System.IdentityModel.Metadata.
+    /// Can be used in any .NET Framework application (console, service, web, etc.)
     /// </summary>
     public class MetadataCache
     {
@@ -158,22 +159,22 @@ namespace IdentityMetadataFetcher.Iis.Services
     public class MetadataCacheEntry
     {
         /// <summary>
-        /// Gets the issuer identifier.
+        /// Gets or sets the issuer identifier.
         /// </summary>
         public string IssuerId { get; set; }
 
         /// <summary>
-        /// Gets the parsed metadata object from System.IdentityModel.Metadata.
+        /// Gets or sets the parsed metadata object from System.IdentityModel.Metadata.
         /// </summary>
         public MetadataBase Metadata { get; set; }
 
         /// <summary>
-        /// Gets the raw XML representation of the metadata.
+        /// Gets or sets the raw XML representation of the metadata.
         /// </summary>
         public string RawXml { get; set; }
 
         /// <summary>
-        /// Gets the timestamp when the metadata was cached (UTC).
+        /// Gets or sets the timestamp when the metadata was cached (UTC).
         /// </summary>
         public DateTime CachedAt { get; set; }
     }

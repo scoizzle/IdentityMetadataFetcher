@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IdentityModel.Metadata;
 using System.IdentityModel.Tokens;
 using System.Linq;
@@ -7,6 +6,7 @@ using System.Security.Cryptography.X509Certificates;
 using NUnit.Framework;
 using IdentityMetadataFetcher.Iis.Services;
 using IdentityMetadataFetcher.Iis.Tests.Mocks;
+using IdentityMetadataFetcher.Services; // Core library
 
 namespace IdentityMetadataFetcher.Iis.Tests.Services
 {
@@ -30,7 +30,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         [Test]
         public void Apply_WithNullMetadata_DoesNotThrow()
         {
-            var entry = new MetadataCacheEntry
+            var entry = new MetadataCacheEntry // From core library
             {
                 IssuerId = "test-issuer",
                 Metadata = null,

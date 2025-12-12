@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using NUnit.Framework;
-using IdentityMetadataFetcher.Iis.Services;
-using IdentityMetadataFetcher.Iis.Tests.Mocks;
+using IdentityMetadataFetcher.Tests.Mocks;
 using IdentityMetadataFetcher.Models;
+using IdentityMetadataFetcher.Services;
 
-namespace IdentityMetadataFetcher.Iis.Tests.Services
+namespace IdentityMetadataFetcher.Tests.Services
 {
     [TestFixture]
     public class MetadataCacheTests

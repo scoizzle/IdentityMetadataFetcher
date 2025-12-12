@@ -392,7 +392,8 @@ Set `autoApplyIdentityModel="true"` in your configuration:
 <samlMetadataPolling enabled="true"
                      autoApplyIdentityModel="true"
                      pollingIntervalMinutes="60"
-                     httpTimeoutSeconds="30">
+                     httpTimeoutSeconds="30"
+                     authFailureRecoveryIntervalMinutes="5">
   <issuers>
     <add id="azure-ad" 
          endpoint="https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml" 
@@ -411,6 +412,74 @@ When `autoApplyIdentityModel` is enabled, the module automatically:
 3. **Updates Endpoints**: Applies SSO and other service endpoints from the metadata
 4. **Maintains Security**: Only applies valid, properly signed metadata
 
+### Authentication Failure Recovery
+
+When `autoApplyIdentityModel` is enabled, the module also provides **automatic recovery from certificate rotation failures**:
+
+#### How It Works
+
+1. **Detects Certificate Trust Failures**: The module intercepts `System.IdentityModel` authentication failures and analyzes whether they're caused by untrusted issuer certificates
+2. **Identifies the Issuer**: Extracts the issuer identifier from the exception to determine which identity provider's metadata needs refreshing
+3. **Checks Polling Threshold**: Verifies that sufficient time has elapsed since the last forced poll for that issuer (configurable via `authFailureRecoveryIntervalMinutes`)
+4. **Refreshes Metadata**: Immediately polls the issuer's metadata endpoint to check for certificate rotation
+5. **Applies New Configuration**: If new certificates are found, applies them to `System.IdentityModel` configuration
+6. **Allows Retry**: Subsequent authentication requests will use the updated certificates
+
+#### Configuration
+
+```xml
+<samlMetadataPolling enabled="true"
+                     autoApplyIdentityModel="true"
+                     pollingIntervalMinutes="60"
+                     httpTimeoutSeconds="30"
+                     authFailureRecoveryIntervalMinutes="5">
+  <!-- authFailureRecoveryIntervalMinutes: minimum time (1-60 minutes) between 
+       forced metadata refreshes triggered by authentication failures.
+       Default: 5 minutes -->
+  <issuers>
+    <add id="azure-ad" 
+         endpoint="https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml" 
+         name="Azure Active Directory" 
+         metadataType="WSFED" />
+  </issuers>
+</samlMetadataPolling>
+```
+
+#### Important Notes
+
+- **Current Request Fails**: The request that triggered the recovery will still fail with an authentication error
+- **Subsequent Requests Succeed**: After metadata is refreshed, subsequent authentication requests will succeed with the new certificates
+- **Rate Limiting**: The `authFailureRecoveryIntervalMinutes` setting prevents excessive polling during rapid authentication failures
+- **Asynchronous Recovery**: Recovery happens in the background and doesn't block the failing request
+- **Synchronous Recovery**: Blocks the request thread while attempting recovery, then redirects on success
+- **Diagnostic Logging**: All recovery attempts are logged to `System.Diagnostics.Trace` for monitoring
+
+#### Example Scenario
+
+1. Identity provider (e.g., Azure AD) rotates their signing certificates
+2. User attempts to authenticate before scheduled polling occurs
+3. Authentication fails with certificate trust error (e.g., ID4037)
+4. Module detects the failure, identifies Azure AD as the issuer
+5. Module immediately fetches fresh metadata from Azure AD
+6. New certificates are applied to IdentityModel configuration
+7. User's next authentication attempt succeeds with new certificates
+
+### Monitoring Recovery
+
+Subscribe to trace events to monitor recovery operations:
+
+```csharp
+// In your application startup or Global.asax
+System.Diagnostics.Trace.Listeners.Add(
+    new System.Diagnostics.TextWriterTraceListener("app_trace.log"));
+
+// Recovery events will be logged:
+// - "Authentication error detected"
+// - "Detected certificate trust failure"
+// - "Attempting metadata refresh for issuer"
+// - "Successfully recovered from authentication failure"
+```
+
 ### Security Considerations
 
 > **⚠️ Important**: The `autoApplyIdentityModel` feature is **disabled by default** for security reasons.
@@ -422,6 +491,7 @@ Before enabling this feature in production:
 - **Certificate Validation**: Keep `validateServerCertificate="true"` (the default) to prevent man-in-the-middle attacks
 - **Monitor Changes**: Subscribe to the `MetadataUpdated` event to log configuration changes
 - **Test Thoroughly**: Test in a staging environment first to ensure proper behavior
+- **Rate Limiting**: Configure `authFailureRecoveryIntervalMinutes` appropriately to prevent DoS from excessive polling
 
 ### Example: Production Configuration with Auto-Apply
 
@@ -431,7 +501,8 @@ Before enabling this feature in production:
                      pollingIntervalMinutes="120"
                      httpTimeoutSeconds="30"
                      validateServerCertificate="true"
-                     maxRetries="2">
+                     maxRetries="2"
+                     authFailureRecoveryIntervalMinutes="5">
   <issuers>
     <!-- Only trusted, HTTPS endpoints -->
     <add id="azure-ad" 
@@ -470,6 +541,7 @@ If you prefer manual control over IdentityModel configuration, keep the default 
                      autoApplyIdentityModel="false"
                      pollingIntervalMinutes="60">
   <!-- Metadata will be fetched and cached but NOT applied to IdentityModel -->
+  <!-- Authentication failure recovery will NOT be active -->
   <issuers>
     <add id="azure-ad" 
          endpoint="https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml" 

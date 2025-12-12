@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using NUnit.Framework;
-using IdentityMetadataFetcher.Iis.Services;
-using IdentityMetadataFetcher.Iis.Tests.Mocks;
+using IdentityMetadataFetcher.Tests.Mocks;
 using IdentityMetadataFetcher.Models;
+using IdentityMetadataFetcher.Services;
 
-namespace IdentityMetadataFetcher.Iis.Tests.Services
+namespace IdentityMetadataFetcher.Tests.Services
 {
     [TestFixture]
     public class MetadataPollingServiceTests
@@ -226,6 +226,34 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
             Assert.IsNotNull(eventArgs);
             Assert.GreaterOrEqual(eventArgs.UpdatedAt, before);
             Assert.LessOrEqual(eventArgs.UpdatedAt, after);
+        }
+
+        [Test]
+        public void Start_TriggersSingleInitialPoll_AndIsIdempotent()
+        {
+            var cache = new MetadataCache();
+            var fetcher = new MockMetadataFetcher();
+            var endpoints = new List<IssuerEndpoint>
+            {
+                new IssuerEndpoint { Id = "issuer-1", Endpoint = "https://example1.com/metadata", Name = "Example 1", MetadataType = MetadataType.SAML },
+            };
+            var service = new MetadataPollingService(fetcher, cache, endpoints, pollingIntervalMinutes: 60);
+
+            var startedCount = 0;
+            service.PollingStarted += (s, e) => startedCount++;
+
+            service.Start();
+            // Allow the initial poll to run
+            System.Threading.Thread.Sleep(50);
+
+            // Subsequent Start() calls should be ignored
+            service.Start();
+            service.Start();
+            System.Threading.Thread.Sleep(50);
+
+            Assert.AreEqual(1, startedCount, "Start should trigger only a single initial poll and be idempotent.");
+
+            service.Stop();
         }
     }
 }
