@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/IdentityMetadataFetcher.Console/IdentityMetadataFetcher.Console.csproj" />
+    <Project Path="src/IdentityMetadataFetcher.Iis/IdentityMetadataFetcher.Iis.csproj" />
+    <Project Path="src/IdentityMetadataFetcher/IdentityMetadataFetcher.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/IdentityMetadataFetcher.Iis.Tests/IdentityMetadataFetcher.Iis.Tests.csproj" />
+    <Project Path="tests/IdentityMetadataFetcher.Tests/IdentityMetadataFetcher.Tests.csproj" />
+  </Folder>
+</Solution>
