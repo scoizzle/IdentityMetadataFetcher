@@ -60,7 +60,10 @@ namespace IdentityMetadataFetcher.Iis.Services
             {
                 try
                 {
-                    FederatedAuthentication.WSFederationAuthenticationModule.Issuer = issuerEndpoint;
+                    if (FederatedAuthentication.WSFederationAuthenticationModule != null)
+                    {
+                        FederatedAuthentication.WSFederationAuthenticationModule.Issuer = issuerEndpoint;
+                    }
                 }
                 catch
                 {
