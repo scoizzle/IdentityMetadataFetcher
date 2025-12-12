@@ -469,36 +469,28 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
 
         private X509Certificate2 CreateTestCertificate()
         {
-            // For .NET Framework compatibility, we'll create a simple byte array representing a minimal certificate
-            // In real tests, you would use actual certificate files or embedded resources
-            // This is just for testing the code paths, not actual certificate validation
-            
-            // Create a basic self-signed certificate using the old API
-            // Note: This is a simplified version for testing purposes
+            // Use a real self-signed test certificate (generated with OpenSSL)
+            // This is a minimal valid X.509 certificate for testing purposes only
             var certBytes = Convert.FromBase64String(
-                "MIIDIzCCAgugAwIBAgIQOcKwOqNYGrIGXgDPIR7cHjANBgkqhkiG9w0BAQsFADAU" +
-                "MRIwEAYDVQQDDAlUZXN0IENlcnQwHhcNMjQwMTAxMDAwMDAwWhcNMjUwMTAxMDAw" +
-                "MDAwWjAUMRIwEAYDVQQDDAlUZXN0IENlcnQwggEiMA0GCSqGSIb3DQEBAQUAA4IB" +
-                "DwAwggEKAoIBAQC6vI1v3z8cQ8N+8Bke7YSM3oMfEQvYJx9nH2h8cxq1H7N5mJZb" +
-                "YQPGHLmQVp8Y9K3aM7VtLx6pN8TQ7bYxfH4QNZ9k4Y9XfE5vL8fN6pY9fN6h8cYx" +
-                "9k4Y9XfE5vL8fN6pY9fN6h8cYx9k4Y9XfE5vL8fN6pY9fN6h8cYx9k4Y9XfE5vL8" +
-                "fN6pY9fN6h8cYx9k4Y9XfE5vL8fN6pY9fN6h8cYxqZfpPxQIDAQABo3sweTAOBgNV" +
-                "HQ8BAf8EBAMCBaAwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMB0GA1Ud" +
-                "DgQWBBQ7QH+xYQW5rBZR8U6fqR0QxLHq2zAfBgNVHSMEGDAWgBQ7QH+xYQW5rBZR" +
-                "8U6fqR0QxLHq2zANBgkqhkiG9w0BAQsFAAOCAQEAK1V8L5gBx8pPQXNvYqQXD7YR" +
-                "fN6h8cYx9k4Y9XfE5vL8fN6pY9fN6h8cYx9k4Y9XfE5vL8fN6pY9fN6h8cYx9k4Y" +
-                "9XfE5vL8fN6pY9fN6h8cYx9k4Y9XfE5vL8fN6pY9fN6h8cYx9k4Y9XfE5vL8");
+                "MIIDFzCCAf+gAwIBAgIUJFDuEHUIo9jyTEp/H3EX2logxicwDQYJKoZIhvcNAQEL" +
+                "BQAwGzEZMBcGA1UEAwwQVGVzdCBDZXJ0aWZpY2F0ZTAeFw0yNTEyMTIxNTA4MjVa" +
+                "Fw0yNjEyMTIxNTA4MjVaMBsxGTAXBgNVBAMMEFRlc3QgQ2VydGlmaWNhdGUwggEi" +
+                "MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCiUybZvoHuth9uQb5hbTbmSs5U" +
+                "nwUxwitg6B8y5a8YdotoCHeUNIkCdpWxi4La17D1rYFKbnws6K4NSz3kI0TkEsmo" +
+                "rZhRLIFmxZUbFm8trmZEk6Qft9WJF1WFy57//mi3MyVetDrjIIspvxLw6HWbTxR3" +
+                "u0ZUdqxp5QfQtbvMRtsYIjIHCljYrMBFz0klg4/qKJoVfQdJ2tUwetZlIGMMWkGt" +
+                "giPIIUXAXVDVgbhDW74+a0vsCK4We7vTQwH+Chbd99VvufaFP70DyXZ4bBblCvyW" +
+                "GImNC2/l4d2bcg1LAFIsUPCCCRhCZnmIAhKndnDh9LEaAn2odySBt9ApFkLdAgMB" +
+                "AAGjUzBRMB0GA1UdDgQWBBQ4dLQfB7MGq4oghjeRDGVOMp5YPTAfBgNVHSMEGDAW" +
+                "gBQ4dLQfB7MGq4oghjeRDGVOMp5YPTAPBgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3" +
+                "DQEBCwUAA4IBAQCMk8Hl0y3FudtrhEV/hRhFx0LNP/k228c32PWE6i054taoVe0V" +
+                "2zt0nhg6DPL3BleWXGIEEtKVIAhoYNJBFyCWgCkdB+GS/nfRyDFn0e3toOnW7lEE" +
+                "jJ2oszalg7St89xoEFdu6/uTX+XCsa0WmOeJf8B4jYUgxTGtbol/h0Siqgd85WmF" +
+                "JwqNiD28QUgudNrrPEaQZaNOFyP6XIx2e9oX93mJ1rnEL7THAQ+idyHlcDmf4QnL" +
+                "6tQbVX3kGZttWdbSvT52ixGY4zvFv+KjUfIG9XUILNH7/ukRwcxDZsTVHOfJrhg4" +
+                "76Kubo+IdIvxDEOHeS++8HyA0nvpA1lQjGMB");
                 
-            try
-            {
-                return new X509Certificate2(certBytes);
-            }
-            catch
-            {
-                // If the above doesn't work, create a minimal valid cert for testing
-                // This fallback creates a very basic certificate structure
-                return new X509Certificate2(System.Text.Encoding.UTF8.GetBytes("TEST_CERT_DATA"));
-            }
+            return new X509Certificate2(certBytes);
         }
 
         #endregion
