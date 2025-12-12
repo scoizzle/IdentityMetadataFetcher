@@ -292,6 +292,61 @@ Add the module registration to your `Web.config` in the `<system.webServer>` sec
 </configuration>
 ```
 
+---
+
+## 🖥️ Console Utility
+
+A Windows-only console tool is included to fetch metadata from a URL and display a friendly summary.
+
+- Project: `src/IdentityMetadataFetcher.Console`
+- Target: `.NET Framework 4.8`
+- Usage: `IdentityMetadataFetcher.Console <metadata-url> [--raw]`
+
+### Example
+
+```powershell
+# Build (Windows)
+msbuild /t:restore
+msbuild /t:build /p:GenerateFullPaths=true /consoleloggerparameters:NoSummary
+
+# Run: Azure AD federation metadata
+IdentityMetadataFetcher.Console.exe https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml
+
+# Include raw XML output
+IdentityMetadataFetcher.Console.exe https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml --raw
+```
+
+### Output
+
+- Entity ID
+- Roles discovered (STS / IDP)
+- Endpoints (Passive Requestor / Single Sign-On)
+- Signing Keys (key info types)
+
+---
+
+## 🔒 IdentityModel Auto-Apply Toggle
+
+You can optionally apply fetched metadata to System.IdentityModel at runtime in IIS by enabling a configuration toggle.
+
+Add `autoApplyIdentityModel="true"` to the `samlMetadataPolling` section to enable; it is `false` by default for safety.
+
+```xml
+<samlMetadataPolling enabled="true"
+                     autoApplyIdentityModel="true"
+                     pollingIntervalMinutes="60"
+                     httpTimeoutSeconds="30"
+                     validateServerCertificate="true"
+                     maxRetries="1">
+  <issuers>
+    <add id="azure-ad" 
+         endpoint="https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml" 
+         name="Azure Active Directory" 
+         metadataType="WSFED" />
+  </issuers>
+</samlMetadataPolling>
+```
+
 ### IIS Module Configuration
 
 Add configuration sections to define metadata endpoints and polling behavior:
