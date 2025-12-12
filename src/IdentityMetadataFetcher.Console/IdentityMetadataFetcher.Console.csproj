@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <RootNamespace>IdentityMetadataFetcher.ConsoleApp</RootNamespace>
+    <AssemblyName>IdentityMetadataFetcher.Console</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../IdentityMetadataFetcher/IdentityMetadataFetcher.csproj" />
+  </ItemGroup>
+
+</Project>
