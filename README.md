@@ -4,6 +4,24 @@
 
 A production-ready .NET class library for fetching and parsing SAML and WS-Federation (WSFED) metadata from multiple identity provider endpoints. Includes an IIS module for automatic metadata polling and caching.
 
+## 🚀 Getting Started
+
+The fastest way to try it is the console utility:
+
+```powershell
+# Build (Windows)
+msbuild /t:restore
+msbuild /t:build /p:GenerateFullPaths=true /consoleloggerparameters:NoSummary
+
+# Run: fetch and summarize metadata
+IdentityMetadataFetcher.Console.exe https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml
+
+# Print raw XML too
+IdentityMetadataFetcher.Console.exe https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml --raw
+```
+
+See full details in the Console Utility section below.
+
 ## Features
 
 - **📦 Dual Components**: Core library for direct usage + IIS HTTP module for ASP.NET applications
