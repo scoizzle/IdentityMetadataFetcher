@@ -1,5 +1,5 @@
 using System;
-using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens;
 using System.Security.Cryptography.X509Certificates;
 
 namespace IdentityMetadataFetcher.Iis.Services

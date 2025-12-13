@@ -6,9 +6,9 @@ using IdentityMetadataFetcher.Iis.Modules;
 using IdentityMetadataFetcher.Models;
 using IdentityMetadataFetcher.Services;
 using MvcDemo.Models;
-using Microsoft.IdentityModel.Protocols.WsFederation.Metadata;
+using System.IdentityModel.Metadata;
 using System.Security.Cryptography.X509Certificates;
-using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens;
 
 namespace MvcDemo.Services
 {

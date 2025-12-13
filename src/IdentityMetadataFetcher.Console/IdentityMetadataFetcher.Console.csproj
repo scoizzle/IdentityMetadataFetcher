@@ -15,6 +15,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="System.IdentityModel" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.IdentityModel.Protocols.WsFederation" Version="8.1.2" />
   </ItemGroup>
 

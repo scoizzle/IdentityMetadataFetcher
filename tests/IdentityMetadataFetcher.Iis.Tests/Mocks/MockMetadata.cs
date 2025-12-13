@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Xml;
-using Microsoft.IdentityModel.Protocols.WsFederation.Metadata;
+using System.IdentityModel.Metadata;
 
 namespace IdentityMetadataFetcher.Iis.Tests.Mocks
 {

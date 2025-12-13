@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Microsoft.IdentityModel.Protocols.WsFederation.Metadata;
+using System.IdentityModel.Metadata;
 using System.Linq;
 using System.Threading.Tasks;
 using NUnit.Framework;

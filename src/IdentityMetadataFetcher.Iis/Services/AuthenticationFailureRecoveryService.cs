@@ -117,7 +117,7 @@ namespace IdentityMetadataFetcher.Iis.Services
                 if (cachedEntry != null && cachedEntry.Metadata != null)
                 {
                     // Try to match by EntityId in the metadata
-                    var entityDescriptor = cachedEntry.Metadata as Microsoft.IdentityModel.Protocols.WsFederation.Metadata.EntityDescriptor;
+                    var entityDescriptor = cachedEntry.Metadata as System.IdentityModel.Metadata.EntityDescriptor;
                     if (entityDescriptor != null && entityDescriptor.EntityId != null)
                     {
                         var entityId = entityDescriptor.EntityId.Id;

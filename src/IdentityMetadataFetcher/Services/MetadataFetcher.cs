@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Microsoft.IdentityModel.Protocols.WsFederation.Metadata;
+using System.IdentityModel.Metadata;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -271,7 +271,7 @@ namespace IdentityMetadataFetcher.Services
             try
             {
                 using var reader = XmlReader.Create(new StringReader(metadataXml));
-                var serializer = new Microsoft.IdentityModel.Protocols.WsFederation.WsFederationMetadataSerializer();
+                var serializer = new MetadataSerializer();
                 var metadata = serializer.ReadMetadata(reader);
                 return metadata;
             }
