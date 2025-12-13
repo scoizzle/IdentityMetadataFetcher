@@ -306,12 +306,10 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
                 Issuer = "https://test.example.com"
             };
             
-            // Add an RSA key (no certificate) - fully qualify to avoid ambiguity
-            using (var rsa = System.Security.Cryptography.RSA.Create())
-            {
-                var rsaKey = new Microsoft.IdentityModel.Tokens.RsaSecurityKey(rsa);
-                config.SigningKeys.Add(rsaKey);
-            }
+            // Add an RSA key (no certificate) - don't dispose RSA while it's referenced
+            var rsa = System.Security.Cryptography.RSA.Create();
+            var rsaKey = new Microsoft.IdentityModel.Tokens.RsaSecurityKey(rsa);
+            config.SigningKeys.Add(rsaKey);
             
             return config;
         }
@@ -327,11 +325,9 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
             var cert1 = CreateTestCertificate();
             config.SigningKeys.Add(new X509SecurityKey(cert1));
             
-            // Add RSA key - fully qualify to avoid ambiguity
-            using (var rsa = System.Security.Cryptography.RSA.Create())
-            {
-                config.SigningKeys.Add(new Microsoft.IdentityModel.Tokens.RsaSecurityKey(rsa));
-            }
+            // Add RSA key - don't dispose RSA while it's referenced
+            var rsa = System.Security.Cryptography.RSA.Create();
+            config.SigningKeys.Add(new Microsoft.IdentityModel.Tokens.RsaSecurityKey(rsa));
             
             // Add another X509 key
             var cert2 = CreateTestCertificate();
