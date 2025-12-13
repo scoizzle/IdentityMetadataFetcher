@@ -36,12 +36,15 @@ See full details in the Console Utility section below.
 
 ## Requirements
 
-- .NET Framework 4.5, 4.6, 4.7, or 4.8
+- .NET Framework 4.6.2, 4.7, or 4.8
 - System.IdentityModel (built-in to .NET Framework)
 - System.IdentityModel.Metadata (built-in to .NET Framework)
 - System.IdentityModel.Services (built-in to .NET Framework)
+- Microsoft.IdentityModel.Protocols.WsFederation 8.1.2+ (NuGet package)
 
 > **⚠️ Windows Only**: This library targets .NET Framework and uses Windows-specific assemblies (System.IdentityModel). It requires a Windows environment to build and run.
+>
+> **📦 Microsoft.IdentityModel Support**: The library now includes Microsoft.IdentityModel packages for modern token validation capabilities. See [MIGRATION_TO_MICROSOFT_IDENTITYMODEL.md](MIGRATION_TO_MICROSOFT_IDENTITYMODEL.md) for details.
 
 ---
 
