@@ -58,9 +58,19 @@ namespace IdentityMetadataFetcher.Iis.Services
                     // Avoid duplicate entries
                     registry.AddTrustedIssuer(NormalizeThumbprint(cert.Thumbprint), issuerDisplayName ?? entry.IssuerId);
                 }
-                catch (ArgumentException)
+                catch (InvalidOperationException ex)
                 {
-                    // Already present; ignore
+                    // ID4265: The issuer certificate Thumbprint already exists in the set of configured trusted issuers
+                    // This can happen when multiple keys share the same certificate or in test scenarios
+                    if (ex.Message != null && ex.Message.Contains("already exists"))
+                    {
+                        System.Diagnostics.Trace.TraceInformation(
+                            $"IdentityModelConfigurationUpdater: Certificate thumbprint already registered for issuer '{issuerDisplayName ?? entry.IssuerId}'");
+                    }
+                    else
+                    {
+                        throw; // Re-throw unexpected InvalidOperationException
+                    }
                 }
             }
 
