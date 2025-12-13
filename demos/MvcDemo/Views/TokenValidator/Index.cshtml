@@ -1,0 +1,130 @@
+@using MvcDemo.Models
+
+@model TokenValidatorViewModel
+
+@{
+    ViewBag.Title = "SAML Token Validator";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>SAML Token Validator</h2>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @TempData["ErrorMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <p class="text-muted">
+                        Paste a SAML token below and select the issuer that created it. 
+                        The application will attempt to validate the token's signature using the issuer's metadata.
+                    </p>
+
+                    <form method="post" action="@Url.Action("Validate", "TokenValidator")">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label for="IssuerId" class="form-label">Issuer <span class="text-danger">*</span></label>
+                            <select id="IssuerId" name="IssuerId" class="form-select" required>
+                                <option value="">-- Select an issuer --</option>
+                                @if (ViewBag.Issuers != null)
+                                {
+                                    foreach (var issuer in ViewBag.Issuers)
+                                    {
+                                        <option value="@issuer.Id">@issuer.Name (@issuer.Id)</option>
+                                    }
+                                }
+                            </select>
+                            @{
+                                var issuersEmpty = ViewBag.Issuers == null || ViewBag.Issuers.Count == 0;
+                            }
+                            @if (issuersEmpty)
+                            {
+                                <small class="text-warning d-block mt-1">
+                                    No issuers configured. Please add an issuer first.
+                                </small>
+                            }
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="SamlToken" class="form-label">SAML Token <span class="text-danger">*</span></label>
+                            <textarea id="SamlToken" name="SamlToken" class="form-control" rows="10" 
+                                      placeholder="Paste your SAML token here (raw XML or Base64 encoded)..." required></textarea>
+                            <small class="form-text text-muted">
+                                The token can be in any of these formats: raw XML, HTML-escaped XML (with &amp;lt; &amp;gt;), or Base64-encoded XML.
+                            </small>
+                        </div>
+
+                        <div class="button-group">
+                            <button type="submit" class="btn btn-primary">Validate Token</button>
+                            <a href="@Url.Action("Index", "Issuers")" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">How to Use</h5>
+                </div>
+                <div class="card-body">
+                    <ol>
+                        <li>Select the issuer that created the SAML token from the dropdown list</li>
+                        <li>Paste your SAML token into the text area (raw XML, HTML-escaped, or Base64-encoded)</li>
+                        <li>Click "Validate Token" to check the token's signature</li>
+                        <li>Review the validation results to see if the token is valid</li>
+                    </ol>
+                    
+                    <h6 class="mt-3">Supported Formats:</h6>
+                    <ul>
+                        <li><strong>Raw XML:</strong> Paste the SAML assertion XML directly</li>
+                        <li><strong>HTML-escaped:</strong> Paste XML with HTML entities (&amp;lt;, &amp;gt;, &amp;quot;, etc.)</li>
+                        <li><strong>Base64-encoded:</strong> Paste Base64-encoded SAML XML</li>
+                    </ul>
+
+                    <h6 class="mt-3">Note:</h6>
+                    <ul>
+                        <li>The issuer must have metadata loaded in the system</li>
+                        <li>This tool validates the token's digital signature only</li>
+                        <li>It does not validate token expiration or other claims</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card bg-light">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Links</h5>
+                </div>
+                <div class="card-body">
+                    <a href="@Url.Action("Index", "Issuers")" class="btn btn-outline-primary btn-sm w-100 mb-2">
+                        Manage Issuers
+                    </a>
+                    <a href="@Url.Action("Index", "LogViewer")" class="btn btn-outline-secondary btn-sm w-100 mb-2">
+                        View Logs
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .button-group {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .button-group button,
+    .button-group a {
+        margin-right: 5px;
+    }
+</style>

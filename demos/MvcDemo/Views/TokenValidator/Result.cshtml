@@ -1,0 +1,213 @@
+@using MvcDemo.Models
+
+@model TokenValidationResultViewModel
+
+@{
+    ViewBag.Title = "Token Validation Result";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var isMetadataPollingMessage = Model.Message != null && Model.Message.Contains("not available");
+}
+
+<h2>Token Validation Result</h2>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header @(Model.IsValid ? "bg-success" : isMetadataPollingMessage ? "bg-info" : "bg-danger") text-white">
+                    <h5 class="mb-0">
+                        @if (Model.IsValid)
+                        {
+                            <text>? Token is Valid</text>
+                        }
+                        else if (isMetadataPollingMessage)
+                        {
+                            <text>? Metadata Loading</text>
+                        }
+                        else
+                        {
+                            <text>? Token Validation Failed</text>
+                        }
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Issuer ID</h6>
+                            <p class="lead">@Model.IssuerId</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Issuer Name</h6>
+                            <p class="lead">@(Model.IssuerName ?? "N/A")</p>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="mb-3">
+                        <h6 class="text-muted">Validation Status</h6>
+                        <p>
+                            <span class="badge @(Model.IsValid ? "bg-success" : isMetadataPollingMessage ? "bg-info" : "bg-danger") fs-6">
+                                @Model.Message
+                            </span>
+                        </p>
+                    </div>
+
+                    @if (!Model.IsValid && !string.IsNullOrEmpty(Model.ErrorDetails))
+                    {
+                        if (isMetadataPollingMessage)
+                        {
+                            <div class="alert alert-info">
+                                <h6>Metadata Fetching in Progress</h6>
+                                <p class="mb-0">@Model.ErrorDetails</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-danger">
+                                <h6>Error Details</h6>
+                                <p class="mb-0">@Model.ErrorDetails</p>
+                            </div>
+                        }
+                    }
+
+                    @if (Model.IsValid)
+                    {
+                        <div class="alert alert-success">
+                            <h6>Validation Successful</h6>
+                            <p class="mb-0">
+                                The token's digital signature has been verified using the issuer's certificates.
+                            </p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="mt-3">
+                @if (isMetadataPollingMessage)
+                {
+                    <button type="button" class="btn btn-primary" onclick="waitAndRetry()">
+                        Retry in 5 Seconds
+                    </button>
+                }
+                else
+                {
+                    <form method="post" action="@Url.Action("Back", "TokenValidator")" class="d-inline">
+                        <button type="submit" class="btn btn-primary">Validate Another Token</button>
+                    </form>
+                }
+                <a href="@Url.Action("Index", "Issuers")" class="btn btn-secondary">Manage Issuers</a>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card bg-light">
+                <div class="card-header">
+                    <h5 class="mb-0">Information</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.IsValid)
+                    {
+                        <h6>What This Validates</h6>
+                        <ul class="small mb-3">
+                            <li>Token's digital signature</li>
+                            <li>Token authenticity (not tampered with)</li>
+                            <li>Token's issuer (matches metadata)</li>
+                        </ul>
+
+                        <h6>What This Does NOT Validate</h6>
+                        <ul class="small">
+                            <li>Token expiration time</li>
+                            <li>Token audience claims</li>
+                            <li>Token subject claims</li>
+                        </ul>
+                    }
+                    else if (isMetadataPollingMessage)
+                    {
+                        <h6>What's Happening</h6>
+                        <p class="small">The system is fetching metadata from the issuer's endpoint. This typically takes a few seconds.</p>
+                        
+                        <h6>Next Steps</h6>
+                        <ul class="small">
+                            <li>Wait for the metadata fetch to complete</li>
+                            <li>Click "Retry" to attempt validation again</li>
+                            <li>Check the issuer configuration in "Manage Issuers"</li>
+                        </ul>
+                    }
+                    else
+                    {
+                        <h6>What This Validates</h6>
+                        <ul class="small mb-3">
+                            <li>Token's digital signature</li>
+                            <li>Token authenticity (not tampered with)</li>
+                            <li>Token's issuer (matches metadata)</li>
+                        </ul>
+
+                        <h6>What This Does NOT Validate</h6>
+                        <ul class="small">
+                            <li>Token expiration time</li>
+                            <li>Token audience claims</li>
+                            <li>Token subject claims</li>
+                        </ul>
+                    }
+                </div>
+            </div>
+
+            @if (Model.IsValid)
+            {
+                <div class="card mt-3 border-success">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0">? Next Steps</h6>
+                    </div>
+                    <div class="card-body small">
+                        <p>The token is authentic and was genuinely issued by the selected issuer.</p>
+                        <p>You can now use this token for your authentication or integration testing.</p>
+                    </div>
+                </div>
+            }
+            else if (!isMetadataPollingMessage)
+            {
+                <div class="card mt-3 border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h6 class="mb-0">? Troubleshooting</h6>
+                    </div>
+                    <div class="card-body small">
+                        <ul>
+                            <li>Verify you selected the correct issuer</li>
+                            <li>Ensure the token is properly Base64-encoded</li>
+                            <li>Check that the issuer's metadata is loaded</li>
+                            <li>Confirm the token was created by the selected issuer</li>
+                        </ul>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .badge {
+        font-size: 1rem !important;
+        padding: 0.5rem 1rem !important;
+    }
+</style>
+
+<script type="text/javascript">
+    function waitAndRetry() {
+        var button = event.target;
+        button.disabled = true;
+        button.textContent = "Retrying in 5...";
+        
+        var countdown = 5;
+        var interval = setInterval(function() {
+            countdown--;
+            if (countdown > 0) {
+                button.textContent = "Retrying in " + countdown + "...";
+            } else {
+                clearInterval(interval);
+                // Redirect back to token validator with the same issuer
+                window.location.href = "@Url.Action("Index", "TokenValidator")";
+            }
+        }, 1000);
+    }
+</script>

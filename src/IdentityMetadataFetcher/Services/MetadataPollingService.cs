@@ -117,11 +117,22 @@ namespace IdentityMetadataFetcher.Services
         /// <returns>True if polling was performed; false if throttled.</returns>
         public async Task<bool> PollIssuerNowAsync(string issuerId)
         {
+            return await PollIssuerNowAsync(issuerId, false);
+        }
+
+        /// <summary>
+        /// Manually triggers a metadata poll for a specific issuer.
+        /// </summary>
+        /// <param name="issuerId">The issuer identifier to poll.</param>
+        /// <param name="force">If true, bypasses throttling and polls immediately.</param>
+        /// <returns>True if polling was performed; false if throttled and not forced.</returns>
+        public async Task<bool> PollIssuerNowAsync(string issuerId, bool force)
+        {
             if (string.IsNullOrEmpty(issuerId))
                 throw new ArgumentNullException(nameof(issuerId));
 
             // Check if we should throttle this poll
-            if (!ShouldPollIssuer(issuerId))
+            if (!force && !ShouldPollIssuer(issuerId))
             {
                 System.Diagnostics.Trace.TraceInformation(
                     $"MetadataPollingService: Skipping throttled poll for issuer '{issuerId}'");
@@ -407,6 +418,14 @@ namespace IdentityMetadataFetcher.Services
             {
                 return _endpoints.ToList();
             }
+        }
+
+        /// <summary>
+        /// Gets the metadata cache entry for the specified issuer.
+        /// </summary>
+        public MetadataCacheEntry GetMetadataCacheEntry(string issuerId)
+        {
+            return _metadataCache.GetCacheEntry(issuerId);
         }
 
         protected virtual void OnPollingStarted(PollingEventArgs e)

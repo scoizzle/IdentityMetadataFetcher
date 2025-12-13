@@ -55,9 +55,12 @@ namespace IdentityMetadataFetcher.Services
 
             try
             {
-                var metadata = FetchMetadataInternal(endpoint);
+                var timeout = endpoint.Timeout ?? _options.DefaultTimeoutMs;
+                var metadataXml = DownloadMetadataXml(endpoint.Endpoint, timeout);
+                var metadata = ParseMetadata(metadataXml, endpoint.MetadataType);
                 result.IsSuccess = true;
                 result.Metadata = metadata;
+                result.RawMetadata = metadataXml;
                 return result;
             }
             catch (Exception ex)
@@ -87,9 +90,12 @@ namespace IdentityMetadataFetcher.Services
 
             try
             {
-                var metadata = await FetchMetadataInternalAsync(endpoint);
+                var timeout = endpoint.Timeout ?? _options.DefaultTimeoutMs;
+                var metadataXml = await DownloadMetadataXmlAsync(endpoint.Endpoint, timeout);
+                var metadata = ParseMetadata(metadataXml, endpoint.MetadataType);
                 result.IsSuccess = true;
                 result.Metadata = metadata;
+                result.RawMetadata = metadataXml;
                 return result;
             }
             catch (Exception ex)

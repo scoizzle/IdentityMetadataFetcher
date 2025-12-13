@@ -1,7 +1,7 @@
 @using System.Collections.Generic
 @using MvcDemo.Models
 
-@model List<IssuerViewModel>
+@model List<IssuerDetailViewModel>
 
 @{
     ViewBag.Title = "Identity Providers";
@@ -31,10 +31,6 @@
         </div>
     }
 
-    <div class="alert alert-warning" role="alert">
-        <strong>Important:</strong> This view shows the identity providers currently being monitored by the metadata polling service. To add, modify, or delete providers, edit the <code>samlMetadataPolling</code> section in Web.config and restart the application.
-    </div>
-
     <div class="alert alert-info" role="alert">
         <strong>Info:</strong> This view shows the identity providers currently being monitored by the metadata polling service. You can add, edit, or remove providers using the buttons below. Changes take effect immediately.
     </div>
@@ -42,43 +38,174 @@
     @if (Model == null || Model.Count == 0)
     {
         <div class="alert alert-info">
-            No identity providers are currently configured. Edit Web.config to add identity providers.
+            No identity providers are currently configured. Use "Add New Issuer" to add identity providers.
         </div>
     }
     else
     {
-        <table class="table table-striped table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Endpoint</th>
-                    <th>Type</th>
-                    <th style="width: 200px;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var issuer in Model)
-                {
-                    <tr>
-                        <td><code>@issuer.Id</code></td>
-                        <td>@issuer.Name</td>
-                        <td style="word-break: break-all;">
-                            <small><a href="@issuer.Endpoint" target="_blank">@issuer.Endpoint</a></small>
-                        </td>
-                        <td><span class="badge bg-info">@issuer.MetadataType</span></td>
-                        <td>
+        foreach (var issuer in Model)
+        {
+            <div class="issuer-card card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">@issuer.Name</h5>
+                            <small class="text-dark"><code>@issuer.Id</code></small>
+                        </div>
+                        <div class="issuer-actions">
                             @Html.ActionLink("Edit", "Edit", "Issuers", new { id = issuer.Id }, new { @class = "btn btn-sm btn-primary" })
                             <form method="post" action="@Url.Action("Delete", "Issuers")" style="display:inline;">
                                 @Html.AntiForgeryToken()
                                 @Html.Hidden("id", issuer.Id)
                                 <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to remove this issuer from monitoring?');">Remove</button>
                             </form>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Basic Information -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Endpoint</h6>
+                            <p><small><a href="@issuer.Endpoint" target="_blank">@issuer.Endpoint</a></small></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Type</h6>
+                            <p><span class="badge bg-info">@issuer.MetadataType</span></p>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <!-- Metadata Information -->
+                    @if (issuer.HasMetadata)
+                    {
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Role</h6>
+                                <p>@issuer.RoleType</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Last Metadata Fetch</h6>
+                                <p>
+                                    @if (issuer.LastMetadataFetch.HasValue)
+                                    {
+                                        <small>@issuer.LastMetadataFetch.Value.ToString("yyyy-MM-dd HH:mm:ss")</small>
+                                    }
+                                    else
+                                    {
+                                        <small class="text-muted">Unknown</small>
+                                    }
+                                </p>
+                            </div>
+
+                        @if (!string.IsNullOrEmpty(issuer.EntityId))
+                        {
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <h6 class="text-muted">Entity ID</h6>
+                                    <p><small><code>@issuer.EntityId</code></small></p>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Endpoints -->
+                        @if (issuer.Endpoints.Count > 0)
+                        {
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <h6 class="text-muted">Endpoints (@issuer.Endpoints.Count)</h6>
+                                    <div class="endpoint-list">
+                                        @foreach (var endpoint in issuer.Endpoints)
+                                        {
+                                            <div class="endpoint-item mb-2">
+                                                <strong>@endpoint.Binding</strong>
+                                                <br />
+                                                <small><a href="@endpoint.Location" target="_blank">@endpoint.Location</a></small>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr />
+                        }
+
+                        <!-- Signing Certificates -->
+                        @if (issuer.SigningCertificates.Count > 0)
+                        {
+                            <div class="row">
+                                <div class="col-12">
+                                    <h6 class="text-muted">Signing Certificates (@issuer.SigningCertificates.Count)</h6>
+                                    <div class="certificates-list">
+                                        @foreach (var cert in issuer.SigningCertificates)
+                                        {
+                                            <div class="certificate-item mb-3 p-3 border rounded">
+                                                <div class="row mb-2">
+                                                    <div class="col-md-6">
+                                                        <small class="text-muted">Subject</small>
+                                                        <p><small><code>@cert.Subject</code></small></p>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <small class="text-muted">Issuer</small>
+                                                        <p><small><code>@cert.Issuer</code></small></p>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row mb-2">
+                                                    <div class="col-12">
+                                                        <small class="text-muted">Thumbprint</small>
+                                                        <p><small><code>@cert.Thumbprint</code></small></p>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row mb-2">
+                                                    <div class="col-md-6">
+                                                        <small class="text-muted">Valid From</small>
+                                                        <p><small>@cert.NotBefore.ToString("yyyy-MM-dd HH:mm:ss")</small></p>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <small class="text-muted">Valid To</small>
+                                                        <p><small>@cert.NotAfter.ToString("yyyy-MM-dd HH:mm:ss")</small></p>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <small class="text-muted">Status</small>
+                                                        <p>
+                                                            <span class="badge @(cert.Status.Contains("EXPIRED") ? "bg-danger" : (cert.Status.Contains("Expires in") || cert.Status == "Not yet valid") ? "bg-warning" : "bg-success")">@cert.Status</span>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning">
+                            <h6>Metadata Not Available</h6>
+                            <p class="mb-0">
+                                @if (!string.IsNullOrEmpty(issuer.MetadataError))
+                                {
+                                    <small>@issuer.MetadataError</small>
+                                }
+                                else
+                                {
+                                    <small>Metadata has not been fetched yet. It will be available after the next polling cycle.</small>
+                                }
+                            </p>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
     }
 </div>
 
@@ -88,6 +215,31 @@
         border: 1px solid #dee2e6;
         border-radius: 4px;
         padding: 15px;
+    }
+
+    .issuer-card {
+        border-left: 4px solid #007bff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .issuer-actions {
+        display: flex;
+        gap: 5px;
+    }
+
+    .endpoint-item {
+        background-color: #f8f9fa;
+        padding: 8px 12px;
+        border-left: 3px solid #17a2b8;
+        border-radius: 3px;
+    }
+
+    .certificate-item {
+        background-color: #f8f9fa;
+    }
+
+    .certificate-item code {
+        word-break: break-all;
     }
 
     .btn-success {
@@ -106,10 +258,6 @@
         background-color: #218838;
     }
 
-    .table-hover tbody tr:hover {
-        background-color: #f5f5f5;
-    }
-
     .badge {
         padding: 4px 8px;
         border-radius: 3px;
@@ -119,6 +267,21 @@
 
     .bg-info {
         background-color: #17a2b8 !important;
+        color: white;
+    }
+
+    .bg-success {
+        background-color: #28a745 !important;
+        color: white;
+    }
+
+    .bg-warning {
+        background-color: #ffc107 !important;
+        color: black;
+    }
+
+    .bg-danger {
+        background-color: #dc3545 !important;
         color: white;
     }
 
@@ -133,16 +296,6 @@
         border: none;
     }
 
-    .btn-info {
-        background-color: #17a2b8;
-        color: white;
-        border: 1px solid #17a2b8;
-    }
-
-    .btn-info:hover {
-        background-color: #138496;
-    }
-
     .btn-primary {
         background-color: #007bff;
         color: white;
@@ -150,47 +303,108 @@
     }
 
     .btn-primary:hover {
-        background-color: #0069d9;
+        background-color: #0056b3;
     }
 
-    .btn-sm {
-        padding: 4px 8px;
-        font-size: 12px;
+    .btn-danger {
+        background-color: #dc3545;
+        color: white;
+        border: 1px solid #dc3545;
     }
 
-    .alert {
-        padding: 12px;
-        margin-bottom: 15px;
-        border: 1px solid transparent;
+    .btn-danger:hover {
+        background-color: #c82333;
+    }
+
+    .d-flex {
+        display: flex;
+    }
+
+    .justify-content-between {
+        justify-content: space-between;
+    }
+
+    .align-items-center {
+        align-items: center;
+    }
+
+    .mb-0 {
+        margin-bottom: 0;
+    }
+
+    .mb-2 {
+        margin-bottom: 0.5rem;
+    }
+
+    .mb-3 {
+        margin-bottom: 1rem;
+    }
+
+    .mb-4 {
+        margin-bottom: 1.5rem;
+    }
+
+    .p-3 {
+        padding: 1rem;
+    }
+
+    .border {
+        border: 1px solid #dee2e6;
+    }
+
+    .rounded {
         border-radius: 4px;
     }
 
-    .alert-success {
-        background-color: #d4edda;
-        border-color: #c3e6cb;
-        color: #155724;
+    .text-light {
+        color: #f8f9fa;
     }
 
-    .alert-danger {
-        background-color: #f8d7da;
-        border-color: #f5c6cb;
-        color: #721c24;
+    .text-muted {
+        color: #6c757d;
     }
 
-    .alert-warning {
-        background-color: #fff3cd;
-        border-color: #ffeeba;
-        color: #856404;
-    }
-
-    .alert-info {
-        background-color: #d1ecf1;
-        border-color: #bee5eb;
-        color: #0c5460;
-    }
-
-    .table-dark {
-        background-color: #343a40;
+    .text-white {
         color: white;
+    }
+
+    .bg-dark {
+        background-color: #343a40 !important;
+    }
+
+    .col-md-6 {
+        flex: 0 0 50%;
+    }
+
+    .col-12 {
+        flex: 0 0 100%;
+    }
+
+    .row {
+        display: flex;
+        flex-wrap: wrap;
+        margin-right: -0.5rem;
+        margin-left: -0.5rem;
+    }
+
+    .row > * {
+        padding-right: 0.5rem;
+        padding-left: 0.5rem;
+    }
+
+    .card {
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        background-color: white;
+    }
+
+    .card-header {
+        padding: 0.75rem 1.25rem;
+        border-bottom: 1px solid #dee2e6;
+        border-radius: 4px 4px 0 0;
+    }
+
+    .card-body {
+        padding: 1.25rem;
     }
 </style>

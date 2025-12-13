@@ -48,6 +48,7 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.IdentityModel" />
     <Reference Include="System.Web" />
     <Reference Include="System.Web.Abstractions" />
     <Reference Include="System.Web.Routing" />
@@ -61,12 +62,16 @@
   <ItemGroup>
     <Compile Include="Controllers\IssuersController.cs" />
     <Compile Include="Controllers\LogViewerController.cs" />
+    <Compile Include="Controllers\TokenValidatorController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Models\IssuerDetailViewModel.cs" />
     <Compile Include="Models\IssuerViewModel.cs" />
+    <Compile Include="Models\TokenValidatorViewModel.cs" />
     <Compile Include="Services\IssuerManagementService.cs" />
+    <Compile Include="Services\TokenValidationService.cs" />
     <Compile Include="Utilities\TraceLogBuffer.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -105,7 +110,12 @@
   <ItemGroup>
     <Content Include="Views\Issuers\Edit.cshtml" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="Views\TokenValidator\Index.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\TokenValidator\Result.cshtml" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
