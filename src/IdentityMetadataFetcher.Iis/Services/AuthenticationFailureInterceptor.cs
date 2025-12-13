@@ -88,24 +88,29 @@ namespace IdentityMetadataFetcher.Iis.Services
         private bool IsCertificateRelated(Exception exception)
         {
             var message = exception.Message;
+            if (string.IsNullOrEmpty(message))
+                return false;
+
+            // Make comparison case-insensitive
+            var lowerMessage = message.ToLowerInvariant();
             
             // Common WIF error IDs and messages related to certificate/signature issues:
-            // ID4022: The key needed to decrypt the token could not be resolved from the token
+            // ID4022: The key needed to decrypt the token could not be resolved
             // ID4037: The key needed to verify the signature could not be resolved
             // ID4175: The issuer of the security token was not recognized
             // ID4257: The key wrap token provided is not a X509SecurityToken
             // ID4252: X509SecurityToken cannot be validated
             
-            return message.Contains("ID4037") ||  // Signature verification failed
-                   message.Contains("ID4022") ||  // Decryption key not found
-                   message.Contains("ID4175") ||  // Issuer not recognized
-                   message.Contains("ID4257") ||  // X509 token issue
-                   message.Contains("ID4252") ||  // X509 validation failed
-                   message.Contains("signature") ||
-                   message.Contains("certificate") ||
-                   message.Contains("X509") ||
-                   message.Contains("key needed") ||
-                   message.Contains("issuer");
+            return lowerMessage.Contains("id4037") ||  // Signature verification failed
+                   lowerMessage.Contains("id4022") ||  // Decryption key not found
+                   lowerMessage.Contains("id4175") ||  // Issuer not recognized
+                   lowerMessage.Contains("id4257") ||  // X509 token issue
+                   lowerMessage.Contains("id4252") ||  // X509 validation failed
+                   lowerMessage.Contains("signature") ||
+                   lowerMessage.Contains("certificate") ||
+                   lowerMessage.Contains("x509") ||
+                   lowerMessage.Contains("key needed") ||
+                   lowerMessage.Contains("issuer");
         }
     }
 }

@@ -298,6 +298,9 @@ namespace IdentityMetadataFetcher.Services
             }
             else
             {
+                // Update poll timestamp even on failure to prevent immediate retry
+                UpdatePollTimestamp(result.Endpoint.Id, now);
+
                 OnPollingError(new PollingErrorEventArgs
                 {
                     IssuerId = result.Endpoint.Id,

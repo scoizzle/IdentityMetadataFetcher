@@ -3,6 +3,7 @@ using IdentityMetadataFetcher.Iis.Tests.Mocks; // Use IIS test mocks
 using IdentityMetadataFetcher.Models;
 using IdentityMetadataFetcher.Services;
 using Microsoft.IdentityModel.Protocols.WsFederation;
+using Microsoft.IdentityModel.Tokens;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -45,12 +46,12 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         [Test]
         public async Task TryRecoverFromAuthenticationFailureAsync_WithIssuerMatch_PrefersMatchingEndpoint()
         {
-            // Pre-populate cache with issuer for issuer1
-            var config = new WsFederationConfiguration { Issuer = "https://issuer1.example.com" };
+            // Pre-populate cache with issuer for issuer1 - must match what MockMetadata will provide
+            var config = new WsFederationConfiguration { Issuer = "https://example.com/entity" };
             _cache.AddOrUpdateMetadata("issuer1", config, "<xml />");
 
-            var ex = new System.IdentityModel.Tokens.SecurityTokenValidationException(
-                "Issuer 'https://issuer1.example.com' signature key not found");
+            var ex = new SecurityTokenValidationException(
+                "Issuer 'https://example.com/entity' signature key not found");
 
             var result = await _recoveryService.TryRecoverFromAuthenticationFailureAsync(ex, _endpoints);
             Assert.That(result, Is.True);
@@ -59,8 +60,13 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         [Test]
         public async Task TryRecoverFromAuthenticationFailureAsync_PollThrottled_ReturnsFalse()
         {
-            var ex = new System.IdentityModel.Tokens.SecurityTokenValidationException(
-                "ID4037: Key not found");
+            // Pre-populate cache with issuer matching MockMetadata
+            var config = new WsFederationConfiguration { Issuer = "https://example.com/entity" };
+            _cache.AddOrUpdateMetadata("issuer1", config, "<xml />");
+            _cache.AddOrUpdateMetadata("issuer2", config, "<xml />");
+
+            var ex = new SecurityTokenValidationException(
+                "Issuer 'https://example.com/entity' signature key not found");
 
             // First recovers
             var first = await _recoveryService.TryRecoverFromAuthenticationFailureAsync(ex, _endpoints);

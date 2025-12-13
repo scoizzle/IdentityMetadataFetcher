@@ -77,6 +77,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
         {
             _element.Id = "issuer-1";
             _element.Endpoint = "https://example.com/metadata";
+            _element.Name = "Example";
             _element.MetadataType = "WsFed";
 
             var endpoint = _element.ToIssuerEndpoint();
@@ -88,6 +89,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
         public void ToIssuerEndpoint_ThrowsOnMissingId()
         {
             _element.Endpoint = "https://example.com/metadata";
+            _element.Name = "Example";
             _element.MetadataType = "Saml";
 
             Assert.Throws<ConfigurationErrorsException>(() => _element.ToIssuerEndpoint());
@@ -98,6 +100,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
         {
             _element.Id = "issuer-1";
             _element.Endpoint = "https://example.com/metadata";
+            _element.Name = "Example";
             _element.MetadataType = "InvalidType";
 
             Assert.Throws<ConfigurationErrorsException>(() => _element.ToIssuerEndpoint());
@@ -108,6 +111,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
         {
             _element.Id = "";
             _element.Endpoint = "https://example.com/metadata";
+            _element.Name = "Example";
             _element.MetadataType = "Saml";
 
             Assert.Throws<ConfigurationErrorsException>(() => _element.ToIssuerEndpoint());
@@ -118,6 +122,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
         {
             _element.Id = "issuer-1";
             _element.Endpoint = "https://example.com/metadata";
+            _element.Name = "Example";
             _element.MetadataType = "Saml";
             _element.TimeoutSeconds = 0; // Not set
 
@@ -131,6 +136,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
         {
             _element.Id = "issuer-1";
             _element.Endpoint = "https://example.com/metadata";
+            _element.Name = "Example";
             _element.MetadataType = "saml"; // lowercase
 
             var endpoint = _element.ToIssuerEndpoint();

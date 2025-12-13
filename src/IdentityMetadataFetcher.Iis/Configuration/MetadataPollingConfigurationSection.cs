@@ -94,9 +94,9 @@ namespace IdentityMetadataFetcher.Iis.Configuration
 
         /// <summary>
         /// Gets or sets the maximum number of retries for failed metadata requests.
-        /// Default is 1.
+        /// Default is 2.
         /// </summary>
-        [ConfigurationProperty("maxRetries", DefaultValue = 1, IsRequired = false)]
+        [ConfigurationProperty("maxRetries", DefaultValue = 2, IsRequired = false)]
         [IntegerValidator(MinValue = 0, MaxValue = 5)]
         public int MaxRetries
         {
