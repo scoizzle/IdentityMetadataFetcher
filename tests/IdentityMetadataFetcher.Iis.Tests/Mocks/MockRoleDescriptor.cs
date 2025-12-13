@@ -1,15 +1,18 @@
 using System;
-using System.IdentityModel.Metadata;
+using Microsoft.IdentityModel.Tokens;
 
 namespace IdentityMetadataFetcher.Iis.Tests.Mocks
 {
     /// <summary>
-    /// Mock implementation of RoleDescriptor for testing purposes
+    /// Mock security key for testing purposes (replaces RoleDescriptor)
     /// </summary>
-    public class MockRoleDescriptor : RoleDescriptor
+    public class MockSecurityKey : SecurityKey
     {
-        public MockRoleDescriptor() : base()
+        public MockSecurityKey()
         {
+            KeyId = "mock-key-id";
         }
+
+        public override int KeySize => 2048;
     }
 }

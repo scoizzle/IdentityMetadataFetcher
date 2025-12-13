@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.IdentityModel.Metadata;
+using Microsoft.IdentityModel.Protocols.WsFederation;
 using System.IdentityModel.Services;
 using System.IdentityModel.Tokens;
+using Microsoft.IdentityModel.Tokens;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using IdentityMetadataFetcher.Services; // Core library
@@ -74,62 +75,33 @@ namespace IdentityMetadataFetcher.Iis.Services
             }
         }
 
-        private static IEnumerable<X509Certificate2> ExtractSigningCertificates(MetadataBase metadata)
+        private static IEnumerable<X509Certificate2> ExtractSigningCertificates(WsFederationConfiguration metadata)
         {
             var result = new List<X509Certificate2>();
 
-            var entity = metadata as EntityDescriptor;
-            if (entity != null && entity.RoleDescriptors != null)
+            if (metadata?.SigningKeys != null)
             {
-                foreach (var role in entity.RoleDescriptors)
+                foreach (var key in metadata.SigningKeys)
                 {
-                    foreach (var key in role.Keys.Where(k => k.Use == KeyType.Signing || k.Use == KeyType.Unspecified))
+                    try
                     {
-                        foreach (var clause in key.KeyInfo)
+                        if (key is X509SecurityKey x509Key)
                         {
-                            // Common clause types in WIF metadata
-                            var x509Raw = clause as X509RawDataKeyIdentifierClause;
-                            if (x509Raw != null)
-                            {
-                                try 
-                                { 
-                                    result.Add(new X509Certificate2(x509Raw.GetX509RawData())); 
-                                } 
-                                catch (Exception ex) 
-                                { 
-                                    System.Diagnostics.Trace.TraceWarning($"IdentityModelConfigurationUpdater: Failed to parse X509 raw data from key identifier clause: {ex.GetType().Name}: {ex.Message}");
-                                }
-                                continue;
-                            }
-
-                            var x509Thumb = clause as X509ThumbprintKeyIdentifierClause;
-                            if (x509Thumb != null)
-                            {
-                                try
-                                {
-                                    // We don't have raw data; attempt to resolve via store if available
-                                    using var store = new X509Store(StoreName.My, StoreLocation.LocalMachine);
-                                    try
-                                    {
-                                        store.Open(OpenFlags.OpenExistingOnly | OpenFlags.ReadOnly);
-                                        var found = store.Certificates.Find(X509FindType.FindByThumbprint, NormalizeThumbprint(x509Thumb.GetX509Thumbprint()), false);
-                                        if (found != null && found.Count > 0)
-                                        {
-                                            result.AddRange(found.Cast<X509Certificate2>());
-                                        }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        System.Diagnostics.Trace.TraceWarning($"IdentityModelConfigurationUpdater: Failed to open certificate store or find certificate by thumbprint: {ex.GetType().Name}: {ex.Message}");
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    System.Diagnostics.Trace.TraceWarning($"IdentityModelConfigurationUpdater: Failed to retrieve certificate from thumbprint key identifier clause: {ex.GetType().Name}: {ex.Message}");
-                                }
-                                continue;
-                            }
+                            result.Add(x509Key.Certificate);
                         }
+                        else if (key is Microsoft.IdentityModel.Tokens.RsaSecurityKey rsaKey)
+                        {
+                            // RSA keys don't have certificates, skip
+                            System.Diagnostics.Trace.TraceInformation($"IdentityModelConfigurationUpdater: Skipping RSA key (no certificate available)");
+                        }
+                        else
+                        {
+                            System.Diagnostics.Trace.TraceWarning($"IdentityModelConfigurationUpdater: Unknown key type: {key.GetType().Name}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Trace.TraceWarning($"IdentityModelConfigurationUpdater: Failed to extract certificate from signing key: {ex.GetType().Name}: {ex.Message}");
                     }
                 }
             }
@@ -137,18 +109,11 @@ namespace IdentityMetadataFetcher.Iis.Services
             return result;
         }
 
-        private static string TryGetPassiveStsEndpoint(MetadataBase metadata)
+        private static string TryGetPassiveStsEndpoint(WsFederationConfiguration metadata)
         {
-            var entity = metadata as EntityDescriptor;
-            if (entity != null && entity.RoleDescriptors != null)
+            if (metadata != null && !string.IsNullOrWhiteSpace(metadata.TokenEndpoint))
             {
-                var sts = entity.RoleDescriptors.OfType<SecurityTokenServiceDescriptor>().FirstOrDefault();
-                if (sts != null)
-                {
-                    var passive = sts.PassiveRequestorEndpoints?.FirstOrDefault();
-                    if (passive != null && passive.Uri != null)
-                        return passive.Uri.ToString();
-                }
+                return metadata.TokenEndpoint;
             }
             return null;
         }

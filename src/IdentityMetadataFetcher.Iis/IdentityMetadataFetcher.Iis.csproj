@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.IdentityModel.Protocols.WsFederation" Version="8.1.2" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens.Saml" Version="8.1.2" />
   </ItemGroup>
 
   <ItemGroup>

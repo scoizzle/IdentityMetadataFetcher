@@ -1,5 +1,5 @@
 using System;
-using System.IdentityModel.Tokens;
+using Microsoft.IdentityModel.Tokens;
 using NUnit.Framework;
 using IdentityMetadataFetcher.Iis.Services;
 

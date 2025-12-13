@@ -1,5 +1,5 @@
 using System;
-using System.IdentityModel.Metadata;
+using Microsoft.IdentityModel.Protocols.WsFederation;
 
 namespace IdentityMetadataFetcher.Models
 {
@@ -19,9 +19,9 @@ namespace IdentityMetadataFetcher.Models
         public bool IsSuccess { get; set; }
 
         /// <summary>
-        /// Gets or sets the metadata descriptor if fetch was successful.
+        /// Gets or sets the metadata configuration if fetch was successful.
         /// </summary>
-        public MetadataBase Metadata { get; set; }
+        public WsFederationConfiguration Metadata { get; set; }
 
         /// <summary>
         /// Gets or sets the raw metadata XML if fetch was successful.
@@ -51,7 +51,7 @@ namespace IdentityMetadataFetcher.Models
         /// <summary>
         /// Creates a successful result.
         /// </summary>
-        public static MetadataFetchResult Success(IssuerEndpoint endpoint, MetadataBase metadata, string rawMetadata)
+        public static MetadataFetchResult Success(IssuerEndpoint endpoint, WsFederationConfiguration metadata, string rawMetadata)
         {
             return new MetadataFetchResult
             {

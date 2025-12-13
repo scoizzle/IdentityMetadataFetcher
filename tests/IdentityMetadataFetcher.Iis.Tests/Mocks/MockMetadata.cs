@@ -1,18 +1,20 @@
 using System;
 using System.Collections.Generic;
-using System.Xml;
-using System.IdentityModel.Metadata;
+using Microsoft.IdentityModel.Protocols.WsFederation;
+using Microsoft.IdentityModel.Tokens;
 
 namespace IdentityMetadataFetcher.Iis.Tests.Mocks
 {
     /// <summary>
-    /// Mock implementation of MetadataBase for testing purposes
+    /// Mock implementation of WsFederationConfiguration for testing purposes
     /// </summary>
-    public class MockMetadata : EntityDescriptor
+    public class MockMetadata : WsFederationConfiguration
     {
         public MockMetadata() : base()
         {
-            EntityId = new EntityId("https://example.com/entity");
+            Issuer = "https://example.com/entity";
+            TokenEndpoint = "https://example.com/token";
+            SigningKeys = new List<SecurityKey>();
         }
     }
 }

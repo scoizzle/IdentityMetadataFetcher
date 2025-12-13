@@ -59,6 +59,7 @@
     <PackageReference Include="Microsoft.AspNet.Razor" Version="3.2.7" />
     <PackageReference Include="Microsoft.AspNet.WebPages" Version="3.2.7" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.WsFederation" Version="8.1.2" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens.Saml" Version="8.1.2" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Controllers\IssuersController.cs" />

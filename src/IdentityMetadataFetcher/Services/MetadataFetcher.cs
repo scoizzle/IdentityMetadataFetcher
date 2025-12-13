@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.IdentityModel.Metadata;
+using Microsoft.IdentityModel.Protocols.WsFederation;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -158,7 +158,7 @@ namespace IdentityMetadataFetcher.Services
             return completedResults;
         }
 
-        private MetadataBase FetchMetadataInternal(IssuerEndpoint endpoint)
+        private WsFederationConfiguration FetchMetadataInternal(IssuerEndpoint endpoint)
         {
             var timeout = endpoint.Timeout ?? _options.DefaultTimeoutMs;
             var metadataXml = DownloadMetadataXml(endpoint.Endpoint, timeout);
@@ -166,7 +166,7 @@ namespace IdentityMetadataFetcher.Services
             return ParseMetadata(metadataXml, endpoint.MetadataType);
         }
 
-        private async Task<MetadataBase> FetchMetadataInternalAsync(IssuerEndpoint endpoint)
+        private async Task<WsFederationConfiguration> FetchMetadataInternalAsync(IssuerEndpoint endpoint)
         {
             var timeout = endpoint.Timeout ?? _options.DefaultTimeoutMs;
             var metadataXml = await DownloadMetadataXmlAsync(endpoint.Endpoint, timeout);
@@ -263,7 +263,7 @@ namespace IdentityMetadataFetcher.Services
             );
         }
 
-        private MetadataBase ParseMetadata(string metadataXml, MetadataType metadataType)
+        private WsFederationConfiguration ParseMetadata(string metadataXml, MetadataType metadataType)
         {
             if (string.IsNullOrWhiteSpace(metadataXml))
                 throw new MetadataFetchException("Downloaded metadata is empty or null");
@@ -271,7 +271,7 @@ namespace IdentityMetadataFetcher.Services
             try
             {
                 using var reader = XmlReader.Create(new StringReader(metadataXml));
-                var serializer = new MetadataSerializer();
+                var serializer = new WsFederationMetadataSerializer();
                 var metadata = serializer.ReadMetadata(reader);
                 return metadata;
             }

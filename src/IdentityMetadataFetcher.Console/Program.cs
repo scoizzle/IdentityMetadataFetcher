@@ -3,8 +3,8 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using System.IdentityModel.Metadata;
-using System.IdentityModel.Tokens;
+using Microsoft.IdentityModel.Protocols.WsFederation;
+using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography.X509Certificates;
 using System.Collections.Generic;
 using IdentityMetadataFetcher.Models;
@@ -215,91 +215,61 @@ namespace IdentityMetadataFetcher.ConsoleApp
             Console.WriteLine("  --interval-min  Polling interval in minutes (default 15, minimum 1)");
         }
 
-        private static void PrintMetadataSummary(MetadataBase metadata)
+        private static void PrintMetadataSummary(WsFederationConfiguration metadata)
         {
-            var entity = metadata as EntityDescriptor;
-            if (entity == null)
+            if (metadata == null)
             {
-                Console.WriteLine("Unsupported metadata type received.");
+                Console.WriteLine("No metadata received.");
                 return;
             }
 
             Console.WriteLine();
             Console.WriteLine("Summary:");
             Console.WriteLine(new string('-', 80));
-            Console.WriteLine($"Entity ID: {entity.EntityId?.Id}");
+            Console.WriteLine($"Issuer: {metadata.Issuer}");
 
-            // WS-Fed STS role
-            var sts = entity.RoleDescriptors?.OfType<SecurityTokenServiceDescriptor>().FirstOrDefault();
-            if (sts != null)
+            // Token endpoint
+            if (!string.IsNullOrEmpty(metadata.TokenEndpoint))
             {
-                Console.WriteLine("Role: Security Token Service (WS-Fed)");
-
-                if (sts.PassiveRequestorEndpoints != null && sts.PassiveRequestorEndpoints.Any())
-                {
-                    Console.WriteLine("Passive Requestor Endpoints:");
-                    foreach (var ep in sts.PassiveRequestorEndpoints)
-                    {
-                        Console.WriteLine($"  - {ep.Uri}");
-                    }
-                }
-
-                if (sts.Keys != null && sts.Keys.Any())
-                {
-                    Console.WriteLine("Signing Keys:");
-                    PrintKeyInformation(sts.Keys);
-                }
+                Console.WriteLine($"Token Endpoint: {metadata.TokenEndpoint}");
             }
 
-            // SAML IdP role
-            var idp = entity.RoleDescriptors?.OfType<IdentityProviderSingleSignOnDescriptor>().FirstOrDefault();
-            if (idp != null)
+            // Signing keys
+            if (metadata.SigningKeys != null && metadata.SigningKeys.Any())
             {
-                Console.WriteLine("Role: Identity Provider (SAML)");
+                Console.WriteLine($"Signing Keys: {metadata.SigningKeys.Count}");
+                PrintKeyInformation(metadata.SigningKeys);
+            }
 
-                if (idp.SingleSignOnServices != null && idp.SingleSignOnServices.Any())
-                {
-                    Console.WriteLine("Single Sign-On Services:");
-                    foreach (var sso in idp.SingleSignOnServices)
-                    {
-                        Console.WriteLine($"  - {sso.Binding} -> {sso.Location}");
-                    }
-                }
-
-                if (idp.Keys != null && idp.Keys.Any())
-                {
-                    Console.WriteLine("Signing Keys:");
-                    PrintKeyInformation(idp.Keys);
-                }
+            // Additional properties
+            if (metadata.KeyInfos != null && metadata.KeyInfos.Any())
+            {
+                Console.WriteLine($"Key Infos: {metadata.KeyInfos.Count}");
             }
         }
 
-        private static void PrintKeyInformation(ICollection<KeyDescriptor> keys)
+        private static void PrintKeyInformation(ICollection<SecurityKey> keys)
         {
             var keyIndex = 1;
             foreach (var key in keys)
             {
                 Console.WriteLine($"  Key #{keyIndex}:");
-                Console.WriteLine($"    Use: {key.Use}");
+                Console.WriteLine($"    Key ID: {key.KeyId}");
 
-                foreach (var clause in key.KeyInfo)
+                if (key is X509SecurityKey x509Key)
                 {
-                    if (clause is X509RawDataKeyIdentifierClause rawDataClause)
+                    try
                     {
-                        try
-                        {
-                            var cert = new X509Certificate2(rawDataClause.GetX509RawData());
-                            PrintCertificateInfo(cert);
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"    Error reading certificate: {ex.Message}");
-                        }
+                        PrintCertificateInfo(x509Key.Certificate);
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        Console.WriteLine($"    Key Type: {clause.GetType().Name}");
+                        Console.WriteLine($"    Error reading certificate: {ex.Message}");
                     }
+                }
+                else
+                {
+                    Console.WriteLine($"    Key Type: {key.GetType().Name}");
                 }
 
                 keyIndex++;
