@@ -14,7 +14,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Mocks
         {
             Issuer = "https://example.com/entity";
             TokenEndpoint = "https://example.com/token";
-            SigningKeys = new List<SecurityKey>();
+            // SigningKeys is readonly, items are added via .Add() method
         }
     }
 }

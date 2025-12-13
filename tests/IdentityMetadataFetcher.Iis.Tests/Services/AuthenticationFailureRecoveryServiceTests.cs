@@ -45,9 +45,9 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         [Test]
         public async Task TryRecoverFromAuthenticationFailureAsync_WithIssuerMatch_PrefersMatchingEndpoint()
         {
-            // Pre-populate cache with entity id for issuer1
-            var entity = new EntityDescriptor { EntityId = new EntityId("https://issuer1.example.com") };
-            _cache.AddOrUpdateMetadata("issuer1", entity, "<xml />");
+            // Pre-populate cache with issuer for issuer1
+            var config = new WsFederationConfiguration { Issuer = "https://issuer1.example.com" };
+            _cache.AddOrUpdateMetadata("issuer1", config, "<xml />");
 
             var ex = new System.IdentityModel.Tokens.SecurityTokenValidationException(
                 "Issuer 'https://issuer1.example.com' signature key not found");
