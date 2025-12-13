@@ -10,8 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.IdentityModel.Protocols.WsFederation" Version="8.1.2" />
-    <PackageReference Include="Microsoft.IdentityModel.Tokens.Saml" Version="8.1.2" />
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.WsFederation" Version="8.15.0" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens.Saml" Version="8.15.0" />
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
   </ItemGroup>
 

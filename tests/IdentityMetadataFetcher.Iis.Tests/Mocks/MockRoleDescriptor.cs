@@ -1,5 +1,5 @@
-using System;
 using Microsoft.IdentityModel.Tokens;
+using System;
 
 namespace IdentityMetadataFetcher.Iis.Tests.Mocks
 {

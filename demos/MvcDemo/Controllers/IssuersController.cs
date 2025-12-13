@@ -1,11 +1,11 @@
+using IdentityMetadataFetcher.Iis.Configuration;
+using MvcDemo.Models;
+using MvcDemo.Services;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.Web.Mvc;
-using IdentityMetadataFetcher.Iis.Configuration;
-using MvcDemo.Models;
-using MvcDemo.Services;
 
 namespace MvcDemo.Controllers
 {

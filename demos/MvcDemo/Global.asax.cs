@@ -1,11 +1,11 @@
+using IdentityMetadataFetcher.Iis.Modules;
+using MvcDemo.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.Routing;
-using IdentityMetadataFetcher.Iis.Modules;
-using MvcDemo.Utilities;
 
 namespace MvcDemo
 {

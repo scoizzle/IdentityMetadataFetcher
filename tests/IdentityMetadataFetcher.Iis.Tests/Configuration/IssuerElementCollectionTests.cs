@@ -1,8 +1,8 @@
-using System;
-using System.Linq;
-using NUnit.Framework;
 using IdentityMetadataFetcher.Iis.Configuration;
 using IdentityMetadataFetcher.Models;
+using NUnit.Framework;
+using System;
+using System.Linq;
 
 namespace IdentityMetadataFetcher.Iis.Tests.Configuration
 {
@@ -20,7 +20,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
         [Test]
         public void IsEmpty_WhenCreated()
         {
-            Assert.AreEqual(0, _collection.Count);
+            Assert.That(_collection.Count, Is.EqualTo(0));
         }
 
         [Test]
@@ -29,7 +29,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
             var element = new IssuerElement { Id = "issuer-1", Endpoint = "https://example.com/metadata", MetadataType = "Saml" };
             _collection.Add(element);
 
-            Assert.AreEqual(1, _collection.Count);
+            Assert.That(_collection.Count, Is.EqualTo(1));
         }
 
         [Test]
@@ -39,7 +39,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
             _collection.Add(element);
             _collection.Remove(element);
 
-            Assert.AreEqual(0, _collection.Count);
+            Assert.That(_collection.Count, Is.EqualTo(0));
         }
 
         [Test]
@@ -50,7 +50,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
             
             _collection.Clear();
 
-            Assert.AreEqual(0, _collection.Count);
+            Assert.That(_collection.Count, Is.EqualTo(0));
         }
 
         [Test]
@@ -60,7 +60,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
             _collection.Add(element);
 
             var retrieved = _collection[0];
-            Assert.AreEqual("issuer-1", retrieved.Id);
+            Assert.That(retrieved.Id, Is.EqualTo("issuer-1"));
         }
 
         [Test]
@@ -70,7 +70,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
             _collection.Add(element);
 
             var retrieved = _collection["issuer-1"];
-            Assert.AreEqual("issuer-1", retrieved.Id);
+            Assert.That(retrieved.Id, Is.EqualTo("issuer-1"));
         }
 
         [Test]
@@ -81,9 +81,9 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
 
             var endpoints = _collection.ToIssuerEndpoints().ToList();
 
-            Assert.AreEqual(2, endpoints.Count);
-            Assert.AreEqual("issuer-1", endpoints[0].Id);
-            Assert.AreEqual("issuer-2", endpoints[1].Id);
+            Assert.That(endpoints.Count, Is.EqualTo(2));
+            Assert.That(endpoints[0].Id, Is.EqualTo("issuer-1"));
+            Assert.That(endpoints[1].Id, Is.EqualTo("issuer-2"));
         }
 
         [Test]
@@ -91,7 +91,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
         {
             var endpoints = _collection.ToIssuerEndpoints().ToList();
 
-            Assert.AreEqual(0, endpoints.Count);
+            Assert.That(endpoints.Count, Is.EqualTo(0));
         }
 
         [Test]
@@ -102,8 +102,8 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
 
             var endpoints = _collection.ToIssuerEndpoints().ToList();
 
-            Assert.AreEqual(MetadataType.SAML, endpoints[0].MetadataType);
-            Assert.AreEqual(MetadataType.WSFED, endpoints[1].MetadataType);
+            Assert.That(endpoints[0].MetadataType, Is.EqualTo(MetadataType.SAML));
+            Assert.That(endpoints[1].MetadataType, Is.EqualTo(MetadataType.WSFED));
         }
 
         [Test]
@@ -112,7 +112,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
             var element = new IssuerElement { Id = "issuer-1", MetadataType = "Saml" };
             _collection.Add(element);
 
-            Assert.IsTrue(_collection.Contains(element));
+            Assert.That(_collection.Contains(element), Is.True);
         }
 
         [Test]
@@ -120,7 +120,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
         {
             var element = new IssuerElement { Id = "issuer-1", MetadataType = "Saml" };
 
-            Assert.IsFalse(_collection.Contains(element));
+            Assert.That(_collection.Contains(element), Is.False);
         }
 
         [Test]
@@ -136,9 +136,9 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
                 });
             }
 
-            Assert.AreEqual(5, _collection.Count);
+            Assert.That(_collection.Count, Is.EqualTo(5));
             var endpoints = _collection.ToIssuerEndpoints().ToList();
-            Assert.AreEqual(5, endpoints.Count);
+            Assert.That(endpoints.Count, Is.EqualTo(5));
         }
     }
 }

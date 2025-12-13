@@ -1,11 +1,11 @@
+using IdentityMetadataFetcher.Models;
+using IdentityMetadataFetcher.Services;
+using IdentityMetadataFetcher.Tests.Mocks;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using NUnit.Framework;
-using IdentityMetadataFetcher.Tests.Mocks;
-using IdentityMetadataFetcher.Models;
-using IdentityMetadataFetcher.Services;
 
 namespace IdentityMetadataFetcher.Tests.Services
 {
@@ -24,7 +24,7 @@ namespace IdentityMetadataFetcher.Tests.Services
         public void IsEmpty_WhenCreated()
         {
             var allEntries = _cache.GetAllEntries().ToList();
-            Assert.AreEqual(0, allEntries.Count);
+            Assert.That(allEntries.Count, Is.EqualTo(0));
         }
 
         [Test]
@@ -33,7 +33,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             var metadata = new MockMetadata();
             _cache.AddOrUpdateMetadata("issuer-1", metadata, "<metadata />");
 
-            Assert.IsTrue(_cache.HasMetadata("issuer-1"));
+            Assert.That(_cache.HasMetadata("issuer-1"), Is.True);
         }
 
         [Test]
@@ -43,7 +43,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             _cache.AddOrUpdateMetadata("issuer-1", metadata, "<metadata />");
 
             var retrieved = _cache.GetMetadata("issuer-1");
-            Assert.IsNotNull(retrieved);
+            Assert.That(retrieved, Is.Not.Null);
         }
 
         [Test]
@@ -54,20 +54,20 @@ namespace IdentityMetadataFetcher.Tests.Services
             _cache.AddOrUpdateMetadata("issuer-1", metadata, rawXml);
 
             var retrieved = _cache.GetRawMetadata("issuer-1");
-            Assert.AreEqual(rawXml, retrieved);
+            Assert.That(retrieved, Is.EqualTo(rawXml));
         }
 
         [Test]
         public void HasMetadata_ReturnsFalseForMissingKey()
         {
-            Assert.IsFalse(_cache.HasMetadata("missing-issuer"));
+            Assert.That(_cache.HasMetadata("missing-issuer"), Is.False);
         }
 
         [Test]
         public void GetMetadata_ReturnsNullForMissingKey()
         {
             var retrieved = _cache.GetMetadata("missing-issuer");
-            Assert.IsNull(retrieved);
+            Assert.That(retrieved, Is.Null);
         }
 
         [Test]
@@ -80,7 +80,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             _cache.AddOrUpdateMetadata("issuer-1", metadata2, "<metadata2 />");
 
             var raw = _cache.GetRawMetadata("issuer-1");
-            Assert.AreEqual("<metadata2 />", raw);
+            Assert.That(raw, Is.EqualTo("<metadata2 />"));
         }
 
         [Test]
@@ -93,9 +93,9 @@ namespace IdentityMetadataFetcher.Tests.Services
 
             var entry = _cache.GetCacheEntry("issuer-1");
             
-            Assert.IsNotNull(entry);
-            Assert.GreaterOrEqual(entry.CachedAt, before);
-            Assert.LessOrEqual(entry.CachedAt, after);
+            Assert.That(entry, Is.Not.Null);
+            Assert.That(entry.CachedAt, Is.GreaterThanOrEqualTo(before));
+            Assert.That(entry.CachedAt, Is.LessThanOrEqualTo(after));
         }
 
         [Test]
@@ -107,7 +107,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             }
 
             var allEntries = _cache.GetAllEntries().ToList();
-            Assert.AreEqual(5, allEntries.Count);
+            Assert.That(allEntries.Count, Is.EqualTo(5));
         }
 
         [Test]
@@ -116,7 +116,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             _cache.AddOrUpdateMetadata("issuer-1", new MockMetadata(), "<metadata />");
             _cache.Clear();
 
-            Assert.IsFalse(_cache.HasMetadata("issuer-1"));
+            Assert.That(_cache.HasMetadata("issuer-1"), Is.False);
         }
 
         [Test]
@@ -140,7 +140,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             Task.WaitAll(tasks.ToArray());
 
             var allEntries = _cache.GetAllEntries().ToList();
-            Assert.AreEqual(100, allEntries.Count);
+            Assert.That(allEntries.Count, Is.EqualTo(100));
         }
 
         [Test]
@@ -159,7 +159,7 @@ namespace IdentityMetadataFetcher.Tests.Services
                     for (int i = 0; i < 100; i++)
                     {
                         var metadata = _cache.GetMetadata("issuer-1");
-                        Assert.IsNotNull(metadata);
+                        Assert.That(metadata, Is.Not.Null);
                     }
                 }));
             }
@@ -167,7 +167,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             Task.WaitAll(tasks.ToArray());
 
             // Verify data integrity
-            Assert.IsTrue(_cache.HasMetadata("issuer-1"));
+            Assert.That(_cache.HasMetadata("issuer-1"), Is.True);
         }
 
         [Test]
@@ -204,7 +204,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             Task.WaitAll(tasks.ToArray());
 
             var allEntries = _cache.GetAllEntries().ToList();
-            Assert.AreEqual(30, allEntries.Count);
+            Assert.That(allEntries.Count, Is.EqualTo(30));
         }
 
         [Test]
@@ -216,10 +216,10 @@ namespace IdentityMetadataFetcher.Tests.Services
 
             var entry = _cache.GetCacheEntry("issuer-1");
 
-            Assert.IsNotNull(entry);
-            Assert.AreEqual("issuer-1", entry.IssuerId);
-            Assert.AreEqual(metadata, entry.Metadata);
-            Assert.AreEqual(rawXml, entry.RawXml);
+            Assert.That(entry, Is.Not.Null);
+            Assert.That(entry.IssuerId, Is.EqualTo("issuer-1"));
+            Assert.That(entry.Metadata, Is.EqualTo(metadata));
+            Assert.That(entry.RawXml, Is.EqualTo(rawXml));
         }
 
         [Test]
@@ -230,9 +230,9 @@ namespace IdentityMetadataFetcher.Tests.Services
 
             var entries = _cache.GetAllEntries().ToList();
 
-            Assert.AreEqual(2, entries.Count);
-            Assert.IsTrue(entries.Any(e => e.IssuerId == "issuer-1"));
-            Assert.IsTrue(entries.Any(e => e.IssuerId == "issuer-2"));
+            Assert.That(entries.Count, Is.EqualTo(2));
+            Assert.That(entries.Any(e => e.IssuerId == "issuer-1"), Is.True);
+            Assert.That(entries.Any(e => e.IssuerId == "issuer-2"), Is.True);
         }
     }
 }

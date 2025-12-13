@@ -1,13 +1,13 @@
-using System;
-using Microsoft.IdentityModel.Protocols.WsFederation;
-using System.IdentityModel.Tokens;
-using Microsoft.IdentityModel.Tokens;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using NUnit.Framework;
 using IdentityMetadataFetcher.Iis.Services;
 using IdentityMetadataFetcher.Iis.Tests.Mocks;
 using IdentityMetadataFetcher.Services; // Core library
+using Microsoft.IdentityModel.Protocols.WsFederation;
+using Microsoft.IdentityModel.Tokens;
+using NUnit.Framework;
+using System;
+using System.IdentityModel.Tokens;
+using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 
 namespace IdentityMetadataFetcher.Iis.Tests.Services
 {

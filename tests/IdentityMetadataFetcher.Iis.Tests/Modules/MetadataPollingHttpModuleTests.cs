@@ -1,12 +1,12 @@
+using IdentityMetadataFetcher.Iis.Configuration;
+using IdentityMetadataFetcher.Iis.Modules;
+using IdentityMetadataFetcher.Iis.Tests.Mocks;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.Web;
-using NUnit.Framework;
-using IdentityMetadataFetcher.Iis.Configuration;
-using IdentityMetadataFetcher.Iis.Modules;
-using IdentityMetadataFetcher.Iis.Tests.Mocks;
 
 namespace IdentityMetadataFetcher.Iis.Tests.Modules
 {
@@ -24,8 +24,8 @@ namespace IdentityMetadataFetcher.Iis.Tests.Modules
         [Test]
         public void CanBeInstantiated()
         {
-            Assert.IsNotNull(_module);
-            Assert.IsInstanceOf<IHttpModule>(_module);
+            Assert.That(_module, Is.Not.Null);
+            Assert.That(_module, Is.InstanceOf<IHttpModule>());
         }
 
         [Test]
@@ -36,7 +36,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Modules
             var type = typeof(MetadataPollingHttpModule);
             var cacheProperty = type.GetProperty("MetadataCache");
             
-            Assert.IsNotNull(cacheProperty);
+            Assert.That(cacheProperty, Is.Not.Null);
         }
 
         [Test]
@@ -47,7 +47,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Modules
             var type = typeof(MetadataPollingHttpModule);
             var serviceProperty = type.GetProperty("PollingService");
             
-            Assert.IsNotNull(serviceProperty);
+            Assert.That(serviceProperty, Is.Not.Null);
         }
 
         [Test]
@@ -60,7 +60,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Modules
         [Test]
         public void IHttpModule_ImplementsInterface()
         {
-            Assert.IsTrue(typeof(IHttpModule).IsAssignableFrom(typeof(MetadataPollingHttpModule)));
+            Assert.That(typeof(IHttpModule).IsAssignableFrom(typeof(MetadataPollingHttpModule)), Is.True);
         }
     }
 }

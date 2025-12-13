@@ -1,5 +1,5 @@
-using System;
 using Microsoft.IdentityModel.Protocols.WsFederation;
+using System;
 
 namespace IdentityMetadataFetcher.Models
 {
@@ -20,8 +20,9 @@ namespace IdentityMetadataFetcher.Models
 
         /// <summary>
         /// Gets or sets the metadata configuration if fetch was successful.
+        /// Can be WsFederationConfiguration for WSFED metadata or EntityDescriptor for SAML metadata.
         /// </summary>
-        public WsFederationConfiguration Metadata { get; set; }
+        public object Metadata { get; set; }
 
         /// <summary>
         /// Gets or sets the raw metadata XML if fetch was successful.
@@ -51,7 +52,7 @@ namespace IdentityMetadataFetcher.Models
         /// <summary>
         /// Creates a successful result.
         /// </summary>
-        public static MetadataFetchResult Success(IssuerEndpoint endpoint, WsFederationConfiguration metadata, string rawMetadata)
+        public static MetadataFetchResult Success(IssuerEndpoint endpoint, object metadata, string rawMetadata)
         {
             return new MetadataFetchResult
             {

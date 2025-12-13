@@ -1,9 +1,9 @@
+using IdentityMetadataFetcher.Models;
+using IdentityMetadataFetcher.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using IdentityMetadataFetcher.Models;
-using IdentityMetadataFetcher.Services;
 
 namespace IdentityMetadataFetcher.Tests.Mocks
 {

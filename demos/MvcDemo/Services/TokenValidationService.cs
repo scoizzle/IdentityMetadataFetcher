@@ -1,9 +1,9 @@
+using IdentityMetadataFetcher.Iis.Modules;
+using MvcDemo.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using IdentityMetadataFetcher.Iis.Modules;
-using MvcDemo.Models;
 
 namespace MvcDemo.Services
 {

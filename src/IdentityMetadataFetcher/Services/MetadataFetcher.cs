@@ -1,14 +1,15 @@
+using IdentityMetadataFetcher.Exceptions;
+using IdentityMetadataFetcher.Models;
+using Microsoft.IdentityModel.Protocols.WsFederation;
 using System;
 using System.Collections.Generic;
-using Microsoft.IdentityModel.Protocols.WsFederation;
 using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
-using IdentityMetadataFetcher.Exceptions;
-using IdentityMetadataFetcher.Models;
+using System.Xml.Linq;
 
 namespace IdentityMetadataFetcher.Services
 {
@@ -158,7 +159,7 @@ namespace IdentityMetadataFetcher.Services
             return completedResults;
         }
 
-        private WsFederationConfiguration FetchMetadataInternal(IssuerEndpoint endpoint)
+        private object FetchMetadataInternal(IssuerEndpoint endpoint)
         {
             var timeout = endpoint.Timeout ?? _options.DefaultTimeoutMs;
             var metadataXml = DownloadMetadataXml(endpoint.Endpoint, timeout);
@@ -166,7 +167,7 @@ namespace IdentityMetadataFetcher.Services
             return ParseMetadata(metadataXml, endpoint.MetadataType);
         }
 
-        private async Task<WsFederationConfiguration> FetchMetadataInternalAsync(IssuerEndpoint endpoint)
+        private async Task<object> FetchMetadataInternalAsync(IssuerEndpoint endpoint)
         {
             var timeout = endpoint.Timeout ?? _options.DefaultTimeoutMs;
             var metadataXml = await DownloadMetadataXmlAsync(endpoint.Endpoint, timeout);
@@ -263,23 +264,71 @@ namespace IdentityMetadataFetcher.Services
             );
         }
 
-        private WsFederationConfiguration ParseMetadata(string metadataXml, MetadataType metadataType)
+        private object ParseMetadata(string metadataXml, MetadataType metadataType)
         {
             if (string.IsNullOrWhiteSpace(metadataXml))
                 throw new MetadataFetchException("Downloaded metadata is empty or null");
 
             try
             {
+                // Validate metadata type by checking the XML structure
+                var doc = XDocument.Parse(metadataXml);
+                var rootElement = doc.Root?.Name.LocalName ?? "";
+                
+                // SAML metadata has EntityDescriptor as root, WS-Federation has EntityDescriptor within a different structure
+                bool isSamlMetadata = rootElement == "EntityDescriptor";
+                
+                // If metadataType is SAML but XML doesn't match, log this mismatch
+                if (metadataType == MetadataType.SAML && !isSamlMetadata)
+                {
+                    throw new MetadataFetchException(
+                        $"Metadata type mismatch: Expected SAML metadata but root element is '{rootElement}'. " +
+                        $"The endpoint may be serving the wrong metadata format."
+                    );
+                }
+                
+                if (metadataType == MetadataType.WSFED && isSamlMetadata)
+                {
+                    throw new MetadataFetchException(
+                        $"Metadata type mismatch: Expected WS-Federation metadata but received SAML EntityDescriptor. " +
+                        $"The endpoint may be configured for the wrong metadata type."
+                    );
+                }
+
                 using var reader = XmlReader.Create(new StringReader(metadataXml));
-                var serializer = new WsFederationMetadataSerializer();
-                var metadata = serializer.ReadMetadata(reader);
-                return metadata;
+                
+                if (metadataType == MetadataType.WSFED)
+                {
+                    var serializer = new WsFederationMetadataSerializer();
+                    return serializer.ReadMetadata(reader);
+                }
+                else if (metadataType == MetadataType.SAML)
+                {
+                    // For SAML metadata, we parse it as EntityDescriptor using the SAML metadata serializer
+                    // The Microsoft.IdentityModel library doesn't provide a dedicated SAML metadata deserializer
+                    // Instead, return the parsed XDocument which can be used to extract EntityDescriptor information
+                    return doc.Root; // Return the EntityDescriptor element
+                }
+                else
+                {
+                    throw new MetadataFetchException($"Unsupported metadata type: {metadataType}");
+                }
+            }
+            catch (MetadataFetchException)
+            {
+                throw;
+            }
+            catch (XmlException ex)
+            {
+                throw new MetadataFetchException(
+                    $"Failed to parse metadata as {metadataType}: Invalid XML format - {ex.Message}",
+                    ex
+                );
             }
             catch (Exception ex)
             {
                 throw new MetadataFetchException(
                     $"Failed to parse metadata as {metadataType}: {ex.Message}",
-                    null,
                     ex
                 );
             }

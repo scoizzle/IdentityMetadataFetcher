@@ -1,6 +1,6 @@
+using IdentityMetadataFetcher.Models;
 using System;
 using System.Configuration;
-using IdentityMetadataFetcher.Models;
 
 namespace IdentityMetadataFetcher.Iis.Configuration
 {

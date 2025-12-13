@@ -1,13 +1,13 @@
-using System;
-using System.Collections.Generic;
-using Microsoft.IdentityModel.Protocols.WsFederation;
-using System.Linq;
-using System.Threading.Tasks;
-using NUnit.Framework;
 using IdentityMetadataFetcher.Iis.Services;
 using IdentityMetadataFetcher.Iis.Tests.Mocks; // Use IIS test mocks
 using IdentityMetadataFetcher.Models;
 using IdentityMetadataFetcher.Services;
+using Microsoft.IdentityModel.Protocols.WsFederation;
+using NUnit.Framework;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace IdentityMetadataFetcher.Iis.Tests.Services
 {
@@ -53,7 +53,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
                 "Issuer 'https://issuer1.example.com' signature key not found");
 
             var result = await _recoveryService.TryRecoverFromAuthenticationFailureAsync(ex, _endpoints);
-            Assert.IsTrue(result);
+            Assert.That(result, Is.True);
         }
 
         [Test]
@@ -64,11 +64,11 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
 
             // First recovers
             var first = await _recoveryService.TryRecoverFromAuthenticationFailureAsync(ex, _endpoints);
-            Assert.IsTrue(first);
+            Assert.That(first, Is.True);
 
             // Immediate second attempt should be throttled by polling service
             var second = await _recoveryService.TryRecoverFromAuthenticationFailureAsync(ex, _endpoints);
-            Assert.IsFalse(second);
+            Assert.That(second, Is.False);
         }
     }
 }

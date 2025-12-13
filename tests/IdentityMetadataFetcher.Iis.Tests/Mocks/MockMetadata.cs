@@ -1,7 +1,7 @@
-using System;
-using System.Collections.Generic;
 using Microsoft.IdentityModel.Protocols.WsFederation;
 using Microsoft.IdentityModel.Tokens;
+using System;
+using System.Collections.Generic;
 
 namespace IdentityMetadataFetcher.Iis.Tests.Mocks
 {

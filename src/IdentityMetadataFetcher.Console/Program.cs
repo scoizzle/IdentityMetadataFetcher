@@ -1,14 +1,14 @@
+using IdentityMetadataFetcher.Models;
+using IdentityMetadataFetcher.Services;
+using Microsoft.IdentityModel.Protocols.WsFederation;
+using Microsoft.IdentityModel.Tokens;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Threading.Tasks;
-using Microsoft.IdentityModel.Protocols.WsFederation;
-using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography.X509Certificates;
-using System.Collections.Generic;
-using IdentityMetadataFetcher.Models;
-using IdentityMetadataFetcher.Services;
+using System.Threading.Tasks;
 
 namespace IdentityMetadataFetcher.ConsoleApp
 {
@@ -215,7 +215,7 @@ namespace IdentityMetadataFetcher.ConsoleApp
             Console.WriteLine("  --interval-min  Polling interval in minutes (default 15, minimum 1)");
         }
 
-        private static void PrintMetadataSummary(WsFederationConfiguration metadata)
+        private static void PrintMetadataSummary(object metadata)
         {
             if (metadata == null)
             {
@@ -223,28 +223,52 @@ namespace IdentityMetadataFetcher.ConsoleApp
                 return;
             }
 
-            Console.WriteLine();
-            Console.WriteLine("Summary:");
-            Console.WriteLine(new string('-', 80));
-            Console.WriteLine($"Issuer: {metadata.Issuer}");
-
-            // Token endpoint
-            if (!string.IsNullOrEmpty(metadata.TokenEndpoint))
+            // Check if it's WsFederationConfiguration
+            if (metadata is WsFederationConfiguration fedMetadata)
             {
-                Console.WriteLine($"Token Endpoint: {metadata.TokenEndpoint}");
+                Console.WriteLine();
+                Console.WriteLine("Summary:");
+                Console.WriteLine(new string('-', 80));
+                Console.WriteLine($"Issuer: {fedMetadata.Issuer}");
+
+                // Token endpoint
+                if (!string.IsNullOrEmpty(fedMetadata.TokenEndpoint))
+                {
+                    Console.WriteLine($"Token Endpoint: {fedMetadata.TokenEndpoint}");
+                }
+
+                // Signing keys
+                if (fedMetadata.SigningKeys != null && fedMetadata.SigningKeys.Any())
+                {
+                    Console.WriteLine($"Signing Keys: {fedMetadata.SigningKeys.Count}");
+                    PrintKeyInformation(fedMetadata.SigningKeys);
+                }
+
+                // Additional properties
+                if (fedMetadata.KeyInfos != null && fedMetadata.KeyInfos.Any())
+                {
+                    Console.WriteLine($"Key Infos: {fedMetadata.KeyInfos.Count}");
+                }
             }
-
-            // Signing keys
-            if (metadata.SigningKeys != null && metadata.SigningKeys.Any())
+            else if (metadata is System.Xml.Linq.XElement samlMetadata)
             {
-                Console.WriteLine($"Signing Keys: {metadata.SigningKeys.Count}");
-                PrintKeyInformation(metadata.SigningKeys);
+                Console.WriteLine();
+                Console.WriteLine("Summary:");
+                Console.WriteLine(new string('-', 80));
+                Console.WriteLine($"SAML EntityDescriptor: {samlMetadata.Name.LocalName}");
+                
+                var entityId = samlMetadata.Attribute("entityID")?.Value;
+                if (!string.IsNullOrWhiteSpace(entityId))
+                {
+                    Console.WriteLine($"Entity ID: {entityId}");
+                }
             }
-
-            // Additional properties
-            if (metadata.KeyInfos != null && metadata.KeyInfos.Any())
+            else
             {
-                Console.WriteLine($"Key Infos: {metadata.KeyInfos.Count}");
+                Console.WriteLine();
+                Console.WriteLine("Summary:");
+                Console.WriteLine(new string('-', 80));
+                Console.WriteLine($"Metadata type: {metadata.GetType().Name}");
             }
         }
 

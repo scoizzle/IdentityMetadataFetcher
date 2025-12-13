@@ -1,6 +1,6 @@
+using Microsoft.IdentityModel.Protocols.WsFederation;
 using System;
 using System.Collections.Generic;
-using Microsoft.IdentityModel.Protocols.WsFederation;
 using System.Linq;
 
 namespace IdentityMetadataFetcher.Services
@@ -22,7 +22,7 @@ namespace IdentityMetadataFetcher.Services
         /// <summary>
         /// Stores metadata in the cache.
         /// </summary>
-        public void AddOrUpdateMetadata(string issuerId, WsFederationConfiguration metadata, string rawXml)
+        public void AddOrUpdateMetadata(string issuerId, object metadata, string rawXml)
         {
             if (string.IsNullOrWhiteSpace(issuerId))
                 throw new ArgumentException("issuerId cannot be null or empty", nameof(issuerId));
@@ -45,7 +45,7 @@ namespace IdentityMetadataFetcher.Services
         /// <summary>
         /// Retrieves metadata from the cache.
         /// </summary>
-        public WsFederationConfiguration GetMetadata(string issuerId)
+        public object GetMetadata(string issuerId)
         {
             if (string.IsNullOrWhiteSpace(issuerId))
                 throw new ArgumentException("issuerId cannot be null or empty", nameof(issuerId));
@@ -165,8 +165,9 @@ namespace IdentityMetadataFetcher.Services
 
         /// <summary>
         /// Gets or sets the parsed metadata configuration from Microsoft.IdentityModel.
+        /// Can be WsFederationConfiguration for WSFED or XElement for SAML metadata.
         /// </summary>
-        public WsFederationConfiguration Metadata { get; set; }
+        public object Metadata { get; set; }
 
         /// <summary>
         /// Gets or sets the raw XML representation of the metadata.

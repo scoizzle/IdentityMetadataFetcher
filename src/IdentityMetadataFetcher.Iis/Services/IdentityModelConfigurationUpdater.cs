@@ -1,12 +1,12 @@
+using IdentityMetadataFetcher.Services; // Core library
+using Microsoft.IdentityModel.Protocols.WsFederation;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
-using Microsoft.IdentityModel.Protocols.WsFederation;
 using System.IdentityModel.Services;
 using System.IdentityModel.Tokens;
-using Microsoft.IdentityModel.Tokens;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
-using IdentityMetadataFetcher.Services; // Core library
 
 namespace IdentityMetadataFetcher.Iis.Services
 {
@@ -26,20 +26,29 @@ namespace IdentityMetadataFetcher.Iis.Services
             if (entry == null || entry.Metadata == null)
                 return;
 
-            var fedConfig = FederatedAuthentication.FederationConfiguration;
-            if (fedConfig == null || fedConfig.IdentityConfiguration == null)
+            // Only process WsFederationConfiguration; SAML metadata requires different handling
+            var fedConfig = entry.Metadata as WsFederationConfiguration;
+            if (fedConfig == null)
+            {
+                System.Diagnostics.Trace.TraceInformation(
+                    $"IdentityModelConfigurationUpdater: Skipping metadata of type {entry.Metadata.GetType().Name} (only WsFederationConfiguration is supported)");
+                return;
+            }
+
+            var authConfig = FederatedAuthentication.FederationConfiguration;
+            if (authConfig == null || authConfig.IdentityConfiguration == null)
                 return; // Federation not initialized in this app
 
             // Ensure we have a configuration-based issuer name registry to receive cert thumbprints
-            var registry = fedConfig.IdentityConfiguration.IssuerNameRegistry as ConfigurationBasedIssuerNameRegistry;
+            var registry = authConfig.IdentityConfiguration.IssuerNameRegistry as ConfigurationBasedIssuerNameRegistry;
             if (registry == null)
             {
                 registry = new ConfigurationBasedIssuerNameRegistry();
-                fedConfig.IdentityConfiguration.IssuerNameRegistry = registry;
+                authConfig.IdentityConfiguration.IssuerNameRegistry = registry;
             }
 
             // Extract signing certificates from the metadata
-            var signingCerts = ExtractSigningCertificates(entry.Metadata);
+            var signingCerts = ExtractSigningCertificates(fedConfig);
 
             // Register each certificate thumbprint as trusted for this issuer
             foreach (var cert in signingCerts)
@@ -56,7 +65,7 @@ namespace IdentityMetadataFetcher.Iis.Services
             }
 
             // Optionally refresh WS-Fed issuer endpoint if metadata provides it
-            var issuerEndpoint = TryGetPassiveStsEndpoint(entry.Metadata);
+            var issuerEndpoint = TryGetPassiveStsEndpoint(fedConfig);
             if (!string.IsNullOrWhiteSpace(issuerEndpoint))
             {
                 try

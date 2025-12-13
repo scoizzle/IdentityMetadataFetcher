@@ -1,14 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using IdentityMetadataFetcher.Iis.Modules;
 using IdentityMetadataFetcher.Models;
 using IdentityMetadataFetcher.Services;
-using MvcDemo.Models;
 using Microsoft.IdentityModel.Protocols.WsFederation;
-using System.Security.Cryptography.X509Certificates;
 using Microsoft.IdentityModel.Tokens;
+using MvcDemo.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 
 namespace MvcDemo.Services
 {
@@ -219,46 +219,68 @@ namespace MvcDemo.Services
                                 issuer.HasMetadata = true;
                                 issuer.LastMetadataFetch = cacheEntry.CachedAt;
 
-                                // Extract metadata from WsFederationConfiguration
+                                // Extract metadata based on type
                                 if (cacheEntry.Metadata != null)
                                 {
-                                    var config = cacheEntry.Metadata;
-                                    issuer.EntityId = config.Issuer;
-
-                                // Token endpoint
-                                if (!string.IsNullOrEmpty(config.TokenEndpoint))
-                                {
-                                    issuer.Endpoints.Add(new IssuerEndpointViewModel
+                                    // Handle WsFederationConfiguration
+                                    if (cacheEntry.Metadata is WsFederationConfiguration config)
                                     {
-                                        Binding = "WS-Federation",
-                                        Location = config.TokenEndpoint
-                                    });
-                                }
+                                        issuer.EntityId = config.Issuer;
 
-                                // Signing certificates from WsFederationConfiguration
-                                if (config.SigningKeys != null)
-                                {
-                                    foreach (var key in config.SigningKeys)
-                                    {
-                                        if (key is X509SecurityKey x509Key)
+                                        // Signing certificates from WsFederationConfiguration
+                                        if (config.SigningKeys != null)
                                         {
-                                            var cert = new SigningCertificateViewModel
+                                            foreach (var key in config.SigningKeys)
                                             {
-                                                Subject = x509Key.Certificate.Subject,
-                                                Issuer = x509Key.Certificate.Issuer,
-                                                Thumbprint = x509Key.Certificate.Thumbprint,
-                                                NotBefore = x509Key.Certificate.NotBefore,
-                                                NotAfter = x509Key.Certificate.NotAfter,
-                                                Status = GetCertificateStatus(x509Key.Certificate)
-                                            };
-                                            AddCertificateIfNotExists(issuer.SigningCertificates, cert);
+                                                if (key is X509SecurityKey x509Key)
+                                                {
+                                                    var cert = new SigningCertificateViewModel
+                                                    {
+                                                        Subject = x509Key.Certificate.Subject,
+                                                        Issuer = x509Key.Certificate.Issuer,
+                                                        Thumbprint = x509Key.Certificate.Thumbprint,
+                                                        NotBefore = x509Key.Certificate.NotBefore,
+                                                        NotAfter = x509Key.Certificate.NotAfter,
+                                                        Status = GetCertificateStatus(x509Key.Certificate)
+                                                    };
+                                                    AddCertificateIfNotExists(issuer.SigningCertificates, cert);
+                                                }
+                                            }
                                         }
+
+                                        issuer.RoleType = "WS-Federation / SAML2 Token Service";
+                                    }
+                                    // Handle SAML metadata (XElement or other types)
+                                    else if (cacheEntry.Metadata.GetType().Name == "XElement")
+                                    {
+                                        // SAML metadata - try to extract entityID attribute
+                                        dynamic samlMetadata = cacheEntry.Metadata;
+                                        try
+                                        {
+                                            var entityIdAttr = samlMetadata.Attribute("entityID");
+                                            if (entityIdAttr != null)
+                                            {
+                                                issuer.EntityId = entityIdAttr.Value;
+                                            }
+                                        }
+                                        catch
+                                        {
+                                            // If we can't extract entityID, just mark it as SAML
+                                        }
+                                        issuer.RoleType = "SAML 2.0 Identity Provider";
+                                        issuer.MetadataError = "SAML metadata is cached but detailed certificate extraction is not yet supported in this UI.";
+                                    }
+                                    else
+                                    {
+                                        issuer.HasMetadata = false;
+                                        issuer.MetadataError = "Metadata type is not recognized.";
                                     }
                                 }
-
-                                    issuer.RoleType = "WS-Federation / SAML2 Token Service";
+                                else
+                                {
+                                    issuer.HasMetadata = false;
+                                    issuer.MetadataError = "Metadata has not been fetched yet. It will be available after the next polling cycle.";
                                 }
-                            }
                             }
                             else
                             {
