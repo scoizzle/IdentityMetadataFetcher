@@ -133,8 +133,8 @@
                     </div>
                     <div class="col-md-3">
                         <div class="stat-card p-3 bg-warning bg-opacity-10 border border-warning rounded-3 text-center">
-                            <div class="stat-number h2 text-warning mb-1">@Model.Sum(m => m.SigningCertificates.Count)</div>
-                            <div class="stat-label text-muted">Certificates</div>
+                            <div class="stat-number h2 text-warning mb-1">@(Model.Sum(m => m.SigningCertificates.Count) + Model.Sum(m => m.EncryptionCertificates.Count))</div>
+                            <div class="stat-label text-muted">Total Certificates</div>
                         </div>
                     </div>
                 </div>
@@ -249,28 +249,214 @@
                                         </div>
                                     }
 
-                                    <!-- Endpoints -->
-                                    @if (issuer.Endpoints.Count > 0)
+                                    <!-- Organization Information -->
+                                    @if (!string.IsNullOrEmpty(issuer.OrganizationName) || !string.IsNullOrEmpty(issuer.OrganizationDisplayName))
                                     {
                                         <div class="mb-4">
                                             <h6 class="mb-3">
-                                                <i class="fas fa-plug text-primary me-2"></i>
-                                                Service Endpoints (@issuer.Endpoints.Count)
+                                                <i class="fas fa-building text-primary me-2"></i>
+                                                Organization Information
                                             </h6>
                                             <div class="row g-3">
-                                                @foreach (var endpoint in issuer.Endpoints)
+                                                @if (!string.IsNullOrEmpty(issuer.OrganizationName))
+                                                {
+                                                    <div class="col-md-6">
+                                                        <div class="org-card p-3 border rounded-3">
+                                                            <div class="d-flex align-items-center mb-2">
+                                                                <i class="fas fa-tag text-info me-2"></i>
+                                                                <h6 class="mb-0">Organization Name</h6>
+                                                            </div>
+                                                            <p class="mb-0">@issuer.OrganizationName</p>
+                                                        </div>
+                                                    </div>
+                                                }
+                                                @if (!string.IsNullOrEmpty(issuer.OrganizationDisplayName))
+                                                {
+                                                    <div class="col-md-6">
+                                                        <div class="org-card p-3 border rounded-3">
+                                                            <div class="d-flex align-items-center mb-2">
+                                                                <i class="fas fa-eye text-info me-2"></i>
+                                                                <h6 class="mb-0">Display Name</h6>
+                                                            </div>
+                                                            <p class="mb-0">@issuer.OrganizationDisplayName</p>
+                                                        </div>
+                                                    </div>
+                                                }
+                                                @if (!string.IsNullOrEmpty(issuer.OrganizationUrl))
+                                                {
+                                                    <div class="col-md-12">
+                                                        <div class="org-card p-3 border rounded-3">
+                                                            <div class="d-flex align-items-center mb-2">
+                                                                <i class="fas fa-globe text-info me-2"></i>
+                                                                <h6 class="mb-0">Organization URL</h6>
+                                                            </div>
+                                                            <p class="mb-0">
+                                                                <a href="@issuer.OrganizationUrl" target="_blank" class="text-decoration-none">
+                                                                    @issuer.OrganizationUrl
+                                                                </a>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <!-- Contact Information -->
+                                    @if (!string.IsNullOrEmpty(issuer.TechnicalContactEmail) || !string.IsNullOrEmpty(issuer.SupportContactEmail))
+                                    {
+                                        <div class="mb-4">
+                                            <h6 class="mb-3">
+                                                <i class="fas fa-address-book text-primary me-2"></i>
+                                                Contact Information
+                                            </h6>
+                                            <div class="row g-3">
+                                                @if (!string.IsNullOrEmpty(issuer.TechnicalContactEmail))
+                                                {
+                                                    <div class="col-md-6">
+                                                        <div class="contact-card p-3 border rounded-3">
+                                                            <div class="d-flex align-items-center mb-2">
+                                                                <i class="fas fa-tools text-warning me-2"></i>
+                                                                <h6 class="mb-0">Technical Contact</h6>
+                                                            </div>
+                                                            @if (!string.IsNullOrEmpty(issuer.TechnicalContactGivenName) || !string.IsNullOrEmpty(issuer.TechnicalContactSurname))
+                                                            {
+                                                                <p class="mb-1">@issuer.TechnicalContactGivenName @issuer.TechnicalContactSurname</p>
+                                                            }
+                                                            <p class="mb-0">
+                                                                <a href="mailto:@issuer.TechnicalContactEmail" class="text-decoration-none">
+                                                                    <i class="fas fa-envelope me-1"></i>@issuer.TechnicalContactEmail
+                                                                </a>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                }
+                                                @if (!string.IsNullOrEmpty(issuer.SupportContactEmail))
+                                                {
+                                                    <div class="col-md-6">
+                                                        <div class="contact-card p-3 border rounded-3">
+                                                            <div class="d-flex align-items-center mb-2">
+                                                                <i class="fas fa-life-ring text-success me-2"></i>
+                                                                <h6 class="mb-0">Support Contact</h6>
+                                                            </div>
+                                                            <p class="mb-0">
+                                                                <a href="mailto:@issuer.SupportContactEmail" class="text-decoration-none">
+                                                                    <i class="fas fa-envelope me-1"></i>@issuer.SupportContactEmail
+                                                                </a>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <!-- Protocol & Security Settings -->
+                                    @if (issuer.ProtocolsSupported.Any() || issuer.WantAuthnRequestsSigned.HasValue || issuer.AuthnRequestsSigned.HasValue || issuer.WantAssertionsSigned.HasValue)
+                                    {
+                                        <div class="mb-4">
+                                            <h6 class="mb-3">
+                                                <i class="fas fa-shield-alt text-primary me-2"></i>
+                                                Protocol & Security Settings
+                                            </h6>
+                                            <div class="row g-3">
+                                                @if (issuer.ProtocolsSupported.Any())
+                                                {
+                                                    <div class="col-md-6">
+                                                        <div class="security-card p-3 border rounded-3">
+                                                            <div class="d-flex align-items-center mb-2">
+                                                                <i class="fas fa-code text-info me-2"></i>
+                                                                <h6 class="mb-0">Supported Protocols</h6>
+                                                            </div>
+                                                            <div>
+                                                                @foreach (var protocol in issuer.ProtocolsSupported)
+                                                                {
+                                                                    <span class="badge bg-info me-1 mb-1">@protocol</span>
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                                <div class="col-md-6">
+                                                    <div class="security-card p-3 border rounded-3">
+                                                        <div class="d-flex align-items-center mb-2">
+                                                            <i class="fas fa-key text-warning me-2"></i>
+                                                            <h6 class="mb-0">Security Settings</h6>
+                                                        </div>
+                                                        <div class="small">
+                                                            @if (issuer.WantAuthnRequestsSigned.HasValue)
+                                                            {
+                                                                <div class="mb-1">
+                                                                    <i class="fas fa-@(issuer.WantAuthnRequestsSigned.Value ? "check" : "times") text-@(issuer.WantAuthnRequestsSigned.Value ? "success" : "danger") me-1"></i>
+                                                                    Wants AuthnRequests Signed
+                                                                </div>
+                                                            }
+                                                            @if (issuer.AuthnRequestsSigned.HasValue)
+                                                            {
+                                                                <div class="mb-1">
+                                                                    <i class="fas fa-@(issuer.AuthnRequestsSigned.Value ? "check" : "times") text-@(issuer.AuthnRequestsSigned.Value ? "success" : "danger") me-1"></i>
+                                                                    AuthnRequests Signed
+                                                                </div>
+                                                            }
+                                                            @if (issuer.WantAssertionsSigned.HasValue)
+                                                            {
+                                                                <div class="mb-1">
+                                                                    <i class="fas fa-@(issuer.WantAssertionsSigned.Value ? "check" : "times") text-@(issuer.WantAssertionsSigned.Value ? "success" : "danger") me-1"></i>
+                                                                    Wants Assertions Signed
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <!-- NameID Formats -->
+                                    @if (issuer.NameIdFormats.Any())
+                                    {
+                                        <div class="mb-4">
+                                            <h6 class="mb-3">
+                                                <i class="fas fa-id-card text-primary me-2"></i>
+                                                Supported NameID Formats (@issuer.NameIdFormats.Count)
+                                            </h6>
+                                            <div class="nameid-card p-3 border rounded-3">
+                                                @foreach (var format in issuer.NameIdFormats)
+                                                {
+                                                    <div class="mb-2">
+                                                        <code class="bg-light px-2 py-1 rounded">@format</code>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <!-- Single Logout Endpoints -->
+                                    @if (issuer.SingleLogoutEndpoints.Any())
+                                    {
+                                        <div class="mb-4">
+                                            <h6 class="mb-3">
+                                                <i class="fas fa-sign-out-alt text-primary me-2"></i>
+                                                Single Logout Endpoints (@issuer.SingleLogoutEndpoints.Count)
+                                            </h6>
+                                            <div class="row g-3">
+                                                @foreach (var slo in issuer.SingleLogoutEndpoints)
                                                 {
                                                     <div class="col-md-6">
                                                         <div class="endpoint-card p-3 border rounded-3">
                                                             <div class="d-flex align-items-start">
-                                                                <i class="fas fa-link text-info me-3 mt-1"></i>
+                                                                <i class="fas fa-sign-out-alt text-warning me-3 mt-1"></i>
                                                                 <div class="flex-grow-1">
-                                                                    <div class="badge bg-info mb-2">@endpoint.Binding</div>
+                                                                    <div class="badge bg-warning text-dark mb-2">SLO</div>
                                                                     <p class="mb-0">
-                                                                        <a href="@endpoint.Location" target="_blank" class="text-decoration-none small text-break">
-                                                                            @endpoint.Location
+                                                                        <a href="@slo.Location" target="_blank" class="text-decoration-none small text-break">
+                                                                            @slo.Location
                                                                         </a>
                                                                     </p>
+                                                                    @if (!string.IsNullOrEmpty(slo.Binding))
+                                                                    {
+                                                                        <small class="text-muted">Binding: @slo.Binding</small>
+                                                                    }
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -280,26 +466,30 @@
                                         </div>
                                     }
 
-                                    <!-- Certificates -->
-                                    @if (issuer.SigningCertificates.Count > 0)
+                                    <!-- Encryption Certificates -->
+                                    @if (issuer.EncryptionCertificates.Any())
                                     {
-                                        <div class="mb-0">
+                                        <div class="mb-4">
                                             <h6 class="mb-3">
-                                                <i class="fas fa-certificate text-primary me-2"></i>
-                                                Signing Certificates (@issuer.SigningCertificates.Count)
+                                                <i class="fas fa-lock text-primary me-2"></i>
+                                                Encryption Certificates (@issuer.EncryptionCertificates.Count)
                                             </h6>
                                             <div class="row g-3">
-                                                @foreach (var cert in issuer.SigningCertificates)
+                                                @foreach (var cert in issuer.EncryptionCertificates)
                                                 {
                                                     <div class="col-md-6">
                                                         <div class="certificate-card p-3 border rounded-3">
                                                             <div class="d-flex align-items-start">
-                                                                <i class="fas fa-shield-alt text-success me-3 mt-1"></i>
+                                                                <i class="fas fa-lock text-info me-3 mt-1"></i>
                                                                 <div class="flex-grow-1">
-                                                                    <h6 class="mb-2">Certificate</h6>
+                                                                    <h6 class="mb-2">Encryption Certificate</h6>
                                                                     <div class="mb-2">
                                                                         <small class="text-muted">Subject:</small><br>
                                                                         <small class="font-monospace">@cert.Subject</small>
+                                                                    </div>
+                                                                    <div class="mb-2">
+                                                                        <small class="text-muted">Thumbprint:</small><br>
+                                                                        <small class="font-monospace">@cert.Thumbprint</small>
                                                                     </div>
                                                                     <div class="mb-2">
                                                                         <small class="text-muted">Valid:</small>
@@ -323,7 +513,6 @@
                                             </div>
                                         </div>
                                     }
-                                
                                 </div>
                             }
                         </div>
@@ -389,12 +578,12 @@
         background-color: #f8f9fa !important;
     }
 
-    .endpoint-card, .certificate-card {
+    .endpoint-card, .certificate-card, .org-card, .contact-card, .security-card, .nameid-card {
         transition: all 0.3s ease;
         background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     }
 
-    .endpoint-card:hover, .certificate-card:hover {
+    .endpoint-card:hover, .certificate-card:hover, .org-card:hover, .contact-card:hover, .security-card:hover, .nameid-card:hover {
         transform: translateX(5px);
         box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }

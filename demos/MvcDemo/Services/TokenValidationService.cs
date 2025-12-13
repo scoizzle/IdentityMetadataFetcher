@@ -298,10 +298,61 @@ namespace MvcDemo.Services
                             var notOnOrAfterStr = tokenXml.Substring(start, end - start);
                             if (DateTime.TryParse(notOnOrAfterStr, out var notOnOrAfter))
                             {
+
                                 if (DateTime.UtcNow >= notOnOrAfter)
                                 {
                                     result.Message = "Token expired";
                                     result.ErrorDetails = "The token has expired";
+                                    return result;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Check for NotBefore (token not yet valid)
+                if (tokenXml.Contains("NotBefore"))
+                {
+                    var notBeforeIndex = tokenXml.IndexOf("NotBefore=\"");
+                    if (notBeforeIndex > 0)
+                    {
+                        var start = notBeforeIndex + "NotBefore=\"".Length;
+                        var end = tokenXml.IndexOf("\"", start);
+                        if (end > start)
+                        {
+                            var notBeforeStr = tokenXml.Substring(start, end - start);
+                            if (DateTime.TryParse(notBeforeStr, out var notBefore))
+                            {
+                                if (DateTime.UtcNow < notBefore)
+                                {
+                                    result.Message = "Token not yet valid";
+                                    result.ErrorDetails = $"The token is not valid until {notBefore.ToString("yyyy-MM-dd HH:mm:ss")} UTC";
+                                    return result;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Check IssueInstant (should not be in the future)
+                if (tokenXml.Contains("IssueInstant"))
+                {
+                    var issueInstantIndex = tokenXml.IndexOf("IssueInstant=\"");
+                    if (issueInstantIndex > 0)
+                    {
+                        var start = issueInstantIndex + "IssueInstant=\"".Length;
+                        var end = tokenXml.IndexOf("\"", start);
+                        if (end > start)
+                        {
+                            var issueInstantStr = tokenXml.Substring(start, end - start);
+                            if (DateTime.TryParse(issueInstantStr, out var issueInstant))
+                            {
+                                // Allow for some clock skew (5 minutes)
+                                var maxClockSkew = TimeSpan.FromMinutes(5);
+                                if (issueInstant > DateTime.UtcNow.Add(maxClockSkew))
+                                {
+                                    result.Message = "Token issued in the future";
+                                    result.ErrorDetails = $"The token was issued at {issueInstant.ToString("yyyy-MM-dd HH:mm:ss")} UTC, which is in the future";
                                     return result;
                                 }
                             }
