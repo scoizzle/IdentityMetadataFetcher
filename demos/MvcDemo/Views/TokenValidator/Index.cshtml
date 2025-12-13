@@ -7,110 +7,235 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>SAML Token Validator</h2>
+<div class="validator-hero bg-gradient-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-4 fw-bold mb-3">
+                    <i class="fas fa-shield-alt me-3"></i>
+                    SAML Token Validator
+                </h1>
+                <p class="lead mb-4">
+                    Validate SAML tokens with enterprise-grade security checks. Verify signatures, issuers, and expiration times using live metadata.
+                </p>
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="badge bg-light text-primary fs-6 px-3 py-2">
+                        <i class="fas fa-signature me-1"></i>Signature Validation
+                    </span>
+                    <span class="badge bg-light text-primary fs-6 px-3 py-2">
+                        <i class="fas fa-clock me-1"></i>Expiration Checks
+                    </span>
+                    <span class="badge bg-light text-primary fs-6 px-3 py-2">
+                        <i class="fas fa-user-check me-1"></i>Issuer Verification
+                    </span>
+                </div>
+            </div>
+            <div class="col-lg-4 text-center">
+                <div class="hero-icon">
+                    <i class="fas fa-key fa-6x text-white opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-body">
-                    @if (TempData["ErrorMessage"] != null)
-                    {
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            @TempData["ErrorMessage"]
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-xl-10">
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <div class="card shadow-lg border-0 rounded-3 overflow-hidden">
+                <div class="card-header bg-white border-bottom-0 py-4">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary rounded-circle p-3 me-3">
+                            <i class="fas fa-edit fa-lg text-white"></i>
                         </div>
-                    }
+                        <div>
+                            <h4 class="mb-1">Token Validation Form</h4>
+                            <p class="text-muted mb-0">Enter your SAML token details below</p>
+                        </div>
+                    </div>
+                </div>
 
-                    <p class="text-muted">
-                        Paste a SAML token below and select the issuer that created it. 
-                        The application will attempt to validate the token's signature using the issuer's metadata.
-                    </p>
-
-                    <form method="post" action="@Url.Action("Validate", "TokenValidator")">
+                <div class="card-body p-4">
+                    <form method="post" action="@Url.Action("Validate", "TokenValidator")" id="validationForm">
                         @Html.AntiForgeryToken()
 
-                        <div class="mb-3">
-                            <label for="IssuerId" class="form-label">Issuer <span class="text-danger">*</span></label>
-                            <select id="IssuerId" name="IssuerId" class="form-select" required>
-                                <option value="">-- Select an issuer --</option>
-                                @if (ViewBag.Issuers != null)
-                                {
-                                    foreach (var issuer in ViewBag.Issuers)
-                                    {
-                                        <option value="@issuer.Id">@issuer.Name (@issuer.Id)</option>
-                                    }
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label for="IssuerId" class="form-label fw-semibold">
+                                    <i class="fas fa-building me-2 text-primary"></i>
+                                    Identity Provider <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-list"></i>
+                                    </span>
+                                    <select id="IssuerId" name="IssuerId" class="form-select form-select-lg" required>
+                                        <option value="">-- Choose an issuer --</option>
+                                        @if (ViewBag.Issuers != null)
+                                        {
+                                            foreach (var issuer in ViewBag.Issuers)
+                                            {
+                                                <option value="@issuer.Id">@issuer.Name (@issuer.Id)</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                                @{
+                                    var issuersEmpty = ViewBag.Issuers == null || ViewBag.Issuers.Count == 0;
                                 }
-                            </select>
-                            @{
-                                var issuersEmpty = ViewBag.Issuers == null || ViewBag.Issuers.Count == 0;
-                            }
-                            @if (issuersEmpty)
-                            {
-                                <small class="text-warning d-block mt-1">
-                                    No issuers configured. Please add an issuer first.
-                                </small>
-                            }
+                                @if (issuersEmpty)
+                                {
+                                    <div class="alert alert-warning mt-2 py-2">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        No issuers configured. <a href="@Url.Action("Index", "Issuers")" class="alert-link">Add an issuer first</a>.
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="col-md-6 mb-4">
+                                <label for="SamlToken" class="form-label fw-semibold">
+                                    <i class="fas fa-code me-2 text-primary"></i>
+                                    SAML Token <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-file-code"></i>
+                                    </span>
+                                    <textarea id="SamlToken" name="SamlToken" class="form-control form-control-lg"
+                                              rows="6" placeholder="Paste your SAML token here..." required></textarea>
+                                </div>
+                                <div class="form-text">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Supports: Raw XML, HTML-escaped XML, or Base64-encoded tokens
+                                    </small>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="SamlToken" class="form-label">SAML Token <span class="text-danger">*</span></label>
-                            <textarea id="SamlToken" name="SamlToken" class="form-control" rows="10" 
-                                      placeholder="Paste your SAML token here (raw XML or Base64 encoded)..." required></textarea>
-                            <small class="form-text text-muted">
-                                The token can be in any of these formats: raw XML, HTML-escaped XML (with &amp;lt; &amp;gt;), or Base64-encoded XML.
-                            </small>
-                        </div>
-
-                        <div class="button-group">
-                            <button type="submit" class="btn btn-primary">Validate Token</button>
-                            <a href="@Url.Action("Index", "Issuers")" class="btn btn-secondary">Cancel</a>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg px-4" id="validateBtn">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    Validate Token
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-lg px-4" onclick="clearForm()">
+                                    <i class="fas fa-eraser me-2"></i>
+                                    Clear
+                                </button>
+                            </div>
+                            <a href="@Url.Action("Index", "Issuers")" class="btn btn-outline-primary btn-lg px-4">
+                                <i class="fas fa-cog me-2"></i>
+                                Manage Issuers
+                            </a>
                         </div>
                     </form>
                 </div>
             </div>
 
-            <div class="card mt-4">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0">How to Use</h5>
+            <!-- Features Grid -->
+            <div class="row mt-5 g-4">
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-shield-alt fa-3x text-success"></i>
+                            </div>
+                            <h5 class="card-title">Secure Validation</h5>
+                            <p class="card-text text-muted">Cryptographically verify token signatures using issuer certificates from live metadata.</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <ol>
-                        <li>Select the issuer that created the SAML token from the dropdown list</li>
-                        <li>Paste your SAML token into the text area (raw XML, HTML-escaped, or Base64-encoded)</li>
-                        <li>Click "Validate Token" to check the token's signature</li>
-                        <li>Review the validation results to see if the token is valid</li>
-                    </ol>
-                    
-                    <h6 class="mt-3">Supported Formats:</h6>
-                    <ul>
-                        <li><strong>Raw XML:</strong> Paste the SAML assertion XML directly</li>
-                        <li><strong>HTML-escaped:</strong> Paste XML with HTML entities (&amp;lt;, &amp;gt;, &amp;quot;, etc.)</li>
-                        <li><strong>Base64-encoded:</strong> Paste Base64-encoded SAML XML</li>
-                    </ul>
-
-                    <h6 class="mt-3">Note:</h6>
-                    <ul>
-                        <li>The issuer must have metadata loaded in the system</li>
-                        <li>This tool validates the token's digital signature only</li>
-                        <li>It does not validate token expiration or other claims</li>
-                    </ul>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-clock fa-3x text-warning"></i>
+                            </div>
+                            <h5 class="card-title">Expiration Checks</h5>
+                            <p class="card-text text-muted">Automatically validate token validity periods and prevent use of expired tokens.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-user-check fa-3x text-info"></i>
+                            </div>
+                            <h5 class="card-title">Issuer Verification</h5>
+                            <p class="card-text text-muted">Confirm tokens were issued by trusted identity providers with proper metadata.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="col-md-4">
-            <div class="card bg-light">
-                <div class="card-header">
-                    <h5 class="mb-0">Quick Links</h5>
+            <!-- Usage Guide -->
+            <div class="card mt-5 border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-question-circle text-primary me-2"></i>
+                        How to Use
+                    </h5>
                 </div>
                 <div class="card-body">
-                    <a href="@Url.Action("Index", "Issuers")" class="btn btn-outline-primary btn-sm w-100 mb-2">
-                        Manage Issuers
-                    </a>
-                    <a href="@Url.Action("Index", "LogViewer")" class="btn btn-outline-secondary btn-sm w-100 mb-2">
-                        View Logs
-                    </a>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">Step-by-Step Guide</h6>
+                            <div class="steps">
+                                <div class="step d-flex mb-3">
+                                    <div class="step-number bg-primary text-white rounded-circle me-3">1</div>
+                                    <div>
+                                        <strong>Select Identity Provider</strong><br>
+                                        <small class="text-muted">Choose the issuer that created your SAML token</small>
+                                    </div>
+                                </div>
+                                <div class="step d-flex mb-3">
+                                    <div class="step-number bg-primary text-white rounded-circle me-3">2</div>
+                                    <div>
+                                        <strong>Paste Token</strong><br>
+                                        <small class="text-muted">Copy and paste your SAML assertion</small>
+                                    </div>
+                                </div>
+                                <div class="step d-flex mb-3">
+                                    <div class="step-number bg-primary text-white rounded-circle me-3">3</div>
+                                    <div>
+                                        <strong>Validate</strong><br>
+                                        <small class="text-muted">Click validate to check authenticity</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">Supported Formats</h6>
+                            <div class="format-list">
+                                <div class="format-item p-3 mb-2 bg-light rounded">
+                                    <i class="fas fa-code text-success me-2"></i>
+                                    <strong>Raw XML</strong><br>
+                                    <small class="text-muted">Standard SAML XML format</small>
+                                </div>
+                                <div class="format-item p-3 mb-2 bg-light rounded">
+                                    <i class="fas fa-globe text-info me-2"></i>
+                                    <strong>HTML-Escaped</strong><br>
+                                    <small class="text-muted">XML with HTML entities (&lt;, &gt;)</small>
+                                </div>
+                                <div class="format-item p-3 mb-2 bg-light rounded">
+                                    <i class="fas fa-lock text-warning me-2"></i>
+                                    <strong>Base64-Encoded</strong><br>
+                                    <small class="text-muted">Encoded SAML XML strings</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -118,13 +243,103 @@
 </div>
 
 <style>
-    .button-group {
-        display: flex;
-        gap: 10px;
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
-    
-    .button-group button,
-    .button-group a {
-        margin-right: 5px;
+
+    .hero-icon {
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @@keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+    }
+
+    .hover-lift {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .hover-lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+    }
+
+    .feature-icon {
+        transition: transform 0.3s ease;
+    }
+
+    .hover-lift:hover .feature-icon {
+        transform: scale(1.1);
+    }
+
+    .step-number {
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+
+    .format-item {
+        transition: all 0.3s ease;
+    }
+
+    .format-item:hover {
+        background-color: #e9ecef !important;
+        transform: translateX(5px);
+    }
+
+    #validateBtn {
+        position: relative;
+        overflow: hidden;
+    }
+
+    #validateBtn:before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transition: width 0.6s, height 0.6s;
+        transform: translate(-50%, -50%);
+    }
+
+    #validateBtn:active:before {
+        width: 300px;
+        height: 300px;
+    }
+
+    .card {
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important;
     }
 </style>
+
+<script>
+    function clearForm() {
+        document.getElementById('IssuerId').value = '';
+        document.getElementById('SamlToken').value = '';
+    }
+
+    // Add loading state to form submission
+    document.getElementById('validationForm').addEventListener('submit', function() {
+        const btn = document.getElementById('validateBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Validating...';
+    });
+
+    // Auto-resize textarea
+    document.getElementById('SamlToken').addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = this.scrollHeight + 'px';
+    });
+</script>

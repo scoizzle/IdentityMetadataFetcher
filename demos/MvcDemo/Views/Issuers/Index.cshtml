@@ -8,403 +8,410 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>Identity Providers (Issuers)</h2>
-
-<div class="issuers-container" style="margin: 20px 0;">
-    <div style="margin-bottom: 15px;">
-        @Html.ActionLink("Add New Issuer", "Create", "Issuers", null, new { @class = "btn btn-success" })
-    </div>
-
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @Html.Raw(TempData["SuccessMessage"].ToString().Replace("\n", "<br/>"))
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
-
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
-
-    <div class="alert alert-info" role="alert">
-        <strong>Info:</strong> This view shows the identity providers currently being monitored by the metadata polling service. You can add, edit, or remove providers using the buttons below. Changes take effect immediately.
-    </div>
-
-    @if (Model == null || Model.Count == 0)
-    {
-        <div class="alert alert-info">
-            No identity providers are currently configured. Use "Add New Issuer" to add identity providers.
-        </div>
-    }
-    else
-    {
-        foreach (var issuer in Model)
-        {
-            <div class="issuer-card card mb-4">
-                <div class="card-header bg-dark text-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="mb-0">@issuer.Name</h5>
-                            <small class="text-dark"><code>@issuer.Id</code></small>
-                        </div>
-                        <div class="issuer-actions">
-                            @Html.ActionLink("Edit", "Edit", "Issuers", new { id = issuer.Id }, new { @class = "btn btn-sm btn-primary" })
-                            <form method="post" action="@Url.Action("Delete", "Issuers")" style="display:inline;">
-                                @Html.AntiForgeryToken()
-                                @Html.Hidden("id", issuer.Id)
-                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to remove this issuer from monitoring?');">Remove</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <!-- Basic Information -->
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <h6 class="text-muted">Endpoint</h6>
-                            <p><small><a href="@issuer.Endpoint" target="_blank">@issuer.Endpoint</a></small></p>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="text-muted">Type</h6>
-                            <p><span class="badge bg-info">@issuer.MetadataType</span></p>
-                        </div>
-                    </div>
-
-                    <hr />
-
-                    <!-- Metadata Information -->
-                    @if (issuer.HasMetadata)
+<div class="issuers-hero bg-gradient-success text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-4 fw-bold mb-3">
+                    <i class="fas fa-building me-3"></i>
+                    Identity Providers
+                </h1>
+                <p class="lead mb-4">
+                    Manage SAML identity providers and monitor metadata synchronization across your enterprise.
+                    @if (Model != null && Model.Count > 0)
                     {
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <h6 class="text-muted">Role</h6>
-                                <p>@issuer.RoleType</p>
-                            </div>
-                            <div class="col-md-6">
-                                <h6 class="text-muted">Last Metadata Fetch</h6>
-                                <p>
-                                    @if (issuer.LastMetadataFetch.HasValue)
-                                    {
-                                        <small>@issuer.LastMetadataFetch.Value.ToString("yyyy-MM-dd HH:mm:ss")</small>
-                                    }
-                                    else
-                                    {
-                                        <small class="text-muted">Unknown</small>
-                                    }
-                                </p>
-                            </div>
-
-                        @if (!string.IsNullOrEmpty(issuer.EntityId))
-                        {
-                            <div class="row mb-3">
-                                <div class="col-12">
-                                    <h6 class="text-muted">Entity ID</h6>
-                                    <p><small><code>@issuer.EntityId</code></small></p>
-                                </div>
-                            </div>
-                        }
-
-                        <!-- Endpoints -->
-                        @if (issuer.Endpoints.Count > 0)
-                        {
-                            <div class="row mb-3">
-                                <div class="col-12">
-                                    <h6 class="text-muted">Endpoints (@issuer.Endpoints.Count)</h6>
-                                    <div class="endpoint-list">
-                                        @foreach (var endpoint in issuer.Endpoints)
-                                        {
-                                            <div class="endpoint-item mb-2">
-                                                <strong>@endpoint.Binding</strong>
-                                                <br />
-                                                <small><a href="@endpoint.Location" target="_blank">@endpoint.Location</a></small>
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-
-                            <hr />
-                        }
-
-                        <!-- Signing Certificates -->
-                        @if (issuer.SigningCertificates.Count > 0)
-                        {
-                            <div class="row">
-                                <div class="col-12">
-                                    <h6 class="text-muted">Signing Certificates (@issuer.SigningCertificates.Count)</h6>
-                                    <div class="certificates-list">
-                                        @foreach (var cert in issuer.SigningCertificates)
-                                        {
-                                            <div class="certificate-item mb-3 p-3 border rounded">
-                                                <div class="row mb-2">
-                                                    <div class="col-md-6">
-                                                        <small class="text-muted">Subject</small>
-                                                        <p><small><code>@cert.Subject</code></small></p>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <small class="text-muted">Issuer</small>
-                                                        <p><small><code>@cert.Issuer</code></small></p>
-                                                    </div>
-                                                </div>
-
-                                                <div class="row mb-2">
-                                                    <div class="col-12">
-                                                        <small class="text-muted">Thumbprint</small>
-                                                        <p><small><code>@cert.Thumbprint</code></small></p>
-                                                    </div>
-                                                </div>
-
-                                                <div class="row mb-2">
-                                                    <div class="col-md-6">
-                                                        <small class="text-muted">Valid From</small>
-                                                        <p><small>@cert.NotBefore.ToString("yyyy-MM-dd HH:mm:ss")</small></p>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <small class="text-muted">Valid To</small>
-                                                        <p><small>@cert.NotAfter.ToString("yyyy-MM-dd HH:mm:ss")</small></p>
-                                                    </div>
-                                                </div>
-
-                                                <div class="row">
-                                                    <div class="col-12">
-                                                        <small class="text-muted">Status</small>
-                                                        <p>
-                                                            <span class="badge @(cert.Status.Contains("EXPIRED") ? "bg-danger" : (cert.Status.Contains("Expires in") || cert.Status == "Not yet valid") ? "bg-warning" : "bg-success")">@cert.Status</span>
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                        
-                        </div>
+                        <span class="badge bg-light text-success fs-6 px-3 py-2 ms-2">@Model.Count Active Provider@(Model.Count == 1 ? "" : "s")</span>
                     }
-                    else
-                    {
-                        <div class="alert alert-warning">
-                            <h6>Metadata Not Available</h6>
-                            <p class="mb-0">
-                                @if (!string.IsNullOrEmpty(issuer.MetadataError))
-                                {
-                                    <small>@issuer.MetadataError</small>
-                                }
-                                else
-                                {
-                                    <small>Metadata has not been fetched yet. It will be available after the next polling cycle.</small>
-                                }
-                            </p>
-                        </div>
-                    }
+                </p>
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="badge bg-light text-primary fs-6 px-3 py-2">
+                        <i class="fas fa-sync me-1"></i>Metadata Polling
+                    </span>
+                    <span class="badge bg-light text-primary fs-6 px-3 py-2">
+                        <i class="fas fa-shield-alt me-1"></i>Certificate Validation
+                    </span>
+                    <span class="badge bg-light text-primary fs-6 px-3 py-2">
+                        <i class="fas fa-clock me-1"></i>Real-time Monitoring
+                    </span>
                 </div>
             </div>
-        }
-    }
+            <div class="col-lg-4 text-center">
+                <div class="hero-icon">
+                    <i class="fas fa-users-cog fa-6x text-white opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-xl-12">
+            <!-- Action Bar -->
+            <div class="card shadow-lg border-0 rounded-3 overflow-hidden mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <div>
+                            <h4 class="mb-1">Provider Management</h4>
+                            <p class="text-muted mb-0">Configure and monitor SAML identity providers</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            @Html.ActionLink("Add New Provider", "Create", "Issuers", null, new { @class = "btn btn-success btn-lg px-4" })
+                            <a href="@Url.Action("Index", "LogViewer")" class="btn btn-outline-primary btn-lg px-4">
+                                <i class="fas fa-list me-2"></i>View Logs
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts -->
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    @Html.Raw(TempData["SuccessMessage"].ToString().Replace("\n", "<br/>"))
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <!-- Info Alert -->
+            <div class="alert alert-info border-0 shadow-sm">
+                <div class="d-flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle fa-2x text-info me-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="alert-heading mb-2">Provider Management</h6>
+                        <p class="mb-0">This view shows identity providers currently monitored by the metadata polling service. Changes take effect immediately and are reflected in real-time logs.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Providers List -->
+            @if (Model == null || Model.Count == 0)
+            {
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-users fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted">No Identity Providers Configured</h4>
+                        <p class="text-muted mb-4">Get started by adding your first SAML identity provider.</p>
+                        @Html.ActionLink("Add First Provider", "Create", "Issuers", null, new { @class = "btn btn-primary btn-lg" })
+                    </div>
+                </div>
+            }
+            else
+            {
+                <!-- Statistics -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="stat-card p-3 bg-primary bg-opacity-10 border border-primary rounded-3 text-center">
+                            <div class="stat-number h2 text-primary mb-1">@Model.Count</div>
+                            <div class="stat-label text-muted">Total Providers</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card p-3 bg-success bg-opacity-10 border border-success rounded-3 text-center">
+                            <div class="stat-number h2 text-success mb-1">@Model.Count(m => m.HasMetadata)</div>
+                            <div class="stat-label text-muted">With Metadata</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card p-3 bg-info bg-opacity-10 border border-info rounded-3 text-center">
+                            <div class="stat-number h2 text-info mb-1">@Model.Sum(m => m.Endpoints.Count)</div>
+                            <div class="stat-label text-muted">Total Endpoints</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card p-3 bg-warning bg-opacity-10 border border-warning rounded-3 text-center">
+                            <div class="stat-number h2 text-warning mb-1">@Model.Sum(m => m.SigningCertificates.Count)</div>
+                            <div class="stat-label text-muted">Certificates</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Provider Cards -->
+                foreach (var issuer in Model)
+                {
+                    <div class="card provider-card shadow-sm border-0 rounded-3 overflow-hidden mb-4">
+                        <div class="card-header bg-gradient-primary text-white py-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="provider-icon me-3">
+                                        <i class="fas fa-building fa-lg"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="mb-0 fw-bold">@issuer.Name</h5>
+                                        <small class="opacity-75">
+                                            <i class="fas fa-id-badge me-1"></i>
+                                            <code class="bg-white bg-opacity-25 px-2 py-1 rounded">@issuer.Id</code>
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    @Html.ActionLink("Edit", "Edit", "Issuers", new { id = issuer.Id }, new { @class = "btn btn-light btn-sm" })
+                                    <form method="post" action="@Url.Action("Delete", "Issuers")" style="display:inline;">
+                                        @Html.AntiForgeryToken()
+                                        @Html.Hidden("id", issuer.Id)
+                                        <button type="submit" class="btn btn-outline-light btn-sm" onclick="return confirm('Are you sure you want to remove this provider from monitoring?');">
+                                            <i class="fas fa-trash me-1"></i>Remove
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-body p-4">
+                            <!-- Basic Info -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="info-item p-3 bg-light rounded-3">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="fas fa-globe text-primary me-2"></i>
+                                            <h6 class="mb-0">Endpoint</h6>
+                                        </div>
+                                        <p class="mb-1">
+                                            <a href="@issuer.Endpoint" target="_blank" class="text-decoration-none">
+                                                <small class="text-break">@issuer.Endpoint</small>
+                                            </a>
+                                        </p>
+                                        <span class="badge bg-info">@issuer.MetadataType</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-item p-3 bg-light rounded-3">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="fas fa-server text-primary me-2"></i>
+                                            <h6 class="mb-0">Metadata Status</h6>
+                                        </div>
+                                        @if (issuer.HasMetadata)
+                                        {
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-check-circle text-success me-2"></i>
+                                                <span class="badge bg-success">Available</span>
+                                            </div>
+                                            if (issuer.LastMetadataFetch.HasValue)
+                                            {
+                                                <small class="text-muted mt-1">
+                                                    Last fetch: @(issuer.LastMetadataFetch.HasValue ? issuer.LastMetadataFetch.Value.ToString("yyyy-MM-dd HH:mm:ss") : "Unknown")
+                                                </small>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-clock text-warning me-2"></i>
+                                                <span class="badge bg-warning">Pending</span>
+                                            </div>
+                                            <small class="text-muted mt-1">@issuer.MetadataError</small>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if (issuer.HasMetadata)
+                            {
+                                <!-- Detailed Info -->
+                                <div class="row mb-4">
+                                    @if (!string.IsNullOrEmpty(issuer.RoleType))
+                                    {
+                                        <div class="col-md-6">
+                                            <div class="info-item p-3 bg-light rounded-3">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <i class="fas fa-user-tag text-primary me-2"></i>
+                                                    <h6 class="mb-0">Role Type</h6>
+                                                </div>
+                                                <p class="mb-0">@issuer.RoleType</p>
+                                            </div>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(issuer.EntityId))
+                                    {
+                                        <div class="col-md-6">
+                                            <div class="info-item p-3 bg-light rounded-3">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <i class="fas fa-fingerprint text-primary me-2"></i>
+                                                    <h6 class="mb-0">Entity ID</h6>
+                                                </div>
+                                                <p class="mb-1">
+                                                    <small class="text-break font-monospace">@issuer.EntityId</small>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <!-- Endpoints -->
+                                    @if (issuer.Endpoints.Count > 0)
+                                    {
+                                        <div class="mb-4">
+                                            <h6 class="mb-3">
+                                                <i class="fas fa-plug text-primary me-2"></i>
+                                                Service Endpoints (@issuer.Endpoints.Count)
+                                            </h6>
+                                            <div class="row g-3">
+                                                @foreach (var endpoint in issuer.Endpoints)
+                                                {
+                                                    <div class="col-md-6">
+                                                        <div class="endpoint-card p-3 border rounded-3">
+                                                            <div class="d-flex align-items-start">
+                                                                <i class="fas fa-link text-info me-3 mt-1"></i>
+                                                                <div class="flex-grow-1">
+                                                                    <div class="badge bg-info mb-2">@endpoint.Binding</div>
+                                                                    <p class="mb-0">
+                                                                        <a href="@endpoint.Location" target="_blank" class="text-decoration-none small text-break">
+                                                                            @endpoint.Location
+                                                                        </a>
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <!-- Certificates -->
+                                    @if (issuer.SigningCertificates.Count > 0)
+                                    {
+                                        <div class="mb-0">
+                                            <h6 class="mb-3">
+                                                <i class="fas fa-certificate text-primary me-2"></i>
+                                                Signing Certificates (@issuer.SigningCertificates.Count)
+                                            </h6>
+                                            <div class="row g-3">
+                                                @foreach (var cert in issuer.SigningCertificates)
+                                                {
+                                                    <div class="col-md-6">
+                                                        <div class="certificate-card p-3 border rounded-3">
+                                                            <div class="d-flex align-items-start">
+                                                                <i class="fas fa-shield-alt text-success me-3 mt-1"></i>
+                                                                <div class="flex-grow-1">
+                                                                    <h6 class="mb-2">Certificate</h6>
+                                                                    <div class="mb-2">
+                                                                        <small class="text-muted">Subject:</small><br>
+                                                                        <small class="font-monospace">@cert.Subject</small>
+                                                                    </div>
+                                                                    <div class="mb-2">
+                                                                        <small class="text-muted">Valid:</small>
+                                                                        <span class="badge @(cert.Status == "Valid" ? "bg-success" : "bg-danger") ms-1">@cert.Status</span>
+                                                                    </div>
+                                                                    <div class="row">
+                                                                        <div class="col-6">
+                                                                            <small class="text-muted">From:</small><br>
+                                                                            <small>@cert.NotBefore.ToString("yyyy-MM-dd")</small>
+                                                                        </div>
+                                                                        <div class="col-6">
+                                                                            <small class="text-muted">To:</small><br>
+                                                                            <small>@cert.NotAfter.ToString("yyyy-MM-dd")</small>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
 </div>
 
 <style>
-    .issuers-container {
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 4px;
-        padding: 15px;
+    .bg-gradient-success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
     }
 
-    .issuer-card {
-        border-left: 4px solid #007bff;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #007bff 0%, #6610f2 100%);
     }
 
-    .issuer-actions {
+    .hero-icon {
+        animation: bounce 2s ease-in-out infinite;
+    }
+
+    @@keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-10px); }
+        60% { transform: translateY(-5px); }
+    }
+
+    .stat-card {
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .provider-card {
+        transition: all 0.3s ease;
+    }
+
+    .provider-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    }
+
+    .provider-icon {
+        background: rgba(255,255,255,0.2);
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
         display: flex;
-        gap: 5px;
-    }
-
-    .endpoint-item {
-        background-color: #f8f9fa;
-        padding: 8px 12px;
-        border-left: 3px solid #17a2b8;
-        border-radius: 3px;
-    }
-
-    .certificate-item {
-        background-color: #f8f9fa;
-    }
-
-    .certificate-item code {
-        word-break: break-all;
-    }
-
-    .btn-success {
-        background-color: #28a745;
-        color: white;
-        border: 1px solid #28a745;
-        padding: 6px 12px;
-        text-decoration: none;
-        border-radius: 4px;
-        display: inline-block;
-        cursor: pointer;
-        font-size: 14px;
-    }
-
-    .btn-success:hover {
-        background-color: #218838;
-    }
-
-    .badge {
-        padding: 4px 8px;
-        border-radius: 3px;
-        font-size: 12px;
-        font-weight: 600;
-    }
-
-    .bg-info {
-        background-color: #17a2b8 !important;
-        color: white;
-    }
-
-    .bg-success {
-        background-color: #28a745 !important;
-        color: white;
-    }
-
-    .bg-warning {
-        background-color: #ffc107 !important;
-        color: black;
-    }
-
-    .bg-danger {
-        background-color: #dc3545 !important;
-        color: white;
-    }
-
-    .btn {
-        padding: 6px 12px;
-        margin-right: 5px;
-        text-decoration: none;
-        border-radius: 4px;
-        display: inline-block;
-        cursor: pointer;
-        font-size: 14px;
-        border: none;
-    }
-
-    .btn-primary {
-        background-color: #007bff;
-        color: white;
-        border: 1px solid #007bff;
-    }
-
-    .btn-primary:hover {
-        background-color: #0056b3;
-    }
-
-    .btn-danger {
-        background-color: #dc3545;
-        color: white;
-        border: 1px solid #dc3545;
-    }
-
-    .btn-danger:hover {
-        background-color: #c82333;
-    }
-
-    .d-flex {
-        display: flex;
-    }
-
-    .justify-content-between {
-        justify-content: space-between;
-    }
-
-    .align-items-center {
         align-items: center;
+        justify-content: center;
     }
 
-    .mb-0 {
-        margin-bottom: 0;
+    .info-item {
+        transition: all 0.3s ease;
     }
 
-    .mb-2 {
-        margin-bottom: 0.5rem;
+    .info-item:hover {
+        background-color: #f8f9fa !important;
     }
 
-    .mb-3 {
-        margin-bottom: 1rem;
+    .endpoint-card, .certificate-card {
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     }
 
-    .mb-4 {
-        margin-bottom: 1.5rem;
-    }
-
-    .p-3 {
-        padding: 1rem;
-    }
-
-    .border {
-        border: 1px solid #dee2e6;
-    }
-
-    .rounded {
-        border-radius: 4px;
-    }
-
-    .text-light {
-        color: #f8f9fa;
-    }
-
-    .text-muted {
-        color: #6c757d;
-    }
-
-    .text-white {
-        color: white;
-    }
-
-    .bg-dark {
-        background-color: #343a40 !important;
-    }
-
-    .col-md-6 {
-        flex: 0 0 50%;
-    }
-
-    .col-12 {
-        flex: 0 0 100%;
-    }
-
-    .row {
-        display: flex;
-        flex-wrap: wrap;
-        margin-right: -0.5rem;
-        margin-left: -0.5rem;
-    }
-
-    .row > * {
-        padding-right: 0.5rem;
-        padding-left: 0.5rem;
+    .endpoint-card:hover, .certificate-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
 
     .card {
-        border: 1px solid #dee2e6;
-        border-radius: 4px;
-        background-color: white;
+        transition: all 0.3s ease;
     }
 
-    .card-header {
-        padding: 0.75rem 1.25rem;
-        border-bottom: 1px solid #dee2e6;
-        border-radius: 4px 4px 0 0;
+    .card:hover {
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1) !important;
     }
 
-    .card-body {
-        padding: 1.25rem;
+    .badge {
+        font-size: 0.75rem !important;
+    }
+
+    .font-monospace {
+        font-family: 'Courier New', monospace;
     }
 </style>

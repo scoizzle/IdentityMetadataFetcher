@@ -105,7 +105,16 @@ namespace MvcDemo.Controllers
                 return RedirectToAction("Index");
             }
 
-            return View(issuer);
+            // Convert IssuerDetailViewModel to IssuerViewModel for editing
+            var editModel = new IssuerViewModel
+            {
+                Id = issuer.Id,
+                Name = issuer.Name,
+                Endpoint = issuer.Endpoint,
+                MetadataType = issuer.MetadataType
+            };
+
+            return View(editModel);
         }
 
         /// <summary>

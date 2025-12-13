@@ -7,198 +7,350 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>Add New Identity Provider</h2>
-
-<div class="form-container" style="margin: 20px 0;">
-    <div class="alert alert-info">
-        <strong>Note:</strong> The issuer you add here will be immediately added to the metadata polling service and begin being monitored. No application restart required.
-    </div>
-
-    @using (Html.BeginForm("Create", "Issuers", FormMethod.Post))
-    {
-        @Html.AntiForgeryToken()
-
-        if (ViewData.ModelState.ContainsKey("") && ViewData.ModelState[""].Errors.Count > 0)
-        {
-            <div class="alert alert-danger">
-                @foreach (var error in ViewData.ModelState[""].Errors)
-                {
-                    <div>@error.ErrorMessage</div>
-                }
+<div class="issuers-hero bg-gradient-success text-white py-4">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="h2 fw-bold mb-2">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    Add Identity Provider
+                </h1>
+                <p class="mb-0 opacity-75">
+                    Configure a new SAML identity provider for metadata polling and token validation.
+                </p>
             </div>
-        }
-
-        <div class="form-group">
-            <label for="Id">Issuer ID <span class="text-danger">*</span></label>
-            @Html.TextBoxFor(m => m.Id, new { @class = "form-control" + (ViewData.ModelState.ContainsKey("Id") && ViewData.ModelState["Id"].Errors.Count > 0 ? " is-invalid" : ""), @placeholder = "e.g., demo-idp", required = "required" })
-            @Html.ValidationMessageFor(m => m.Id, "", new { @class = "invalid-feedback" })
-            <small class="form-text text-muted">A unique identifier for this issuer</small>
+            <div class="col-lg-4 text-center">
+                <div class="hero-icon">
+                    <i class="fas fa-user-plus fa-4x text-white opacity-75"></i>
+                </div>
+            </div>
         </div>
+    </div>
+</div>
 
-        <div class="form-group">
-            <label for="Name">Name <span class="text-danger">*</span></label>
-            @Html.TextBoxFor(m => m.Name, new { @class = "form-control" + (ViewData.ModelState.ContainsKey("Name") && ViewData.ModelState["Name"].Errors.Count > 0 ? " is-invalid" : ""), @placeholder = "e.g., My Identity Provider", required = "required" })
-            @Html.ValidationMessageFor(m => m.Name, "", new { @class = "invalid-feedback" })
-            <small class="form-text text-muted">A display name for this issuer</small>
-        </div>
+<div class="container my-4">
+    <div class="row justify-content-center">
+        <div class="col-xl-8">
+            <!-- Info Alert -->
+            <div class="alert alert-info border-0 shadow-sm">
+                <div class="d-flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle fa-2x text-info me-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="alert-heading mb-2">Immediate Activation</h6>
+                        <p class="mb-0">The identity provider you add here will be immediately added to the metadata polling service and begin being monitored. No application restart required.</p>
+                    </div>
+                </div>
+            </div>
 
-        <div class="form-group">
-            <label for="Endpoint">Metadata Endpoint <span class="text-danger">*</span></label>
-            @Html.TextBoxFor(m => m.Endpoint, new { @class = "form-control" + (ViewData.ModelState.ContainsKey("Endpoint") && ViewData.ModelState["Endpoint"].Errors.Count > 0 ? " is-invalid" : ""), @placeholder = "https://example.com/federationmetadata/2007-06/federationmetadata.xml", @type = "url", required = "required" })
-            @Html.ValidationMessageFor(m => m.Endpoint, "", new { @class = "invalid-feedback" })
-            <small class="form-text text-muted">The URL where the issuer publishes its metadata</small>
-        </div>
+            <!-- Form Card -->
+            <div class="card shadow-lg border-0 rounded-3 overflow-hidden">
+                <div class="card-header bg-white border-bottom-0 py-4">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-success rounded-circle p-3 me-3">
+                            <i class="fas fa-cog fa-lg text-white"></i>
+                        </div>
+                        <div>
+                            <h4 class="mb-1">Provider Configuration</h4>
+                            <p class="text-muted mb-0">Enter the details for your new identity provider</p>
+                        </div>
+                    </div>
+                </div>
 
-        <div class="form-group">
-            <label for="MetadataType">Metadata Type <span class="text-danger">*</span></label>
-            @Html.DropDownListFor(m => m.MetadataType, new SelectList(new[] { "SAML", "WSFED" }), new { @class = "form-control", required = "required" })
-            @Html.ValidationMessageFor(m => m.MetadataType, "", new { @class = "invalid-feedback" })
-            <small class="form-text text-muted">The format of the metadata (SAML or WSFED)</small>
-        </div>
+                <div class="card-body p-4">
+                    @using (Html.BeginForm("Create", "Issuers", FormMethod.Post))
+                    {
+                        @Html.AntiForgeryToken()
 
-        <div class="alert alert-warning">
-            <strong>Example Web.config entry:</strong>
-            <pre>&lt;add id="@Model.Id" endpoint="@Model.Endpoint" name="@Model.Name" metadataType="@Model.MetadataType" /&gt;</pre>
-        </div>
+                        if (ViewData.ModelState.ContainsKey("") && ViewData.ModelState[""].Errors.Count > 0)
+                        {
+                            <div class="alert alert-danger border-0 rounded-3">
+                                <h6 class="alert-heading mb-2">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    Configuration Error
+                                </h6>
+                                @foreach (var error in ViewData.ModelState[""].Errors)
+                                {
+                                    <div class="mb-1">@error.ErrorMessage</div>
+                                }
+                            </div>
+                        }
 
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Prepare Configuration</button>
-            @Html.ActionLink("Cancel", "Index", "Issuers", null, new { @class = "btn btn-secondary" })
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label for="Id" class="form-label fw-semibold">
+                                    <i class="fas fa-id-badge me-2 text-primary"></i>
+                                    Issuer ID <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-hashtag"></i>
+                                    </span>
+                                    @Html.TextBoxFor(m => m.Id, new { @class = "form-control form-control-lg" + (ViewData.ModelState.ContainsKey("Id") && ViewData.ModelState["Id"].Errors.Count > 0 ? " is-invalid" : ""), @placeholder = "e.g., demo-idp", required = "required" })
+                                </div>
+                                @Html.ValidationMessageFor(m => m.Id, "", new { @class = "invalid-feedback" })
+                                <div class="form-text">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        A unique identifier for this issuer
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-4">
+                                <label for="Name" class="form-label fw-semibold">
+                                    <i class="fas fa-tag me-2 text-primary"></i>
+                                    Display Name <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-building"></i>
+                                    </span>
+                                    @Html.TextBoxFor(m => m.Name, new { @class = "form-control form-control-lg" + (ViewData.ModelState.ContainsKey("Name") && ViewData.ModelState["Name"].Errors.Count > 0 ? " is-invalid" : ""), @placeholder = "e.g., My Identity Provider", required = "required" })
+                                </div>
+                                @Html.ValidationMessageFor(m => m.Name, "", new { @class = "invalid-feedback" })
+                                <div class="form-text">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        A friendly display name for this issuer
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-8 mb-4">
+                                <label for="Endpoint" class="form-label fw-semibold">
+                                    <i class="fas fa-globe me-2 text-primary"></i>
+                                    Metadata Endpoint <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-link"></i>
+                                    </span>
+                                    @Html.TextBoxFor(m => m.Endpoint, new { @class = "form-control form-control-lg" + (ViewData.ModelState.ContainsKey("Endpoint") && ViewData.ModelState["Endpoint"].Errors.Count > 0 ? " is-invalid" : ""), @placeholder = "https://example.com/federationmetadata/2007-06/federationmetadata.xml", @type = "url", required = "required" })
+                                </div>
+                                @Html.ValidationMessageFor(m => m.Endpoint, "", new { @class = "invalid-feedback" })
+                                <div class="form-text">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        The URL where the issuer publishes its SAML metadata
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4 mb-4">
+                                <label for="MetadataType" class="form-label fw-semibold">
+                                    <i class="fas fa-file-code me-2 text-primary"></i>
+                                    Metadata Type <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-cogs"></i>
+                                    </span>
+                                    @Html.DropDownListFor(m => m.MetadataType, new SelectList(new[] { "SAML", "WSFED" }), new { @class = "form-select form-select-lg", required = "required" })
+                                </div>
+                                @Html.ValidationMessageFor(m => m.MetadataType, "", new { @class = "invalid-feedback" })
+                                <div class="form-text">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        The format of the metadata (SAML or WSFED)
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Configuration Preview -->
+                        <div class="config-preview mb-4">
+                            <h6 class="mb-3">
+                                <i class="fas fa-eye me-2 text-primary"></i>
+                                Configuration Preview
+                            </h6>
+                            <div class="alert alert-light border rounded-3">
+                                <div class="d-flex align-items-start">
+                                    <i class="fas fa-code text-secondary me-3 mt-1"></i>
+                                    <div class="flex-grow-1">
+                                        <small class="text-muted mb-1 d-block">Web.config entry that will be generated:</small>
+                                        <code class="d-block bg-white p-3 rounded border font-monospace small">
+                                            &lt;add id="<span id="preview-id">@(Model.Id ?? "issuer-id")</span>"
+                                                 endpoint="<span id="preview-endpoint">@(Model.Endpoint ?? "https://...")</span>"
+                                                 name="<span id="preview-name">@(Model.Name ?? "Issuer Name")</span>"
+                                                 metadataType="<span id="preview-type">@(Model.MetadataType ?? "SAML")</span>" /&gt;
+                                        </code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-success btn-lg px-4">
+                                    <i class="fas fa-plus-circle me-2"></i>
+                                    Add Provider
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-lg px-4" onclick="clearForm()">
+                                    <i class="fas fa-eraser me-2"></i>
+                                    Clear
+                                </button>
+                            </div>
+                            <a href="@Url.Action("Index", "Issuers")" class="btn btn-outline-primary btn-lg px-4">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                Back to Providers
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Help Section -->
+            <div class="row mt-4 g-4">
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-question-circle me-2"></i>
+                                What is a Metadata Endpoint?
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-2">A metadata endpoint is a URL where your identity provider publishes its SAML configuration information.</p>
+                            <ul class="mb-0 small">
+                                <li>Usually ends with <code> federationmetadata.xml</code></li>
+                                <li>Contains certificates, endpoints, and capabilities</li>
+                                <li>Automatically polled for updates</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-warning text-dark">
+                            <h6 class="mb-0">
+                                <i class="fas fa-lightbulb me-2"></i>
+                                Best Practices
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <ul class="mb-0 small">
+                                <li>Use descriptive names for easy identification</li>
+                                <li>Ensure metadata endpoints are publicly accessible</li>
+                                <li>Test endpoints before adding to production</li>
+                                <li>Monitor logs for polling activity and errors</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    }
+    </div>
 </div>
 
 <style>
-    .form-container {
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 4px;
-        padding: 20px;
-        max-width: 600px;
+    .bg-gradient-success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
     }
 
-    .form-group {
-        margin-bottom: 15px;
+    .hero-icon {
+        animation: bounce 2s ease-in-out infinite;
     }
 
-    .form-group label {
-        font-weight: 600;
-        margin-bottom: 5px;
-        display: block;
+    @@keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-10px); }
+        60% { transform: translateY(-5px); }
     }
 
-    .form-control {
-        width: 100%;
-        padding: 8px 12px;
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-        font-size: 14px;
-        box-sizing: border-box;
+    .card {
+        transition: all 0.3s ease;
     }
 
-    .form-control:focus {
-        outline: none;
-        border-color: #80bdff;
-        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    .card:hover {
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1) !important;
     }
 
-    .form-control.is-invalid {
-        border-color: #dc3545;
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
     }
 
-    .form-control.is-invalid:focus {
-        border-color: #dc3545;
-        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    .form-control:focus, .form-select:focus {
+        border-color: #28a745;
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
     }
 
-    .invalid-feedback {
-        color: #dc3545;
-        font-size: 12px;
-        margin-top: 5px;
-        display: block;
+    .input-group-text {
+        border-radius: 10px 0 0 10px;
+        border: 2px solid #e9ecef;
+        border-right: none;
     }
 
-    .form-text {
-        font-size: 12px;
-        color: #6c757d;
-        margin-top: 5px;
-        display: block;
+    .form-control-lg {
+        border-radius: 0 10px 10px 0;
     }
 
-    .text-danger {
-        color: #dc3545;
+    .config-preview code {
+        line-height: 1.4;
     }
 
-    .text-muted {
-        color: #6c757d;
-    }
-
-    .form-actions {
-        margin-top: 20px;
-        padding-top: 15px;
-        border-top: 1px solid #dee2e6;
+    .font-monospace {
+        font-family: 'Courier New', monospace;
     }
 
     .btn {
-        padding: 8px 16px;
-        margin-right: 10px;
-        text-decoration: none;
-        border-radius: 4px;
-        display: inline-block;
-        cursor: pointer;
-        font-size: 14px;
-        border: none;
+        border-radius: 25px;
         font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
     }
 
-    .btn-primary {
-        background-color: #007bff;
-        color: white;
-    }
-
-    .btn-primary:hover {
-        background-color: #0056b3;
-    }
-
-    .btn-secondary {
-        background-color: #6c757d;
-        color: white;
-    }
-
-    .btn-secondary:hover {
-        background-color: #5a6268;
-    }
-
-    .alert {
-        padding: 12px;
-        margin-bottom: 15px;
-        border: 1px solid transparent;
-        border-radius: 4px;
-    }
-
-    .alert-info {
-        background-color: #d1ecf1;
-        border-color: #bee5eb;
-        color: #0c5460;
-    }
-
-    .alert-warning {
-        background-color: #fff3cd;
-        border-color: #ffeeba;
-        color: #856404;
-    }
-
-    .alert-danger {
-        background-color: #f8d7da;
-        border-color: #f5c6cb;
-        color: #721c24;
-    }
-
-    pre {
-        background-color: #f4f4f4;
-        padding: 10px;
-        border-radius: 4px;
-        overflow-x: auto;
-        font-size: 12px;
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
     }
 </style>
+
+<script>
+    // Update configuration preview in real-time
+    document.addEventListener('DOMContentLoaded', function() {
+        const idField = document.getElementById('Id');
+        const nameField = document.getElementById('Name');
+        const endpointField = document.getElementById('Endpoint');
+        const typeField = document.getElementById('MetadataType');
+
+        const previewId = document.getElementById('preview-id');
+        const previewName = document.getElementById('preview-name');
+        const previewEndpoint = document.getElementById('preview-endpoint');
+        const previewType = document.getElementById('preview-type');
+
+        function updatePreview() {
+            previewId.textContent = idField.value || 'issuer-id';
+            previewName.textContent = nameField.value || 'Issuer Name';
+            previewEndpoint.textContent = endpointField.value || 'https://...';
+            previewType.textContent = typeField.value || 'SAML';
+        }
+
+        [idField, nameField, endpointField, typeField].forEach(field => {
+            field.addEventListener('input', updatePreview);
+        });
+
+        updatePreview();
+    });
+
+    function clearForm() {
+        document.getElementById('Id').value = '';
+        document.getElementById('Name').value = '';
+        document.getElementById('Endpoint').value = '';
+        document.getElementById('MetadataType').value = 'SAML';
+
+        // Update preview
+        document.getElementById('preview-id').textContent = 'issuer-id';
+        document.getElementById('preview-name').textContent = 'Issuer Name';
+        document.getElementById('preview-endpoint').textContent = 'https://...';
+        document.getElementById('preview-type').textContent = 'SAML';
+    }
+</script>

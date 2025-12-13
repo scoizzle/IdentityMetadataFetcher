@@ -1,7 +1,229 @@
 @{
-    ViewBag.Title = "Home";
+    ViewBag.Title = "Identity Metadata Fetcher";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>@ViewBag.Message</h2>
-<p>This MVC app is configured to use the Identity Metadata Polling HTTP Module.</p>
-<p>Check logs/trace to see polling activity.</p>
+<div class="hero-section bg-gradient-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-4 fw-bold mb-3">
+                    <i class="fas fa-shield-alt me-3"></i>
+                    Identity Metadata Fetcher
+                </h1>
+                <p class="lead mb-4">
+                    Enterprise-grade SAML metadata management and token validation system.
+                    Automatically fetch, cache, and validate identity provider metadata for secure authentication.
+                </p>
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    <span class="badge bg-light text-primary fs-6 px-3 py-2">
+                        <i class="fas fa-sync me-1"></i>Auto Metadata Polling
+                    </span>
+                    <span class="badge bg-light text-primary fs-6 px-3 py-2">
+                        <i class="fas fa-database me-1"></i>Intelligent Caching
+                    </span>
+                    <span class="badge bg-light text-primary fs-6 px-3 py-2">
+                        <i class="fas fa-lock me-1"></i>Secure Validation
+                    </span>
+                    <span class="badge bg-light text-primary fs-6 px-3 py-2">
+                        <i class="fas fa-clock me-1"></i>Real-time Monitoring
+                    </span>
+                </div>
+            </div>
+            <div class="col-lg-4 text-center">
+                <div class="hero-icon">
+                    <i class="fas fa-cogs fa-6x text-white opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-xl-10">
+            <!-- Welcome Section -->
+            <div class="card shadow-lg border-0 rounded-3 overflow-hidden mb-5">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <h2 class="fw-bold text-primary mb-3">Welcome to the Demo Application</h2>
+                        <p class="lead text-muted">
+                            This MVC application demonstrates the Identity Metadata Fetcher HTTP Module in action.
+                            Explore the features below to see how SAML metadata polling and token validation work.
+                        </p>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="feature-card p-4 bg-light rounded-3 h-100">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="feature-icon bg-primary text-white rounded-circle p-3 me-3">
+                                        <i class="fas fa-key fa-lg"></i>
+                                    </div>
+                                    <h5 class="mb-0">Token Validation</h5>
+                                </div>
+                                <p class="mb-3">Validate SAML tokens with enterprise-grade security checks including signature verification, issuer validation, and expiration checks.</p>
+                                <a href="@Url.Action("Index", "TokenValidator")" class="btn btn-primary">
+                                    <i class="fas fa-arrow-right me-2"></i>Try Token Validator
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="feature-card p-4 bg-light rounded-3 h-100">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="feature-icon bg-info text-white rounded-circle p-3 me-3">
+                                        <i class="fas fa-building fa-lg"></i>
+                                    </div>
+                                    <h5 class="mb-0">Identity Providers</h5>
+                                </div>
+                                <p class="mb-3">Manage SAML identity providers, monitor metadata fetching, and configure polling settings for each provider.</p>
+                                <a href="@Url.Action("Index", "Issuers")" class="btn btn-info">
+                                    <i class="fas fa-arrow-right me-2"></i>Manage Providers
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="feature-card p-4 bg-light rounded-3 h-100">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="feature-icon bg-success text-white rounded-circle p-3 me-3">
+                                        <i class="fas fa-list fa-lg"></i>
+                                    </div>
+                                    <h5 class="mb-0">Trace Logging</h5>
+                                </div>
+                                <p class="mb-3">Monitor real-time application activity, metadata polling events, and system diagnostics with live log streaming.</p>
+                                <a href="@Url.Action("Index", "LogViewer")" class="btn btn-success">
+                                    <i class="fas fa-arrow-right me-2"></i>View Logs
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="feature-card p-4 bg-light rounded-3 h-100">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="feature-icon bg-warning text-white rounded-circle p-3 me-3">
+                                        <i class="fas fa-info-circle fa-lg"></i>
+                                    </div>
+                                    <h5 class="mb-0">System Status</h5>
+                                </div>
+                                <p class="mb-3">Check the current status of the metadata polling service, view active configurations, and monitor system health.</p>
+                                <a href="@Url.Action("Index", "Issuers")" class="btn btn-warning">
+                                    <i class="fas fa-arrow-right me-2"></i>Check Status
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Information -->
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-server me-2"></i>
+                                System Information
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="info-item d-flex justify-content-between py-2">
+                                <span><i class="fas fa-code me-2 text-primary"></i>Framework</span>
+                                <strong>.NET Framework 4.8</strong>
+                            </div>
+                            <div class="info-item d-flex justify-content-between py-2">
+                                <span><i class="fas fa-cogs me-2 text-primary"></i>Module Status</span>
+                                <span class="badge bg-success">Active</span>
+                            </div>
+                            <div class="info-item d-flex justify-content-between py-2">
+                                <span><i class="fas fa-clock me-2 text-primary"></i>Polling Service</span>
+                                <span class="badge bg-success">Running</span>
+                            </div>
+                            <div class="info-item d-flex justify-content-between py-2">
+                                <span><i class="fas fa-database me-2 text-primary"></i>Cache Status</span>
+                                <span class="badge bg-success">Operational</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-lightbulb me-2"></i>
+                                Getting Started
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <ol class="mb-0">
+                                <li class="mb-2">
+                                    <strong>Add Identity Providers:</strong> Configure SAML providers to start metadata polling
+                                </li>
+                                <li class="mb-2">
+                                    <strong>Monitor Logs:</strong> Watch real-time polling activity and system events
+                                </li>
+                                <li class="mb-2">
+                                    <strong>Test Validation:</strong> Use the token validator to test SAML token processing
+                                </li>
+                                <li class="mb-0">
+                                    <strong>Explore Features:</strong> Discover advanced metadata management capabilities
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .hero-icon {
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @@keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+    }
+
+    .feature-card {
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .feature-icon {
+        transition: transform 0.3s ease;
+    }
+
+    .feature-card:hover .feature-icon {
+        transform: scale(1.1);
+    }
+
+    .info-item {
+        border-bottom: 1px solid #f8f9fa;
+    }
+
+    .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .card {
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important;
+    }
+</style>
