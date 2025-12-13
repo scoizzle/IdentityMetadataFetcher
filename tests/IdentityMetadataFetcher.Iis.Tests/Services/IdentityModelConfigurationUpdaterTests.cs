@@ -1,6 +1,6 @@
 using System;
-using System.IdentityModel.Metadata;
-using System.IdentityModel.Tokens;
+using Microsoft.IdentityModel.Protocols.WsFederation.Metadata;
+using Microsoft.IdentityModel.Tokens;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using NUnit.Framework;

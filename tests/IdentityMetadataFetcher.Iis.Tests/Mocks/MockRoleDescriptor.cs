@@ -1,5 +1,5 @@
 using System;
-using System.IdentityModel.Metadata;
+using Microsoft.IdentityModel.Protocols.WsFederation.Metadata;
 
 namespace IdentityMetadataFetcher.Iis.Tests.Mocks
 {

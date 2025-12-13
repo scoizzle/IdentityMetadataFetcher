@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.IdentityModel.Metadata;
+using Microsoft.IdentityModel.Protocols.WsFederation.Metadata;
 using System.IdentityModel.Services;
-using System.IdentityModel.Tokens;
+using Microsoft.IdentityModel.Tokens;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using IdentityMetadataFetcher.Services; // Core library
