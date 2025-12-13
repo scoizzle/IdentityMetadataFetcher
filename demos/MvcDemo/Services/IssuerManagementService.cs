@@ -214,14 +214,16 @@ namespace MvcDemo.Services
                             };
 
                             var cacheEntry = pollingService.GetMetadataCacheEntry(endpoint.Id);
-                            if (cacheEntry != null && cacheEntry.Metadata != null)
+                            if (cacheEntry != null)
                             {
                                 issuer.HasMetadata = true;
                                 issuer.LastMetadataFetch = cacheEntry.CachedAt;
 
                                 // Extract metadata from WsFederationConfiguration
-                                var config = cacheEntry.Metadata;
-                                issuer.EntityId = config.Issuer;
+                                if (cacheEntry.Metadata != null)
+                                {
+                                    var config = cacheEntry.Metadata;
+                                    issuer.EntityId = config.Issuer;
 
                                 // Token endpoint
                                 if (!string.IsNullOrEmpty(config.TokenEndpoint))
@@ -254,7 +256,8 @@ namespace MvcDemo.Services
                                     }
                                 }
 
-                                issuer.RoleType = "WS-Federation / SAML2 Token Service";
+                                    issuer.RoleType = "WS-Federation / SAML2 Token Service";
+                                }
                             }
                             }
                             else

@@ -10,7 +10,7 @@ namespace IdentityMetadataFetcher.Tests.Mocks
     /// </summary>
     public class MockMetadata : WsFederationConfiguration
     {
-        public MockMetadata() : base()
+        public MockMetadata()
         {
             Issuer = "https://example.com/entity";
             TokenEndpoint = "https://example.com/token";
