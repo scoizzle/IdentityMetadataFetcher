@@ -1,6 +1,5 @@
 using IdentityMetadataFetcher.Models;
 using IdentityMetadataFetcher.Services; // Now references core library
-using Microsoft.IdentityModel.Protocols.WsFederation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -117,18 +116,15 @@ namespace IdentityMetadataFetcher.Iis.Services
                 
                 if (cachedEntry != null && cachedEntry.Metadata != null)
                 {
-                    // Try to match by Issuer in the metadata (only for WS-Federation)
-                    if (cachedEntry.Metadata is WsFederationConfiguration fedMetadata)
+                    // Try to match by Issuer in the metadata
+                    var issuer = cachedEntry.Metadata.Issuer;
+                    if (!string.IsNullOrEmpty(issuer))
                     {
-                        var issuer = fedMetadata.Issuer;
-                        if (!string.IsNullOrEmpty(issuer))
+                        if (!string.IsNullOrEmpty(issuerFromException) && 
+                            issuer.Equals(issuerFromException, StringComparison.OrdinalIgnoreCase))
                         {
-                            if (!string.IsNullOrEmpty(issuerFromException) && 
-                                issuer.Equals(issuerFromException, StringComparison.OrdinalIgnoreCase))
-                            {
-                                matches.Add(endpoint);
-                                continue;
-                            }
+                            matches.Add(endpoint);
+                            continue;
                         }
                     }
                 }

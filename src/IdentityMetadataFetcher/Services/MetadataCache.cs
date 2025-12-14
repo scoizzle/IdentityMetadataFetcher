@@ -1,4 +1,4 @@
-using Microsoft.IdentityModel.Protocols.WsFederation;
+using IdentityMetadataFetcher.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +6,7 @@ using System.Linq;
 namespace IdentityMetadataFetcher.Services
 {
     /// <summary>
-    /// Thread-safe cache for metadata configuration objects from Microsoft.IdentityModel.
+    /// Thread-safe cache for metadata documents.
     /// Can be used in any .NET Framework application (console, service, web, etc.)
     /// </summary>
     public class MetadataCache
@@ -22,7 +22,7 @@ namespace IdentityMetadataFetcher.Services
         /// <summary>
         /// Stores metadata in the cache.
         /// </summary>
-        public void AddOrUpdateMetadata(string issuerId, object metadata, string rawXml)
+        public void AddOrUpdateMetadata(string issuerId, WsFederationMetadataDocument metadata, string rawXml)
         {
             if (string.IsNullOrWhiteSpace(issuerId))
                 throw new ArgumentException("issuerId cannot be null or empty", nameof(issuerId));
@@ -45,7 +45,7 @@ namespace IdentityMetadataFetcher.Services
         /// <summary>
         /// Retrieves metadata from the cache.
         /// </summary>
-        public object GetMetadata(string issuerId)
+        public WsFederationMetadataDocument GetMetadata(string issuerId)
         {
             if (string.IsNullOrWhiteSpace(issuerId))
                 throw new ArgumentException("issuerId cannot be null or empty", nameof(issuerId));
@@ -164,10 +164,9 @@ namespace IdentityMetadataFetcher.Services
         public string IssuerId { get; set; }
 
         /// <summary>
-        /// Gets or sets the parsed metadata configuration from Microsoft.IdentityModel.
-        /// Can be WsFederationConfiguration for WSFED or XElement for SAML metadata.
+        /// Gets or sets the parsed metadata document.
         /// </summary>
-        public object Metadata { get; set; }
+        public WsFederationMetadataDocument Metadata { get; set; }
 
         /// <summary>
         /// Gets or sets the raw XML representation of the metadata.

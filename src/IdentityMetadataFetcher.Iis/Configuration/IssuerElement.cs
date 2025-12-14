@@ -77,23 +77,11 @@ namespace IdentityMetadataFetcher.Iis.Configuration
             if (string.IsNullOrWhiteSpace(Name))
                 throw new ConfigurationErrorsException($"Issuer '{Id}' 'name' attribute is required");
 
-            if (string.IsNullOrWhiteSpace(MetadataType))
-                throw new ConfigurationErrorsException($"Issuer '{Id}' 'metadataType' attribute is required");
-
-            // Parse metadata type
-            IdentityMetadataFetcher.Models.MetadataType metadataType;
-            if (!Enum.TryParse(MetadataType, true, out metadataType))
-            {
-                throw new ConfigurationErrorsException(
-                    $"Issuer '{Id}' has invalid metadataType '{MetadataType}'. Must be 'WSFED' or 'SAML'");
-            }
-
             var endpoint = new IssuerEndpoint
             {
                 Id = Id,
                 Endpoint = Endpoint,
                 Name = Name,
-                MetadataType = metadataType,
                 Timeout = TimeoutSeconds > 0 ? TimeoutSeconds * 1000 : (int?)null
             };
 

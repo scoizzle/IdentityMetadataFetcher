@@ -1,5 +1,6 @@
 using IdentityMetadataFetcher.Iis.Services;
 using IdentityMetadataFetcher.Iis.Tests.Mocks;
+using IdentityMetadataFetcher.Models;
 using IdentityMetadataFetcher.Services; // Core library
 using Microsoft.IdentityModel.Protocols.WsFederation;
 using Microsoft.IdentityModel.Tokens;
@@ -45,10 +46,11 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         [Test]
         public void Apply_WithEmptyMetadata_DoesNotThrow()
         {
+            var config = new WsFederationConfiguration();
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "test-issuer",
-                Metadata = new WsFederationConfiguration(),
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };
@@ -68,7 +70,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "test-issuer",
-                Metadata = config,
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };
@@ -86,7 +88,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "test-issuer",
-                Metadata = config,
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };
@@ -103,7 +105,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "test-issuer",
-                Metadata = config,
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };
@@ -122,7 +124,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "fallback-issuer-id",
-                Metadata = config,
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };
@@ -142,7 +144,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "fallback-issuer-id",
-                Metadata = config,
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };
@@ -159,7 +161,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "test-issuer",
-                Metadata = config,
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };
@@ -175,7 +177,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "test-issuer",
-                Metadata = config,
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };
@@ -191,7 +193,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "test-issuer",
-                Metadata = config,
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };
@@ -207,7 +209,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "test-issuer",
-                Metadata = config,
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };
@@ -224,7 +226,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "test-issuer",
-                Metadata = config,
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };
@@ -240,7 +242,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "test-issuer",
-                Metadata = config,
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };
@@ -256,7 +258,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "test-issuer",
-                Metadata = config,
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };

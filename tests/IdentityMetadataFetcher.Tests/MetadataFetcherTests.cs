@@ -52,7 +52,7 @@ namespace IdentityMetadataFetcher.Tests
         [Test]
         public void FetchMetadata_WithEmptyEndpointUrl_ThrowsArgumentException()
         {
-            var endpoint = new IssuerEndpoint { Id = "test", Endpoint = "", MetadataType = MetadataType.SAML };
+            var endpoint = new IssuerEndpoint { Id = "test", Endpoint = "" };
             Assert.Throws<ArgumentException>(() => _fetcher.FetchMetadata(endpoint));
         }
 
@@ -63,8 +63,7 @@ namespace IdentityMetadataFetcher.Tests
             {
                 Id = "test-invalid",
                 Endpoint = "http://invalid-endpoint-that-does-not-exist-12345.example.com/metadata",
-                Name = "Invalid Endpoint",
-                MetadataType = MetadataType.SAML
+                Name = "Invalid Endpoint"
             };
 
             var result = _fetcher.FetchMetadata(endpoint);
@@ -84,7 +83,7 @@ namespace IdentityMetadataFetcher.Tests
         [Test]
         public async Task FetchMetadataAsync_WithEmptyEndpointUrl_ThrowsArgumentException()
         {
-            var endpoint = new IssuerEndpoint { Id = "test", Endpoint = "", MetadataType = MetadataType.SAML };
+            var endpoint = new IssuerEndpoint { Id = "test", Endpoint = "" };
             Assert.ThrowsAsync<ArgumentException>(async () => await _fetcher.FetchMetadataAsync(endpoint));
         }
 
@@ -95,8 +94,7 @@ namespace IdentityMetadataFetcher.Tests
             {
                 Id = "test-invalid",
                 Endpoint = "http://invalid-endpoint-that-does-not-exist-12345.example.com/metadata",
-                Name = "Invalid Endpoint",
-                MetadataType = MetadataType.SAML
+                Name = "Invalid Endpoint"
             };
 
             var result = await _fetcher.FetchMetadataAsync(endpoint);
@@ -118,8 +116,8 @@ namespace IdentityMetadataFetcher.Tests
         {
             var endpoints = new[]
             {
-                new IssuerEndpoint { Id = "ep1", Endpoint = "http://invalid1.example.com/metadata", Name = "Invalid 1", MetadataType = MetadataType.SAML },
-                new IssuerEndpoint { Id = "ep2", Endpoint = "http://invalid2.example.com/metadata", Name = "Invalid 2", MetadataType = MetadataType.WSFED }
+                new IssuerEndpoint { Id = "ep1", Endpoint = "http://invalid1.example.com/metadata", Name = "Invalid 1" },
+                new IssuerEndpoint { Id = "ep2", Endpoint = "http://invalid2.example.com/metadata", Name = "Invalid 2" }
             };
 
             var results = _fetcher.FetchMetadataFromMultipleEndpoints(endpoints).ToList();
@@ -140,8 +138,8 @@ namespace IdentityMetadataFetcher.Tests
         {
             var endpoints = new[]
             {
-                new IssuerEndpoint { Id = "ep1", Endpoint = "http://invalid1.example.com/metadata", Name = "Invalid 1", MetadataType = MetadataType.SAML },
-                new IssuerEndpoint { Id = "ep2", Endpoint = "http://invalid2.example.com/metadata", Name = "Invalid 2", MetadataType = MetadataType.WSFED }
+                new IssuerEndpoint { Id = "ep1", Endpoint = "http://invalid1.example.com/metadata", Name = "Invalid 1" },
+                new IssuerEndpoint { Id = "ep2", Endpoint = "http://invalid2.example.com/metadata", Name = "Invalid 2" }
             };
 
             var results = (await _fetcher.FetchMetadataFromMultipleEndpointsAsync(endpoints)).ToList();
@@ -176,11 +174,10 @@ namespace IdentityMetadataFetcher.Tests
         [Test]
         public void IssuerEndpoint_ConstructorWithParameters()
         {
-            var endpoint = new IssuerEndpoint("id1", "http://example.com/metadata", "Example", MetadataType.SAML);
+            var endpoint = new IssuerEndpoint("id1", "http://example.com/metadata", "Example");
             Assert.That(endpoint.Id, Is.EqualTo("id1"));
             Assert.That(endpoint.Endpoint, Is.EqualTo("http://example.com/metadata"));
             Assert.That(endpoint.Name, Is.EqualTo("Example"));
-            Assert.That(endpoint.MetadataType, Is.EqualTo(MetadataType.SAML));
         }
 
         [Test]

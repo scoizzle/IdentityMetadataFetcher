@@ -1,4 +1,5 @@
-using IdentityMetadataFetcher.Services; // Core library
+using IdentityMetadataFetcher.Models;
+using IdentityMetadataFetcher.Services;
 using Microsoft.IdentityModel.Protocols.WsFederation;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -26,14 +27,7 @@ namespace IdentityMetadataFetcher.Iis.Services
             if (entry == null || entry.Metadata == null)
                 return;
 
-            // Only process WsFederationConfiguration; SAML metadata requires different handling
-            var fedConfig = entry.Metadata as WsFederationConfiguration;
-            if (fedConfig == null)
-            {
-                System.Diagnostics.Trace.TraceInformation(
-                    $"IdentityModelConfigurationUpdater: Skipping metadata of type {entry.Metadata.GetType().Name} (only WsFederationConfiguration is supported)");
-                return;
-            }
+            var wsFedDoc = entry.Metadata;
 
             var authConfig = FederatedAuthentication.FederationConfiguration;
             if (authConfig == null || authConfig.IdentityConfiguration == null)
@@ -47,8 +41,8 @@ namespace IdentityMetadataFetcher.Iis.Services
                 authConfig.IdentityConfiguration.IssuerNameRegistry = registry;
             }
 
-            // Extract signing certificates from the metadata
-            var signingCerts = ExtractSigningCertificates(fedConfig);
+            // Extract signing certificates from the metadata document
+            var signingCerts = wsFedDoc.SigningCertificates;
 
             // Register each certificate thumbprint as trusted for this issuer
             foreach (var cert in signingCerts)
@@ -75,8 +69,9 @@ namespace IdentityMetadataFetcher.Iis.Services
             }
 
             // Optionally refresh WS-Fed issuer endpoint if metadata provides it
-            var issuerEndpoint = TryGetPassiveStsEndpoint(fedConfig);
-            if (!string.IsNullOrWhiteSpace(issuerEndpoint))
+            string issuerEndpoint;
+            if (wsFedDoc.Endpoints.TryGetValue("TokenEndpoint", out issuerEndpoint) && 
+                !string.IsNullOrWhiteSpace(issuerEndpoint))
             {
                 try
                 {
@@ -94,49 +89,6 @@ namespace IdentityMetadataFetcher.Iis.Services
             }
         }
 
-        private static IEnumerable<X509Certificate2> ExtractSigningCertificates(WsFederationConfiguration metadata)
-        {
-            var result = new List<X509Certificate2>();
-
-            if (metadata?.SigningKeys != null)
-            {
-                foreach (var key in metadata.SigningKeys)
-                {
-                    try
-                    {
-                        if (key is X509SecurityKey x509Key)
-                        {
-                            result.Add(x509Key.Certificate);
-                        }
-                        else if (key is Microsoft.IdentityModel.Tokens.RsaSecurityKey rsaKey)
-                        {
-                            // RSA keys don't have certificates, skip
-                            System.Diagnostics.Trace.TraceInformation($"IdentityModelConfigurationUpdater: Skipping RSA key (no certificate available)");
-                        }
-                        else
-                        {
-                            System.Diagnostics.Trace.TraceWarning($"IdentityModelConfigurationUpdater: Unknown key type: {key.GetType().Name}");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Trace.TraceWarning($"IdentityModelConfigurationUpdater: Failed to extract certificate from signing key: {ex.GetType().Name}: {ex.Message}");
-                    }
-                }
-            }
-
-            return result;
-        }
-
-        private static string TryGetPassiveStsEndpoint(WsFederationConfiguration metadata)
-        {
-            if (metadata != null && !string.IsNullOrWhiteSpace(metadata.TokenEndpoint))
-            {
-                return metadata.TokenEndpoint;
-            }
-            return null;
-        }
-
         private static string NormalizeThumbprint(string thumbprint)
         {
             if (thumbprint == null)
@@ -144,12 +96,6 @@ namespace IdentityMetadataFetcher.Iis.Services
             if (thumbprint.Length == 0)
                 throw new ArgumentException("Thumbprint cannot be empty.", nameof(thumbprint));
             return new string(thumbprint.Where(c => !char.IsWhiteSpace(c)).ToArray()).ToUpperInvariant();
-        }
-
-        private static string NormalizeThumbprint(byte[] thumbprint)
-        {
-            if (thumbprint == null || thumbprint.Length == 0) return null;
-            return BitConverter.ToString(thumbprint).Replace("-", "").ToUpperInvariant();
         }
     }
 }

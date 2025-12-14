@@ -20,7 +20,7 @@
     <IISExpressUseClassicPipelineMode />
     <UseGlobalApplicationHostFile />
     <FileUpgradeFlags>40</FileUpgradeFlags>
-    <UpgradeBackupLocation>C:\Users\scoizzle\source\repos\IdentityMetadataFetcher\Backup2\</UpgradeBackupLocation>
+    <UpgradeBackupLocation>C:\Users\scoizzle\source\repos\IdentityMetadataFetcher\Backup3\</UpgradeBackupLocation>
     <OldToolsVersion>Current</OldToolsVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -52,6 +52,7 @@
     <Reference Include="System.Web.Abstractions" />
     <Reference Include="System.Web.Routing" />
     <Reference Include="System.Configuration" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNet.Mvc" Version="5.3.0" />
@@ -116,10 +117,10 @@
     <Content Include="Views\TokenValidator\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Views\TokenValidator\Result.cshtml" />
+    <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Properties\" />
+    <Content Include="Views\TokenValidator\Result.cshtml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>

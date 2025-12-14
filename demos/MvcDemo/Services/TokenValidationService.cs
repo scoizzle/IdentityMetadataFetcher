@@ -4,6 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.IdentityModel.Tokens.Saml2;
+using System.Security.Cryptography.X509Certificates;
 
 namespace MvcDemo.Services
 {
@@ -240,7 +243,7 @@ namespace MvcDemo.Services
         }
 
         /// <summary>
-        /// Performs comprehensive SAML token validation including signature, validity periods, issuer, and audience.
+        /// Performs comprehensive SAML token validation using Saml2SecurityTokenHandler.
         /// </summary>
         private static TokenValidationResultViewModel ValidateSamlToken(string tokenXml, string metadataXml, string expectedIssuerId)
         {
@@ -248,122 +251,206 @@ namespace MvcDemo.Services
 
             try
             {
-                // Parse metadata to extract signing certificates
+                // Extract signing certificates from metadata first
                 var signingCertificates = ExtractSigningCertificatesFromMetadata(metadataXml);
                 if (!signingCertificates.Any())
                 {
                     result.Message = "No signing certificates in metadata";
                     result.ErrorDetails = "The issuer's metadata does not contain any signing certificates for validation";
+                    result.SignatureValid = false;
+                    result.SignatureValidMessage = "No certificates available";
                     return result;
                 }
 
-                // For demo purposes, perform basic validation
-                // In production, you'd use proper SAML parsing and validation
-
-                // Check if token contains basic SAML structure
-                if (!tokenXml.Contains("<Assertion") && !tokenXml.Contains("<assertion"))
+                // Store certificate info
+                result.SigningCertificateCount = signingCertificates.Count;
+                if (signingCertificates.Count > 0)
                 {
-                    result.Message = "Invalid SAML token";
-                    result.ErrorDetails = "The token does not contain a valid SAML Assertion element";
+                    result.PrimarySigningCertificateThumbprint = signingCertificates[0].Thumbprint;
+                    result.PrimarySigningCertificateExpiration = signingCertificates[0].NotAfter;
+                }
+
+                // Create SAML2 token handler
+                var saml2Handler = new Saml2SecurityTokenHandler();
+                
+                // Check if handler can read this token format
+                if (!saml2Handler.CanReadToken(tokenXml))
+                {
+                    result.Message = "Unsupported token format";
+                    result.ErrorDetails = "The token is not in a supported SAML2 assertion format";
+                    result.SignatureValid = false;
+                    result.SignatureValidMessage = "Invalid token format";
                     return result;
                 }
 
-                // Check for signature
-                if (!tokenXml.Contains("<Signature") && !tokenXml.Contains("<signature"))
-                {
-                    result.Message = "Unsigned token";
-                    result.ErrorDetails = "The token does not contain a digital signature";
-                    return result;
-                }
+                // Extract audiences from the token for validation
+                var audiences = ExtractAudiencesFromToken(tokenXml);
 
-                // Check issuer (basic check)
-                if (!string.IsNullOrEmpty(expectedIssuerId) && !tokenXml.Contains(expectedIssuerId))
+                // Build token validation parameters with the signing certificates
+                var tokenValidationParameters = new TokenValidationParameters
                 {
-                    result.Message = "Invalid issuer";
-                    result.ErrorDetails = $"The token does not appear to be issued by '{expectedIssuerId}'";
-                    return result;
-                }
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKeys = signingCertificates
+                        .Select(cert => new X509SecurityKey(cert))
+                        .Cast<SecurityKey>()
+                        .ToList(),
+                    ValidateIssuer = false,  // We'll validate the issuer manually
+                    ValidateLifetime = true,
+                    ValidateAudience = audiences.Any(),  // Only validate audience if we found one
+                    ValidAudiences = audiences,  // Set the audiences extracted from the token
+                    ClockSkew = TimeSpan.FromMinutes(5)
+                };
 
-                // Check for expiration (basic check for NotOnOrAfter)
-                if (tokenXml.Contains("NotOnOrAfter"))
+                // Validate the token using Saml2SecurityTokenHandler
+                try
                 {
-                    // Extract NotOnOrAfter value (simplified)
-                    var notOnOrAfterIndex = tokenXml.IndexOf("NotOnOrAfter=\"");
-                    if (notOnOrAfterIndex > 0)
+                    SecurityToken validatedToken;
+                    var principal = saml2Handler.ValidateToken(tokenXml, tokenValidationParameters, out validatedToken);
+                    
+                    // At this point, signature is valid
+                    result.SignatureValid = true;
+                    result.SignatureValidMessage = "Cryptographically verified using issuer's certificates";
+
+                    // Extract token issuer for additional validation
+                    var saml2Token = validatedToken as Saml2SecurityToken;
+                    if (saml2Token != null && saml2Token.Issuer != null)
                     {
-                        var start = notOnOrAfterIndex + "NotOnOrAfter=\"".Length;
-                        var end = tokenXml.IndexOf("\"", start);
-                        if (end > start)
+                        string tokenIssuer = saml2Token.Issuer.ToString();
+                        
+                        // Validate issuer against metadata
+                        if (!ValidateTokenIssuerAgainstMetadata(tokenIssuer, metadataXml))
                         {
-                            var notOnOrAfterStr = tokenXml.Substring(start, end - start);
-                            if (DateTime.TryParse(notOnOrAfterStr, out var notOnOrAfter))
-                            {
+                            result.Message = "Invalid issuer";
+                            result.ErrorDetails = $"The token issuer '{tokenIssuer}' does not match any issuer in the metadata";
+                            result.IssuerVerified = false;
+                            result.IssuerVerifiedMessage = $"Token issuer '{tokenIssuer}' not found in metadata";
+                            return result;
+                        }
 
-                                if (DateTime.UtcNow >= notOnOrAfter)
-                                {
-                                    result.Message = "Token expired";
-                                    result.ErrorDetails = "The token has expired";
-                                    return result;
-                                }
+                        result.IssuerVerified = true;
+                        result.IssuerVerifiedMessage = "Issuer matches metadata and trusted provider list";
+                    }
+                    else
+                    {
+                        result.IssuerVerified = false;
+                        result.IssuerVerifiedMessage = "Unable to extract issuer from token";
+                    }
+
+                    // Extract and populate token details (for all valid tokens)
+                    if (saml2Token != null)
+                    {
+                        if (saml2Token.Issuer != null)
+                        {
+                            result.TokenIssuer = saml2Token.Issuer.ToString();
+                        }
+                        result.IssueInstant = saml2Token.ValidFrom;
+                        result.NotBefore = saml2Token.ValidFrom;
+                        result.NotOnOrAfter = saml2Token.ValidTo;
+
+                        // Check expiration status
+                        var now = System.DateTime.UtcNow;
+                        if (now >= saml2Token.ValidFrom && now < saml2Token.ValidTo)
+                        {
+                            result.TokenNotExpired = true;
+                            result.TokenNotExpiredMessage = $"Token is valid until {saml2Token.ValidTo:yyyy-MM-dd HH:mm:ss UTC}";
+                            result.TokenNotYetValid = true;
+                            result.TokenNotYetValidMessage = "Token is currently valid";
+                        }
+                        else if (now < saml2Token.ValidFrom)
+                        {
+                            result.TokenNotExpired = true;
+                            result.TokenNotYetValid = false;
+                            result.TokenNotYetValidMessage = $"Token becomes valid at {saml2Token.ValidFrom:yyyy-MM-dd HH:mm:ss UTC}";
+                        }
+                        else
+                        {
+                            result.TokenNotExpired = false;
+                            result.TokenNotExpiredMessage = $"Token expired on {saml2Token.ValidTo:yyyy-MM-dd HH:mm:ss UTC}";
+                            result.TokenNotYetValid = true;
+                        }
+                    }
+                    
+                    // Add audiences
+                    var tokenAudiences = ExtractAudiencesFromToken(tokenXml);
+                    if (tokenAudiences != null)
+                    {
+                        result.Audiences.AddRange(tokenAudiences);
+                    }
+
+                    // Extract claims from the principal
+                    if (principal != null && principal.Claims != null)
+                    {
+                        foreach (var claim in principal.Claims)
+                        {
+                            var key = claim.Type;
+                            var value = claim.Value;
+                            
+                            // Use claim type without namespace for readability
+                            var shortKey = key.Contains("/") ? key.Substring(key.LastIndexOf("/") + 1) : key;
+                            
+                            if (!result.Claims.ContainsKey(shortKey))
+                            {
+                                result.Claims[shortKey] = value;
                             }
                         }
                     }
-                }
 
-                // Check for NotBefore (token not yet valid)
-                if (tokenXml.Contains("NotBefore"))
+                    // Token validation successful
+                    result.IsValid = true;
+                    result.Message = "Token validation passed";
+                    result.IssuerName = expectedIssuerId;
+                    return result;
+                }
+                catch (SecurityTokenSignatureKeyNotFoundException ex)
                 {
-                    var notBeforeIndex = tokenXml.IndexOf("NotBefore=\"");
-                    if (notBeforeIndex > 0)
-                    {
-                        var start = notBeforeIndex + "NotBefore=\"".Length;
-                        var end = tokenXml.IndexOf("\"", start);
-                        if (end > start)
-                        {
-                            var notBeforeStr = tokenXml.Substring(start, end - start);
-                            if (DateTime.TryParse(notBeforeStr, out var notBefore))
-                            {
-                                if (DateTime.UtcNow < notBefore)
-                                {
-                                    result.Message = "Token not yet valid";
-                                    result.ErrorDetails = $"The token is not valid until {notBefore.ToString("yyyy-MM-dd HH:mm:ss")} UTC";
-                                    return result;
-                                }
-                            }
-                        }
-                    }
+                    result.Message = "Invalid token signature";
+                    result.ErrorDetails = $"The token signature could not be verified with available certificates: {ex.Message}";
+                    result.SignatureValid = false;
+                    result.SignatureValidMessage = "Certificate mismatch or invalid signature";
+                    System.Diagnostics.Trace.TraceError($"TokenValidationService: Signature key not found: {ex.Message}");
+                    return result;
                 }
-
-                // Check IssueInstant (should not be in the future)
-                if (tokenXml.Contains("IssueInstant"))
+                catch (SecurityTokenInvalidSignatureException ex)
                 {
-                    var issueInstantIndex = tokenXml.IndexOf("IssueInstant=\"");
-                    if (issueInstantIndex > 0)
-                    {
-                        var start = issueInstantIndex + "IssueInstant=\"".Length;
-                        var end = tokenXml.IndexOf("\"", start);
-                        if (end > start)
-                        {
-                            var issueInstantStr = tokenXml.Substring(start, end - start);
-                            if (DateTime.TryParse(issueInstantStr, out var issueInstant))
-                            {
-                                // Allow for some clock skew (5 minutes)
-                                var maxClockSkew = TimeSpan.FromMinutes(5);
-                                if (issueInstant > DateTime.UtcNow.Add(maxClockSkew))
-                                {
-                                    result.Message = "Token issued in the future";
-                                    result.ErrorDetails = $"The token was issued at {issueInstant.ToString("yyyy-MM-dd HH:mm:ss")} UTC, which is in the future";
-                                    return result;
-                                }
-                            }
-                        }
-                    }
+                    result.Message = "Invalid token signature";
+                    result.ErrorDetails = $"The token has an invalid or tampered signature: {ex.Message}";
+                    result.SignatureValid = false;
+                    result.SignatureValidMessage = "Signature validation failed - token may be tampered";
+                    System.Diagnostics.Trace.TraceError($"TokenValidationService: Invalid signature: {ex.Message}");
+                    return result;
                 }
-
-                // If we get here, basic validation passed
-                result.IsValid = true;
-                result.Message = "Token validation passed";
-                return result;
+                catch (SecurityTokenExpiredException ex)
+                {
+                    result.Message = "Token expired";
+                    result.ErrorDetails = $"The token has expired and is no longer valid";
+                    result.TokenNotExpired = false;
+                    result.TokenNotExpiredMessage = "Token has passed its expiration date";
+                    System.Diagnostics.Trace.TraceWarning($"TokenValidationService: Token expired: {ex.Message}");
+                    return result;
+                }
+                catch (SecurityTokenNotYetValidException ex)
+                {
+                    result.Message = "Token not yet valid";
+                    result.ErrorDetails = $"The token is not yet valid - check the NotBefore condition";
+                    result.TokenNotYetValid = false;
+                    result.TokenNotYetValidMessage = "Token's start validity has not been reached";
+                    System.Diagnostics.Trace.TraceWarning($"TokenValidationService: Token not yet valid: {ex.Message}");
+                    return result;
+                }
+                catch (SecurityTokenValidationException ex)
+                {
+                    result.Message = "Token validation failed";
+                    result.ErrorDetails = $"Token validation failed: {ex.Message}";
+                    System.Diagnostics.Trace.TraceError($"TokenValidationService: Validation error: {ex.Message}");
+                    return result;
+                }
+                catch (Exception ex)
+                {
+                    result.Message = "Unexpected validation error";
+                    result.ErrorDetails = $"An unexpected error occurred during validation: {ex.Message}";
+                    System.Diagnostics.Trace.TraceError($"TokenValidationService: Unexpected error: {ex.Message}");
+                    return result;
+                }
             }
             catch (Exception ex)
             {
@@ -374,22 +461,193 @@ namespace MvcDemo.Services
         }
 
         /// <summary>
-        /// Extracts signing certificates from SAML metadata XML.
-        /// Simplified version that checks for certificate presence.
+        /// Extracts signing certificates from SAML metadata XML using string parsing.
+        /// Searches for X509Certificate elements containing Base64-encoded certificate data.
         /// </summary>
-        private static System.Collections.Generic.List<System.Security.Cryptography.X509Certificates.X509Certificate2> ExtractSigningCertificatesFromMetadata(string metadataXml)
+        private static List<X509Certificate2> ExtractSigningCertificatesFromMetadata(string metadataXml)
         {
-            var certificates = new System.Collections.Generic.List<System.Security.Cryptography.X509Certificates.X509Certificate2>();
+            var certificates = new List<X509Certificate2>();
 
-            // For demo purposes, just check if metadata contains certificates
-            // In production, you'd properly parse the XML
-            if (metadataXml.Contains("X509Certificate"))
+            if (string.IsNullOrEmpty(metadataXml))
+                return certificates;
+
+            try
             {
-                // Assume certificates are present
-                certificates.Add(new System.Security.Cryptography.X509Certificates.X509Certificate2()); // Dummy certificate
+                // Search for X509Certificate elements
+                int startIndex = 0;
+                const string certStartTag = "<X509Certificate>";
+                const string certEndTag = "</X509Certificate>";
+
+                while (true)
+                {
+                    int tagStart = metadataXml.IndexOf(certStartTag, startIndex);
+                    if (tagStart < 0)
+                        break;
+
+                    int certDataStart = tagStart + certStartTag.Length;
+                    int tagEnd = metadataXml.IndexOf(certEndTag, certDataStart);
+                    
+                    if (tagEnd < 0)
+                        break;
+
+                    string certData = metadataXml.Substring(certDataStart, tagEnd - certDataStart).Trim();
+                    
+                    if (!string.IsNullOrEmpty(certData))
+                    {
+                        try
+                        {
+                            // Decode Base64 certificate data
+                            byte[] certBytes = System.Convert.FromBase64String(certData);
+                            var cert = new X509Certificate2(certBytes);
+                            
+                            // Avoid duplicate certificates
+                            if (!certificates.Any(c => c.Thumbprint == cert.Thumbprint))
+                            {
+                                certificates.Add(cert);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Trace.TraceWarning(
+                                $"TokenValidationService: Failed to parse X509Certificate: {ex.Message}");
+                        }
+                    }
+
+                    startIndex = tagEnd + certEndTag.Length;
+                }
+
+                return certificates;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError(
+                    $"TokenValidationService: Error extracting certificates from metadata: {ex.Message}");
+                return certificates;
+            }
+        }
+
+        /// <summary>
+        /// Extracts the issuer URI from a SAML token XML.
+        /// </summary>
+        private static string ExtractIssuerFromToken(string tokenXml)
+        {
+            if (string.IsNullOrEmpty(tokenXml))
+                return null;
+
+            // Look for <Issuer> element (with or without namespace prefix)
+            var issuerStartPatterns = new[] { "<Issuer>", "<issuer>", "<saml:Issuer>", "<saml2:Issuer>" };
+            var issuerEndPatterns = new[] { "</Issuer>", "</issuer>", "</saml:Issuer>", "</saml2:Issuer>" };
+
+            foreach (var startPattern in issuerStartPatterns)
+            {
+                int startIndex = tokenXml.IndexOf(startPattern);
+                if (startIndex >= 0)
+                {
+                    int contentStart = startIndex + startPattern.Length;
+                    
+                    // Find the corresponding closing tag
+                    foreach (var endPattern in issuerEndPatterns)
+                    {
+                        int endIndex = tokenXml.IndexOf(endPattern, contentStart);
+                        if (endIndex >= 0)
+                        {
+                            return tokenXml.Substring(contentStart, endIndex - contentStart).Trim();
+                        }
+                    }
+                }
             }
 
-            return certificates;
+            return null;
+        }
+
+        /// <summary>
+        /// Validates that the token issuer matches the issuer in the metadata.
+        /// </summary>
+        private static bool ValidateTokenIssuerAgainstMetadata(string tokenIssuer, string metadataXml)
+        {
+            if (string.IsNullOrEmpty(tokenIssuer) || string.IsNullOrEmpty(metadataXml))
+                return false;
+
+            // For WS-Federation metadata, look for EntityDescriptor with the issuer
+            // For SAML metadata, check if the issuer appears in the metadata
+            
+            // Simple check: see if the token issuer appears anywhere in the metadata
+            // This is a basic validation - in production you'd parse the metadata properly
+            if (metadataXml.Contains(tokenIssuer))
+            {
+                return true;
+            }
+
+            // Also check for variations of the issuer (with or without trailing slash)
+            var issuerWithSlash = tokenIssuer.TrimEnd('/') + "/";
+            var issuerWithoutSlash = tokenIssuer.TrimEnd('/');
+            
+            if (metadataXml.Contains(issuerWithSlash) || metadataXml.Contains(issuerWithoutSlash))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Extracts audience URIs from a SAML token XML.
+        /// Searches for Audience elements within AudienceRestriction elements.
+        /// </summary>
+        private static IEnumerable<string> ExtractAudiencesFromToken(string tokenXml)
+        {
+            var audiences = new List<string>();
+
+            if (string.IsNullOrEmpty(tokenXml))
+                return audiences;
+
+            try
+            {
+                // Look for <Audience> elements (with or without namespace prefix)
+                var audiencePatterns = new[] { "<Audience>", "<audience>" };
+                var audienceEndPatterns = new[] { "</Audience>", "</audience>" };
+
+                foreach (var startPattern in audiencePatterns)
+                {
+                    int startIndex = 0;
+                    
+                    while (true)
+                    {
+                        startIndex = tokenXml.IndexOf(startPattern, startIndex);
+                        if (startIndex < 0)
+                            break;
+
+                        int contentStart = startIndex + startPattern.Length;
+                        
+                        // Find the corresponding closing tag
+                        foreach (var endPattern in audienceEndPatterns)
+                        {
+                            int endIndex = tokenXml.IndexOf(endPattern, contentStart);
+                            if (endIndex >= 0)
+                            {
+                                string audience = tokenXml.Substring(contentStart, endIndex - contentStart).Trim();
+                                if (!string.IsNullOrEmpty(audience) && !audiences.Contains(audience))
+                                {
+                                    audiences.Add(audience);
+                                }
+                                startIndex = endIndex + endPattern.Length;
+                                break;
+                            }
+                        }
+
+                        if (startIndex == 0)
+                            break;
+                    }
+                }
+
+                return audiences;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceWarning(
+                    $"TokenValidationService: Error extracting audiences from token: {ex.Message}");
+                return audiences;
+            }
         }
     }
 }

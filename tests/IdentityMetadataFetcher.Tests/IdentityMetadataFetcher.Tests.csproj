@@ -21,4 +21,8 @@
     <ProjectReference Include="..\..\src\IdentityMetadataFetcher\IdentityMetadataFetcher.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Models\" />
+  </ItemGroup>
+
 </Project>

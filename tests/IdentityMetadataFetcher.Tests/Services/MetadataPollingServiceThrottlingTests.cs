@@ -24,8 +24,8 @@ namespace IdentityMetadataFetcher.Tests.Services
             
             _endpoints = new List<IssuerEndpoint>
             {
-                new IssuerEndpoint("issuer1", "https://issuer1.example.com/metadata", "Issuer 1", MetadataType.SAML),
-                new IssuerEndpoint("issuer2", "https://issuer2.example.com/metadata", "Issuer 2", MetadataType.WSFED)
+                new IssuerEndpoint("issuer1", "https://issuer1.example.com/metadata", "Issuer 1"),
+                new IssuerEndpoint("issuer2", "https://issuer2.example.com/metadata", "Issuer 2")
             };
         }
 
@@ -318,7 +318,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             var fetcher = new MockMetadataFetcher();
             var endpoints = new List<IssuerEndpoint>
             {
-                new IssuerEndpoint("issuer1", "https://issuer1.example.com/metadata", "Issuer 1", MetadataType.SAML),
+                new IssuerEndpoint("issuer1", "https://issuer1.example.com/metadata", "Issuer 1"),
             };
             var service = new MetadataPollingService(fetcher, cache, endpoints, 60, 5);
 
@@ -333,8 +333,8 @@ namespace IdentityMetadataFetcher.Tests.Services
             var fetcher = new MockMetadataFetcher();
             var endpoints = new List<IssuerEndpoint>
             {
-                new IssuerEndpoint("issuer1", "https://issuer1.example.com/metadata", "Issuer 1", MetadataType.SAML),
-                new IssuerEndpoint("issuer2", "https://issuer2.example.com/metadata", "Issuer 2", MetadataType.WSFED)
+                new IssuerEndpoint("issuer1", "https://issuer1.example.com/metadata", "Issuer 1"),
+                new IssuerEndpoint("issuer2", "https://issuer2.example.com/metadata", "Issuer 2")
             };
             var service = new MetadataPollingService(fetcher, cache, endpoints, 60, 5);
 

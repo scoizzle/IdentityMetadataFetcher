@@ -71,8 +71,7 @@ namespace IdentityMetadataFetcher.ConsoleApp
                 {
                     Id = url,
                     Name = url,
-                    Endpoint = url,
-                    MetadataType = MetadataType.SAML // best-effort; parser supports both
+                    Endpoint = url
                 };
 
                 if (enablePolling)
@@ -223,8 +222,69 @@ namespace IdentityMetadataFetcher.ConsoleApp
                 return;
             }
 
-            // Check if it's WsFederationConfiguration
-            if (metadata is WsFederationConfiguration fedMetadata)
+            // Handle WsFederationMetadataDocument (the actual concrete type we now use)
+            if (metadata is WsFederationMetadataDocument wsFedDoc)
+            {
+                Console.WriteLine();
+                Console.WriteLine("Summary:");
+                Console.WriteLine(new string('-', 80));
+                
+                // Issuer
+                if (!string.IsNullOrEmpty(wsFedDoc.Issuer))
+                {
+                    Console.WriteLine($"Issuer: {wsFedDoc.Issuer}");
+                }
+
+                // Configuration info
+                if (wsFedDoc.Configuration != null)
+                {
+                    // Token endpoint
+                    if (!string.IsNullOrEmpty(wsFedDoc.Configuration.TokenEndpoint))
+                    {
+                        Console.WriteLine($"Token Endpoint: {wsFedDoc.Configuration.TokenEndpoint}");
+                    }
+                }
+
+                // Additional endpoints dictionary
+                if (wsFedDoc.Endpoints != null && wsFedDoc.Endpoints.Any())
+                {
+                    Console.WriteLine();
+                    Console.WriteLine($"Endpoints ({wsFedDoc.Endpoints.Count}):");
+                    foreach (var ep in wsFedDoc.Endpoints)
+                    {
+                        Console.WriteLine($"  {ep.Key}: {ep.Value}");
+                    }
+                }
+
+                // Signing certificates
+                if (wsFedDoc.SigningCertificates != null && wsFedDoc.SigningCertificates.Any())
+                {
+                    Console.WriteLine();
+                    Console.WriteLine($"Signing Certificates ({wsFedDoc.SigningCertificates.Count}):");
+                    PrintCertificateInformation(wsFedDoc.SigningCertificates);
+                }
+
+                // Signing keys from configuration
+                if (wsFedDoc.Configuration?.SigningKeys != null && wsFedDoc.Configuration.SigningKeys.Any())
+                {
+                    Console.WriteLine();
+                    Console.WriteLine($"Signing Keys ({wsFedDoc.Configuration.SigningKeys.Count}):");
+                    PrintKeyInformation(wsFedDoc.Configuration.SigningKeys);
+                }
+
+                // Key infos
+                if (wsFedDoc.Configuration?.KeyInfos != null && wsFedDoc.Configuration.KeyInfos.Any())
+                {
+                    Console.WriteLine();
+                    Console.WriteLine($"Key Infos: {wsFedDoc.Configuration.KeyInfos.Count}");
+                }
+
+                // Created timestamp
+                Console.WriteLine();
+                Console.WriteLine($"Created At: {wsFedDoc.CreatedAt:u}");
+            }
+            // Fallback for WsFederationConfiguration (if passed directly)
+            else if (metadata is WsFederationConfiguration fedMetadata)
             {
                 Console.WriteLine();
                 Console.WriteLine("Summary:");
@@ -240,6 +300,7 @@ namespace IdentityMetadataFetcher.ConsoleApp
                 // Signing keys
                 if (fedMetadata.SigningKeys != null && fedMetadata.SigningKeys.Any())
                 {
+                    Console.WriteLine();
                     Console.WriteLine($"Signing Keys: {fedMetadata.SigningKeys.Count}");
                     PrintKeyInformation(fedMetadata.SigningKeys);
                 }
@@ -248,19 +309,6 @@ namespace IdentityMetadataFetcher.ConsoleApp
                 if (fedMetadata.KeyInfos != null && fedMetadata.KeyInfos.Any())
                 {
                     Console.WriteLine($"Key Infos: {fedMetadata.KeyInfos.Count}");
-                }
-            }
-            else if (metadata is System.Xml.Linq.XElement samlMetadata)
-            {
-                Console.WriteLine();
-                Console.WriteLine("Summary:");
-                Console.WriteLine(new string('-', 80));
-                Console.WriteLine($"SAML EntityDescriptor: {samlMetadata.Name.LocalName}");
-                
-                var entityId = samlMetadata.Attribute("entityID")?.Value;
-                if (!string.IsNullOrWhiteSpace(entityId))
-                {
-                    Console.WriteLine($"Entity ID: {entityId}");
                 }
             }
             else
@@ -302,24 +350,29 @@ namespace IdentityMetadataFetcher.ConsoleApp
 
         private static void PrintCertificateInfo(X509Certificate2 cert)
         {
-            Console.WriteLine("    Certificate:");
-            Console.WriteLine($"      Subject: {cert.Subject}");
-            Console.WriteLine($"      Issuer: {cert.Issuer}");
-            Console.WriteLine($"      Thumbprint: {cert.Thumbprint}");
-            Console.WriteLine($"      Valid From: {cert.NotBefore:yyyy-MM-dd HH:mm:ss}");
-            Console.WriteLine($"      Valid To: {cert.NotAfter:yyyy-MM-dd HH:mm:ss}");
+            PrintCertificateInfo(cert, "    ");
+        }
+
+        private static void PrintCertificateInfo(X509Certificate2 cert, string indent)
+        {
+            Console.WriteLine($"{indent}Subject: {cert.Subject}");
+            Console.WriteLine($"{indent}Issuer: {cert.Issuer}");
+            Console.WriteLine($"{indent}Thumbprint: {cert.Thumbprint}");
+            Console.WriteLine($"{indent}Serial Number: {cert.SerialNumber}");
+            Console.WriteLine($"{indent}Valid From: {cert.NotBefore:yyyy-MM-dd HH:mm:ss}");
+            Console.WriteLine($"{indent}Valid To: {cert.NotAfter:yyyy-MM-dd HH:mm:ss}");
             
             var now = DateTime.Now;
             if (now < cert.NotBefore)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("      Status: Not yet valid");
+                Console.WriteLine($"{indent}Status: Not yet valid");
                 Console.ResetColor();
             }
             else if (now > cert.NotAfter)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("      Status: EXPIRED");
+                Console.WriteLine($"{indent}Status: EXPIRED");
                 Console.ResetColor();
             }
             else
@@ -328,15 +381,38 @@ namespace IdentityMetadataFetcher.ConsoleApp
                 if (daysRemaining < 30)
                 {
                     Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine($"      Status: Expires in {daysRemaining} days");
+                    Console.WriteLine($"{indent}Status: Expires in {daysRemaining} days");
                     Console.ResetColor();
                 }
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine($"      Status: Valid (expires in {daysRemaining} days)");
+                    Console.WriteLine($"{indent}Status: Valid (expires in {daysRemaining} days)");
                     Console.ResetColor();
                 }
+            }
+
+            // Display public key info
+            try
+            {
+                var publicKey = cert.PublicKey;
+                Console.WriteLine($"{indent}Key Algorithm: {publicKey.Oid?.FriendlyName ?? publicKey.Oid?.Value}");
+                Console.WriteLine($"{indent}Key Size: {cert.PublicKey.Key?.KeySize} bits");
+            }
+            catch
+            {
+                // Some certs may not expose key info
+            }
+        }
+
+        private static void PrintCertificateInformation(IReadOnlyList<X509Certificate2> certificates)
+        {
+            var certIndex = 1;
+            foreach (var cert in certificates)
+            {
+                Console.WriteLine($"  Certificate #{certIndex}:");
+                PrintCertificateInfo(cert, "    ");
+                certIndex++;
             }
         }
     }

@@ -19,12 +19,11 @@ namespace IdentityMetadataFetcher.Tests
         [Test]
         public void Constructor_WithParameters_SetsAllProperties()
         {
-            var endpoint = new IssuerEndpoint("test-id", "http://example.com/metadata", "Test Issuer", MetadataType.SAML);
+            var endpoint = new IssuerEndpoint("test-id", "http://example.com/metadata", "Test Issuer");
             
             Assert.That(endpoint.Id, Is.EqualTo("test-id"));
             Assert.That(endpoint.Endpoint, Is.EqualTo("http://example.com/metadata"));
             Assert.That(endpoint.Name, Is.EqualTo("Test Issuer"));
-            Assert.That(endpoint.MetadataType, Is.EqualTo(MetadataType.SAML));
         }
 
         [Test]
@@ -35,28 +34,12 @@ namespace IdentityMetadataFetcher.Tests
             endpoint.Id = "new-id";
             endpoint.Endpoint = "http://issuer.example.com/metadata";
             endpoint.Name = "New Issuer";
-            endpoint.MetadataType = MetadataType.WSFED;
             endpoint.Timeout = 15000;
 
             Assert.That(endpoint.Id, Is.EqualTo("new-id"));
             Assert.That(endpoint.Endpoint, Is.EqualTo("http://issuer.example.com/metadata"));
             Assert.That(endpoint.Name, Is.EqualTo("New Issuer"));
-            Assert.That(endpoint.MetadataType, Is.EqualTo(MetadataType.WSFED));
             Assert.That(endpoint.Timeout, Is.EqualTo(15000));
-        }
-
-        [Test]
-        public void MetadataType_SAML_IsValidValue()
-        {
-            var endpoint = new IssuerEndpoint { MetadataType = MetadataType.SAML };
-            Assert.That(endpoint.MetadataType, Is.EqualTo(MetadataType.SAML));
-        }
-
-        [Test]
-        public void MetadataType_WSFED_IsValidValue()
-        {
-            var endpoint = new IssuerEndpoint { MetadataType = MetadataType.WSFED };
-            Assert.That(endpoint.MetadataType, Is.EqualTo(MetadataType.WSFED));
         }
 
         [Test]

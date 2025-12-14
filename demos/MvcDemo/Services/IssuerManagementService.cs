@@ -39,19 +39,12 @@ namespace MvcDemo.Services
                     return false;
                 }
 
-                // Parse metadata type
-                if (!Enum.TryParse<MetadataType>(issuerModel.MetadataType, out var metadataType))
-                {
-                    metadataType = MetadataType.SAML;
-                }
-
                 // Create the issuer endpoint
                 var endpoint = new IssuerEndpoint
                 {
                     Id = issuerModel.Id,
                     Name = issuerModel.Name,
-                    Endpoint = issuerModel.Endpoint,
-                    MetadataType = metadataType
+                    Endpoint = issuerModel.Endpoint
                 };
 
                 // Add to the polling service
@@ -102,19 +95,12 @@ namespace MvcDemo.Services
                     return false;
                 }
 
-                // Parse metadata type
-                if (!Enum.TryParse<MetadataType>(issuerModel.MetadataType, out var metadataType))
-                {
-                    metadataType = MetadataType.SAML;
-                }
-
                 // Create the updated issuer endpoint
                 var endpoint = new IssuerEndpoint
                 {
                     Id = issuerModel.Id,
                     Name = issuerModel.Name,
-                    Endpoint = issuerModel.Endpoint,
-                    MetadataType = metadataType
+                    Endpoint = issuerModel.Endpoint
                 };
 
                 // Update in the polling service
@@ -209,8 +195,7 @@ namespace MvcDemo.Services
                             {
                                 Id = endpoint.Id,
                                 Name = endpoint.Name,
-                                Endpoint = endpoint.Endpoint,
-                                MetadataType = endpoint.MetadataType.ToString()
+                                Endpoint = endpoint.Endpoint
                             };
 
                             var cacheEntry = pollingService.GetMetadataCacheEntry(endpoint.Id);
@@ -222,59 +207,28 @@ namespace MvcDemo.Services
                                 // Extract metadata based on type
                                 if (cacheEntry.Metadata != null)
                                 {
-                                    // Handle WsFederationConfiguration
-                                    if (cacheEntry.Metadata is WsFederationConfiguration config)
-                                    {
-                                        issuer.EntityId = config.Issuer;
+                                    var wsFedDoc = cacheEntry.Metadata;
+                                    issuer.EntityId = wsFedDoc.Issuer;
 
-                                        // Signing certificates from WsFederationConfiguration
-                                        if (config.SigningKeys != null)
+                                    // Signing certificates from WsFederationMetadataDocument
+                                    if (wsFedDoc.SigningCertificates != null)
+                                    {
+                                        foreach (var cert in wsFedDoc.SigningCertificates)
                                         {
-                                            foreach (var key in config.SigningKeys)
+                                            var certViewModel = new SigningCertificateViewModel
                                             {
-                                                if (key is X509SecurityKey x509Key)
-                                                {
-                                                    var cert = new SigningCertificateViewModel
-                                                    {
-                                                        Subject = x509Key.Certificate.Subject,
-                                                        Issuer = x509Key.Certificate.Issuer,
-                                                        Thumbprint = x509Key.Certificate.Thumbprint,
-                                                        NotBefore = x509Key.Certificate.NotBefore,
-                                                        NotAfter = x509Key.Certificate.NotAfter,
-                                                        Status = GetCertificateStatus(x509Key.Certificate)
-                                                    };
-                                                    AddCertificateIfNotExists(issuer.SigningCertificates, cert);
-                                                }
-                                            }
+                                                Subject = cert.Subject,
+                                                Issuer = cert.Issuer,
+                                                Thumbprint = cert.Thumbprint,
+                                                NotBefore = cert.NotBefore,
+                                                NotAfter = cert.NotAfter,
+                                                Status = GetCertificateStatus(cert)
+                                            };
+                                            AddCertificateIfNotExists(issuer.SigningCertificates, certViewModel);
                                         }
+                                    }
 
-                                        issuer.RoleType = "WS-Federation / SAML2 Token Service";
-                                    }
-                                    // Handle SAML metadata (XElement or other types)
-                                    else if (cacheEntry.Metadata.GetType().Name == "XElement")
-                                    {
-                                        // SAML metadata - try to extract entityID attribute
-                                        dynamic samlMetadata = cacheEntry.Metadata;
-                                        try
-                                        {
-                                            var entityIdAttr = samlMetadata.Attribute("entityID");
-                                            if (entityIdAttr != null)
-                                            {
-                                                issuer.EntityId = entityIdAttr.Value;
-                                            }
-                                        }
-                                        catch
-                                        {
-                                            // If we can't extract entityID, just mark it as SAML
-                                        }
-                                        issuer.RoleType = "SAML 2.0 Identity Provider";
-                                        issuer.MetadataError = "SAML metadata is cached but detailed certificate extraction is not yet supported in this UI.";
-                                    }
-                                    else
-                                    {
-                                        issuer.HasMetadata = false;
-                                        issuer.MetadataError = "Metadata type is not recognized.";
-                                    }
+                                    issuer.RoleType = "WS-Federation / SAML2 Token Service";
                                 }
                                 else
                                 {

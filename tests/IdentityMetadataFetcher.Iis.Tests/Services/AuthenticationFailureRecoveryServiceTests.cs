@@ -30,8 +30,8 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
             _fetcher = new MockMetadataFetcher();
             _endpoints = new List<IssuerEndpoint>
             {
-                new IssuerEndpoint("issuer1", "https://issuer1.example.com/metadata", "Issuer 1", MetadataType.SAML),
-                new IssuerEndpoint("issuer2", "https://issuer2.example.com/metadata", "Issuer 2", MetadataType.WSFED)
+                new IssuerEndpoint("issuer1", "https://issuer1.example.com/metadata", "Issuer 1"),
+                new IssuerEndpoint("issuer2", "https://issuer2.example.com/metadata", "Issuer 2")
             };
             _pollingService = new MetadataPollingService(_fetcher, _cache, _endpoints, 60, 5);
             _recoveryService = new AuthenticationFailureRecoveryService(_pollingService, _cache, _updater);
@@ -48,7 +48,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         {
             // Pre-populate cache with issuer for issuer1 - must match what MockMetadata will provide
             var config = new WsFederationConfiguration { Issuer = "https://example.com/entity" };
-            _cache.AddOrUpdateMetadata("issuer1", config, "<xml />");
+            _cache.AddOrUpdateMetadata("issuer1", new WsFederationMetadataDocument(config, "<xml />"), "<xml />");
 
             var ex = new SecurityTokenValidationException(
                 "Issuer 'https://example.com/entity' signature key not found");
@@ -62,8 +62,8 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         {
             // Pre-populate cache with issuer matching MockMetadata
             var config = new WsFederationConfiguration { Issuer = "https://example.com/entity" };
-            _cache.AddOrUpdateMetadata("issuer1", config, "<xml />");
-            _cache.AddOrUpdateMetadata("issuer2", config, "<xml />");
+            _cache.AddOrUpdateMetadata("issuer1", new WsFederationMetadataDocument(config, "<xml />"), "<xml />");
+            _cache.AddOrUpdateMetadata("issuer2", new WsFederationMetadataDocument(config, "<xml />"), "<xml />");
 
             var ex = new SecurityTokenValidationException(
                 "Issuer 'https://example.com/entity' signature key not found");

@@ -68,7 +68,6 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
             Assert.That(endpoint.Id, Is.EqualTo("issuer-1"));
             Assert.That(endpoint.Endpoint, Is.EqualTo("https://example.com/metadata"));
             Assert.That(endpoint.Name, Is.EqualTo("Example"));
-            Assert.That(endpoint.MetadataType, Is.EqualTo(MetadataType.SAML));
             Assert.That(endpoint.Timeout, Is.EqualTo(20000)); // TimeoutSeconds converted to milliseconds
         }
 
@@ -82,7 +81,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
 
             var endpoint = _element.ToIssuerEndpoint();
 
-            Assert.That(endpoint.MetadataType, Is.EqualTo(MetadataType.WSFED));
+            Assert.That(endpoint.Id, Is.EqualTo("issuer-1"));
         }
 
         [Test]
@@ -91,17 +90,6 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
             _element.Endpoint = "https://example.com/metadata";
             _element.Name = "Example";
             _element.MetadataType = "Saml";
-
-            Assert.Throws<ConfigurationErrorsException>(() => _element.ToIssuerEndpoint());
-        }
-
-        [Test]
-        public void ToIssuerEndpoint_ThrowsOnInvalidMetadataType()
-        {
-            _element.Id = "issuer-1";
-            _element.Endpoint = "https://example.com/metadata";
-            _element.Name = "Example";
-            _element.MetadataType = "InvalidType";
 
             Assert.Throws<ConfigurationErrorsException>(() => _element.ToIssuerEndpoint());
         }
@@ -129,19 +117,6 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
             var endpoint = _element.ToIssuerEndpoint();
 
             Assert.That(endpoint.Timeout, Is.Null);
-        }
-
-        [Test]
-        public void ToIssuerEndpoint_MetadataTypeCaseInsensitive()
-        {
-            _element.Id = "issuer-1";
-            _element.Endpoint = "https://example.com/metadata";
-            _element.Name = "Example";
-            _element.MetadataType = "saml"; // lowercase
-
-            var endpoint = _element.ToIssuerEndpoint();
-
-            Assert.That(endpoint.MetadataType, Is.EqualTo(MetadataType.SAML));
         }
     }
 }
