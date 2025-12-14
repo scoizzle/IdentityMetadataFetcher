@@ -160,7 +160,7 @@ public class MyTests
    - Add classes to appropriate namespace
    - Follow existing code style
    - Add XML documentation comments
-   - Reference System.IdentityModel.Metadata as needed
+   - Reference Microsoft.IdentityModel NuGet packages as needed
 
 3. **Write Unit Tests**
    - Add test cases to IdentityMetadataFetcher.Tests project
@@ -276,7 +276,8 @@ The project has no external NuGet dependencies. It uses only the .NET Framework 
 - System
 - System.Core
 - System.IdentityModel (WIF)
-- System.IdentityModel.Metadata
+- Microsoft.IdentityModel.Protocols.WsFederation
+- Microsoft.IdentityModel.Tokens.Saml
 - System.IdentityModel.Services
 - System.Net.Http
 - System.Xml
@@ -324,7 +325,7 @@ Console.WriteLine($"Memory used: {afterSize - beforeSize} bytes");
 | Project won't load | Check .csproj file syntax |
 | Test discovery fails | Rebuild solution, restart Visual Studio |
 | HttpClient not found | Ensure System.Net.Http reference exists |
-| MetadataSerializer missing | Add reference to System.IdentityModel.Metadata |
+| WsFederationMetadataSerializer missing | Install Microsoft.IdentityModel.Protocols.WsFederation NuGet package |
 
 ## Continuous Integration
 
@@ -350,8 +351,8 @@ jobs:
 ## Resources
 
 ### Microsoft Documentation
-- [System.IdentityModel.Metadata](https://docs.microsoft.com/en-us/dotnet/api/system.identitymodel.metadata)
-- [MetadataSerializer Class](https://docs.microsoft.com/en-us/dotnet/api/system.identitymodel.metadata.metadataserializer)
+- [Microsoft.IdentityModel Documentation](https://docs.microsoft.com/en-us/dotnet/api/microsoft.identitymodel)
+- [WsFederationConfiguration Class](https://docs.microsoft.com/en-us/dotnet/api/microsoft.identitymodel.protocols.wsfederation.wsfederationconfiguration)
 - [Windows Identity Foundation](https://docs.microsoft.com/en-us/dotnet/framework/security/windows-identity-foundation)
 - [SAML 2.0 Metadata](https://docs.oasis-open.org/security/saml/v2.0/saml-metadata-2.0-os.pdf)
 - [WS-Federation Metadata](https://docs.microsoft.com/en-us/dotnet/framework/security/wsfederation-metadata)

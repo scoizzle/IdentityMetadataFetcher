@@ -148,9 +148,9 @@ A fully-featured .NET 4.5+ class library for fetching and parsing WSFED and SAML
 - [x] No external dependencies
 
 ### ✅ Integration
-- [x] System.IdentityModel.Metadata integration
-- [x] MetadataSerializer usage
-- [x] Returns typed MetadataBase objects
+- [x] Microsoft.IdentityModel integration
+- [x] WsFederationMetadataSerializer usage
+- [x] Returns typed WsFederationConfiguration objects
 - [x] Support for System.Xml
 
 ### ✅ Testing

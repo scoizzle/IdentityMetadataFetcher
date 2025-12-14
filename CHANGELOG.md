@@ -2,6 +2,52 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2025-12-14
+
+### ⚠️ BREAKING CHANGES
+
+**Full Migration to Microsoft.IdentityModel**
+
+This release completes the migration from `System.IdentityModel.Metadata` to `Microsoft.IdentityModel` packages.
+
+#### Changed
+
+- **Metadata Type**: `MetadataFetchResult.Metadata` now returns `WsFederationConfiguration` instead of `MetadataBase`
+- **Parser**: Uses `WsFederationMetadataSerializer` instead of `MetadataSerializer`
+- **Removed**: `System.IdentityModel` framework assembly references from core library and console app
+- **Retained**: `System.IdentityModel.Services` only in IIS module (required for WIF integration)
+
+#### Added
+
+- Microsoft.IdentityModel.Protocols.WsFederation 8.1.2
+- Microsoft.IdentityModel.Tokens.Saml 8.1.2
+- Comprehensive migration documentation (MIGRATION_COMPLETE.md, FULL_MIGRATION_STATUS.md)
+
+#### Migration Guide
+
+Applications using this library will need to update code that accesses metadata:
+
+**Before:**
+```csharp
+if (result.Metadata is EntityDescriptor entity)
+{
+    var entityId = entity.EntityId?.Id;
+    foreach (var role in entity.RoleDescriptors) { ... }
+}
+```
+
+**After:**
+```csharp
+var config = result.Metadata;  // WsFederationConfiguration
+var issuer = config.Issuer;
+var tokenEndpoint = config.TokenEndpoint;
+foreach (var key in config.SigningKeys) { ... }
+```
+
+See [MIGRATION_COMPLETE.md](MIGRATION_COMPLETE.md) for full migration details.
+
+---
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
@@ -18,10 +64,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Synchronous and asynchronous APIs for all operations
 
 - **Metadata Processing**:
-  - Integration with System.IdentityModel.Metadata.MetadataSerializer
+  - Integration with Microsoft.IdentityModel.Protocols.WsFederation.WsFederationMetadataSerializer
   - Automatic XML parsing and deserialization
   - Support for both WSFED and SAML metadata formats
-  - Returns parsed MetadataBase objects from System.IdentityModel
+  - Returns parsed WsFederationConfiguration objects from Microsoft.IdentityModel
 
 - **Configuration Options**:
   - Configurable HTTP request timeouts (global and per-endpoint)
@@ -68,7 +114,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Technical Details
 
 - **Framework Target**: .NET Framework 4.5+
-- **Dependencies**: Framework assemblies only (System.IdentityModel.Metadata, System.Net.Http, System.Xml)
+- **Dependencies**: Microsoft.IdentityModel NuGet packages (Microsoft.IdentityModel.Protocols.WsFederation, Microsoft.IdentityModel.Tokens.Saml), System.Net.Http, System.Xml
 - **No external NuGet dependencies**
 - **Thread-safe** - stateless service design
 - **Language**: C# 5.0+ compatible
