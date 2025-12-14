@@ -97,13 +97,5 @@ namespace IdentityMetadataFetcher.Models
                 _endpoints["PassiveSts"] = _configuration.TokenEndpoint; // Alias for compatibility
             }
         }
-
-        /// <summary>
-        /// Returns a string representation of this metadata document.
-        /// </summary>
-        public override string ToString()
-        {
-            return $"WS-Federation Metadata: Issuer={Issuer}, Certificates={_signingCertificates.Count}";
-        }
     }
 }
