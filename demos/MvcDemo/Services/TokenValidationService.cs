@@ -87,13 +87,59 @@ namespace MvcDemo.Services
                 {
                     result.Message = validationResult.Message;
                     result.ErrorDetails = validationResult.ErrorDetails;
+                    // Copy validation flags even for failed validations
+                    result.SignatureValid = validationResult.SignatureValid;
+                    result.SignatureValidMessage = validationResult.SignatureValidMessage;
+                    result.IssuerVerified = validationResult.IssuerVerified;
+                    result.IssuerVerifiedMessage = validationResult.IssuerVerifiedMessage;
+                    result.TokenNotExpired = validationResult.TokenNotExpired;
+                    result.TokenNotExpiredMessage = validationResult.TokenNotExpiredMessage;
+                    result.TokenNotYetValid = validationResult.TokenNotYetValid;
+                    result.TokenNotYetValidMessage = validationResult.TokenNotYetValidMessage;
                     return result;
                 }
 
-                // Successfully validated
+                // Successfully validated - copy all properties from validationResult
                 result.IsValid = true;
                 result.Message = validationResult.Message;
                 result.IssuerName = GetIssuerName(issuerId);
+                
+                // Token properties
+                result.TokenIssuer = validationResult.TokenIssuer;
+                result.IssueInstant = validationResult.IssueInstant;
+                result.NotBefore = validationResult.NotBefore;
+                result.NotOnOrAfter = validationResult.NotOnOrAfter;
+                
+                // Audiences
+                if (validationResult.Audiences != null && validationResult.Audiences.Any())
+                {
+                    result.Audiences.AddRange(validationResult.Audiences);
+                }
+                
+                // Claims
+                if (validationResult.Claims != null && validationResult.Claims.Any())
+                {
+                    foreach (var claim in validationResult.Claims)
+                    {
+                        result.Claims[claim.Key] = claim.Value;
+                    }
+                }
+                
+                // Validation flags
+                result.SignatureValid = validationResult.SignatureValid;
+                result.SignatureValidMessage = validationResult.SignatureValidMessage;
+                result.IssuerVerified = validationResult.IssuerVerified;
+                result.IssuerVerifiedMessage = validationResult.IssuerVerifiedMessage;
+                result.TokenNotExpired = validationResult.TokenNotExpired;
+                result.TokenNotExpiredMessage = validationResult.TokenNotExpiredMessage;
+                result.TokenNotYetValid = validationResult.TokenNotYetValid;
+                result.TokenNotYetValidMessage = validationResult.TokenNotYetValidMessage;
+                
+                // Certificate information
+                result.SigningCertificateCount = validationResult.SigningCertificateCount;
+                result.PrimarySigningCertificateThumbprint = validationResult.PrimarySigningCertificateThumbprint;
+                result.PrimarySigningCertificateExpiration = validationResult.PrimarySigningCertificateExpiration;
+                
                 return result;
             }
             catch (Exception ex)

@@ -122,6 +122,9 @@
   <ItemGroup>
     <Content Include="Views\TokenValidator\Result.cshtml" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\TokenValidator\Result.cshtml.new" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
