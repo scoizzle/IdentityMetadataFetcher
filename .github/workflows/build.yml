@@ -26,6 +26,12 @@ jobs:
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v2
     
+    - name: Setup .NET Framework
+      run: |
+        # Install .NET Framework 4.8 Developer Pack (includes targeting pack)
+        choco install netfx-4.8-devpack -y
+      shell: pwsh
+    
     - name: Restore dependencies
       run: nuget restore IdentityMetadataFetcher.sln
     
