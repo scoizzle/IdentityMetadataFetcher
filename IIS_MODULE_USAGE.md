@@ -150,11 +150,12 @@ using System.IdentityModel.Metadata;
 var cache = MetadataPollingHttpModule.MetadataCache;
 
 // Retrieve metadata for an issuer
-var metadata = cache.GetMetadata("azure-ad");
+var config = cache.GetMetadata("azure-ad");
 
-if (metadata is EntityDescriptor entity)
+if (config != null)
 {
-    var entityId = entity.EntityId?.Id;
+    var issuer = config.Issuer;
+    var tokenEndpoint = config.TokenEndpoint;
     // Use the metadata...
 }
 
@@ -251,7 +252,7 @@ service.MetadataUpdated += (sender, e) =>
 
 - All successfully fetched metadata is cached in memory
 - Cache is thread-safe
-- Includes both parsed metadata (MetadataBase) and raw XML
+- Includes both parsed metadata (WsFederationConfiguration) and raw XML
 - Cached with timestamp for age tracking
 
 ### Error Handling

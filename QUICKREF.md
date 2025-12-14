@@ -30,7 +30,7 @@ var endpoint = new IssuerEndpoint
 var result = fetcher.FetchMetadata(endpoint);
 if (result.IsSuccess)
 {
-    var metadata = result.Metadata;  // System.IdentityModel.Metadata.MetadataBase
+    var metadata = result.Metadata;  // Microsoft.IdentityModel.Protocols.WsFederation.WsFederationConfiguration
     // Process metadata...
 }
 ```
@@ -180,7 +180,7 @@ result.FetchedAt              // DateTime - When was it fetched? (UTC)
 result.Endpoint               // IssuerEndpoint - Which endpoint?
 
 // On Success
-result.Metadata               // MetadataBase - Parsed metadata from System.IdentityModel.Metadata
+result.Metadata               // WsFederationConfiguration - Parsed metadata from Microsoft.IdentityModel.Protocols.WsFederation
 result.RawMetadata            // string - Original XML
 
 // On Failure
@@ -190,10 +190,15 @@ result.Exception              // Exception - Full exception details
 
 ## Common Metadata Properties
 
-Once you have `MetadataBase`, cast it appropriately:
+Once you have `WsFederationConfiguration`, access its properties:
 
 ```csharp
-if (result.Metadata is System.IdentityModel.Metadata.EntityDescriptor entity)
+if (result.IsSuccess)
+{
+    var config = result.Metadata;
+    Console.WriteLine($"Issuer: {config.Issuer}");
+    Console.WriteLine($"Token Endpoint: {config.TokenEndpoint}");
+    Console.WriteLine($"Signing Keys: {config.SigningKeys.Count}");
 {
     var entityId = entity.EntityId?.Id;
     
