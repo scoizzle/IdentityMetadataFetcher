@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net462;net47;net48</TargetFrameworks>
+    <TargetFrameworks>net462;net472;net481</TargetFrameworks>
     <RootNamespace>IdentityMetadataFetcher.Iis.Tests</RootNamespace>
     <AssemblyName>IdentityMetadataFetcher.Iis.Tests</AssemblyName>
     <LangVersion>latest</LangVersion>
@@ -12,14 +12,16 @@
   <ItemGroup>
     <Reference Include="System.Configuration" />
     <Reference Include="System.IdentityModel" />
-    
+    <Reference Include="System.IdentityModel.Services" />
     <Reference Include="System.Web" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NUnit" Version="3.13.3" />
-    <PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.2" />
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.WsFederation" Version="8.15.0" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens.Saml" Version="8.15.0" />
+    <PackageReference Include="NUnit" Version="4.4.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="6.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
   </ItemGroup>
 
   <ItemGroup>

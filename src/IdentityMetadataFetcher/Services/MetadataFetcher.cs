@@ -1,14 +1,15 @@
+using IdentityMetadataFetcher.Exceptions;
+using IdentityMetadataFetcher.Models;
+using Microsoft.IdentityModel.Protocols.WsFederation;
 using System;
 using System.Collections.Generic;
-using System.IdentityModel.Metadata;
 using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
-using IdentityMetadataFetcher.Exceptions;
-using IdentityMetadataFetcher.Models;
+using System.Xml.Linq;
 
 namespace IdentityMetadataFetcher.Services
 {
@@ -57,7 +58,7 @@ namespace IdentityMetadataFetcher.Services
             {
                 var timeout = endpoint.Timeout ?? _options.DefaultTimeoutMs;
                 var metadataXml = DownloadMetadataXml(endpoint.Endpoint, timeout);
-                var metadata = ParseMetadata(metadataXml, endpoint.MetadataType);
+                var metadata = ParseMetadata(metadataXml);
                 result.IsSuccess = true;
                 result.Metadata = metadata;
                 result.RawMetadata = metadataXml;
@@ -92,7 +93,7 @@ namespace IdentityMetadataFetcher.Services
             {
                 var timeout = endpoint.Timeout ?? _options.DefaultTimeoutMs;
                 var metadataXml = await DownloadMetadataXmlAsync(endpoint.Endpoint, timeout);
-                var metadata = ParseMetadata(metadataXml, endpoint.MetadataType);
+                var metadata = ParseMetadata(metadataXml);
                 result.IsSuccess = true;
                 result.Metadata = metadata;
                 result.RawMetadata = metadataXml;
@@ -156,22 +157,6 @@ namespace IdentityMetadataFetcher.Services
 
             var completedResults = await Task.WhenAll(tasks);
             return completedResults;
-        }
-
-        private MetadataBase FetchMetadataInternal(IssuerEndpoint endpoint)
-        {
-            var timeout = endpoint.Timeout ?? _options.DefaultTimeoutMs;
-            var metadataXml = DownloadMetadataXml(endpoint.Endpoint, timeout);
-            
-            return ParseMetadata(metadataXml, endpoint.MetadataType);
-        }
-
-        private async Task<MetadataBase> FetchMetadataInternalAsync(IssuerEndpoint endpoint)
-        {
-            var timeout = endpoint.Timeout ?? _options.DefaultTimeoutMs;
-            var metadataXml = await DownloadMetadataXmlAsync(endpoint.Endpoint, timeout);
-            
-            return ParseMetadata(metadataXml, endpoint.MetadataType);
         }
 
         private string DownloadMetadataXml(string endpoint, int timeoutMs)
@@ -263,7 +248,7 @@ namespace IdentityMetadataFetcher.Services
             );
         }
 
-        private MetadataBase ParseMetadata(string metadataXml, MetadataType metadataType)
+        private WsFederationMetadataDocument ParseMetadata(string metadataXml)
         {
             if (string.IsNullOrWhiteSpace(metadataXml))
                 throw new MetadataFetchException("Downloaded metadata is empty or null");
@@ -271,15 +256,31 @@ namespace IdentityMetadataFetcher.Services
             try
             {
                 using var reader = XmlReader.Create(new StringReader(metadataXml));
-                var serializer = new MetadataSerializer();
-                var metadata = serializer.ReadMetadata(reader);
-                return metadata;
+                
+                // WsFederationMetadataSerializer handles all standard metadata formats:
+                // - Pure WS-Federation metadata
+                // - SAML 2.0 EntityDescriptor with IDPSSODescriptor
+                // - Hybrid SAML/WS-Fed formats (Azure AD, ADFS)
+                var serializer = new WsFederationMetadataSerializer();
+                var configuration = serializer.ReadMetadata(reader);
+                
+                return new WsFederationMetadataDocument(configuration, metadataXml);
+            }
+            catch (MetadataFetchException)
+            {
+                throw;
+            }
+            catch (XmlException ex)
+            {
+                throw new MetadataFetchException(
+                    $"Failed to parse metadata: Invalid XML format - {ex.Message}",
+                    ex
+                );
             }
             catch (Exception ex)
             {
                 throw new MetadataFetchException(
-                    $"Failed to parse metadata as {metadataType}: {ex.Message}",
-                    null,
+                    $"Failed to parse metadata: {ex.Message}",
                     ex
                 );
             }

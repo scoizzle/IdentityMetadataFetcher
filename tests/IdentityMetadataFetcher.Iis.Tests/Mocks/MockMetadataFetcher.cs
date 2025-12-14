@@ -1,9 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using IdentityMetadataFetcher.Models;
 using IdentityMetadataFetcher.Services;
+using Microsoft.IdentityModel.Protocols.WsFederation;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Xml;
 
 namespace IdentityMetadataFetcher.Iis.Tests.Mocks
 {
@@ -40,7 +43,6 @@ namespace IdentityMetadataFetcher.Iis.Tests.Mocks
                 return MetadataFetchResult.Failure(endpoint, _errorMap[endpoint.Id]);
             }
 
-            var metadata = new MockMetadata();
             var rawXml = $@"<?xml version=""1.0"" encoding=""utf-8""?>
 <EntityDescriptor xmlns=""urn:oasis:names:tc:SAML:2.0:metadata"" ID=""{Guid.NewGuid()}"">
     <SPSSODescriptor protocolSupportEnumeration=""urn:oasis:names:tc:SAML:2.0:protocol"">
@@ -49,7 +51,18 @@ namespace IdentityMetadataFetcher.Iis.Tests.Mocks
     </SPSSODescriptor>
 </EntityDescriptor>";
 
-            return MetadataFetchResult.Success(endpoint, metadata, rawXml);
+            try
+            {
+                using var reader = XmlReader.Create(new StringReader(rawXml));
+                var serializer = new WsFederationMetadataSerializer();
+                var configuration = serializer.ReadMetadata(reader);
+                var metadata = new WsFederationMetadataDocument(configuration, rawXml);
+                return MetadataFetchResult.Success(endpoint, metadata, rawXml);
+            }
+            catch (Exception ex)
+            {
+                return MetadataFetchResult.Failure(endpoint, $"Failed to create mock metadata: {ex.Message}", ex);
+            }
         }
 
         public async Task<MetadataFetchResult> FetchMetadataAsync(IssuerEndpoint endpoint)

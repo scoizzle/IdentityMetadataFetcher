@@ -36,12 +36,14 @@ See full details in the Console Utility section below.
 
 ## Requirements
 
-- .NET Framework 4.5, 4.6, 4.7, or 4.8
-- System.IdentityModel (built-in to .NET Framework)
-- System.IdentityModel.Metadata (built-in to .NET Framework)
-- System.IdentityModel.Services (built-in to .NET Framework)
+- .NET Framework 4.6.2, 4.7, or 4.8
+- Microsoft.IdentityModel.Protocols.WsFederation 8.1.2+ (NuGet package)
+- Microsoft.IdentityModel.Tokens.Saml 8.1.2+ (NuGet package)
+- System.IdentityModel.Services (built-in to .NET Framework - IIS module only)
 
-> **⚠️ Windows Only**: This library targets .NET Framework and uses Windows-specific assemblies (System.IdentityModel). It requires a Windows environment to build and run.
+> **⚠️ Windows Only**: This library targets .NET Framework and requires a Windows environment to build and run.
+>
+> **📦 Microsoft.IdentityModel Migration**: The library has been fully migrated to Microsoft.IdentityModel packages. Metadata is now returned as `WsFederationConfiguration` instead of the legacy `EntityDescriptor`. See [MIGRATION_COMPLETE.md](MIGRATION_COMPLETE.md) for full details.
 
 ---
 
@@ -196,17 +198,18 @@ var result = await fetcher.FetchMetadataAsync(endpoint);
 
 if (result.IsSuccess)
 {
-    // Cast to appropriate type based on metadata type
-    if (result.Metadata is EntityDescriptor entityDescriptor)
+    // Access WsFederationConfiguration
+    var config = result.Metadata;
+    
+    Console.WriteLine($"Issuer: {config.Issuer}");
+    Console.WriteLine($"Token Endpoint: {config.TokenEndpoint}");
+    
+    // Access signing keys
+    foreach (var key in config.SigningKeys)
     {
-        var entityId = entityDescriptor.EntityId?.Id;
-        Console.WriteLine($"Entity ID: {entityId}");
-        
-        // Access SAML/WSFED-specific information
-        foreach (var role in entityDescriptor.RoleDescriptors)
+        if (key is Microsoft.IdentityModel.Tokens.X509SecurityKey x509Key)
         {
-            Console.WriteLine($"Role: {role.GetType().Name}");
-            // Process role descriptor (IDPSSODescriptor, SPSSODescriptor, etc.)
+            Console.WriteLine($"Certificate: {x509Key.Certificate.Subject}");
         }
     }
     

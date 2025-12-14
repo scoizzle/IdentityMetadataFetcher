@@ -1,9 +1,9 @@
+using IdentityMetadataFetcher.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using IdentityMetadataFetcher.Models;
 
 namespace IdentityMetadataFetcher.Services
 {
@@ -298,6 +298,9 @@ namespace IdentityMetadataFetcher.Services
             }
             else
             {
+                // Update poll timestamp even on failure to prevent immediate retry
+                UpdatePollTimestamp(result.Endpoint.Id, now);
+
                 OnPollingError(new PollingErrorEventArgs
                 {
                     IssuerId = result.Endpoint.Id,

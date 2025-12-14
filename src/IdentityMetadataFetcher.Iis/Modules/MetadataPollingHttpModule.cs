@@ -1,10 +1,10 @@
-using System;
-using System.Configuration;
-using System.Web;
 using IdentityMetadataFetcher.Iis.Configuration;
 using IdentityMetadataFetcher.Iis.Services;
 using IdentityMetadataFetcher.Models;
 using IdentityMetadataFetcher.Services;
+using System;
+using System.Configuration;
+using System.Web;
 
 namespace IdentityMetadataFetcher.Iis.Modules
 {

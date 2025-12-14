@@ -1,7 +1,7 @@
+using IdentityMetadataFetcher.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using IdentityMetadataFetcher.Models;
 
 namespace IdentityMetadataFetcher.Services
 {

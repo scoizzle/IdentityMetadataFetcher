@@ -1,14 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using IdentityMetadataFetcher.Iis.Modules;
 using IdentityMetadataFetcher.Models;
 using IdentityMetadataFetcher.Services;
+using Microsoft.IdentityModel.Protocols.WsFederation;
+using Microsoft.IdentityModel.Tokens;
 using MvcDemo.Models;
-using System.IdentityModel.Metadata;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography.X509Certificates;
-using System.IdentityModel.Tokens;
+using System.Threading.Tasks;
 
 namespace MvcDemo.Services
 {
@@ -39,19 +39,12 @@ namespace MvcDemo.Services
                     return false;
                 }
 
-                // Parse metadata type
-                if (!Enum.TryParse<MetadataType>(issuerModel.MetadataType, out var metadataType))
-                {
-                    metadataType = MetadataType.SAML;
-                }
-
                 // Create the issuer endpoint
                 var endpoint = new IssuerEndpoint
                 {
                     Id = issuerModel.Id,
                     Name = issuerModel.Name,
-                    Endpoint = issuerModel.Endpoint,
-                    MetadataType = metadataType
+                    Endpoint = issuerModel.Endpoint
                 };
 
                 // Add to the polling service
@@ -102,19 +95,12 @@ namespace MvcDemo.Services
                     return false;
                 }
 
-                // Parse metadata type
-                if (!Enum.TryParse<MetadataType>(issuerModel.MetadataType, out var metadataType))
-                {
-                    metadataType = MetadataType.SAML;
-                }
-
                 // Create the updated issuer endpoint
                 var endpoint = new IssuerEndpoint
                 {
                     Id = issuerModel.Id,
                     Name = issuerModel.Name,
-                    Endpoint = issuerModel.Endpoint,
-                    MetadataType = metadataType
+                    Endpoint = issuerModel.Endpoint
                 };
 
                 // Update in the polling service
@@ -209,8 +195,7 @@ namespace MvcDemo.Services
                             {
                                 Id = endpoint.Id,
                                 Name = endpoint.Name,
-                                Endpoint = endpoint.Endpoint,
-                                MetadataType = endpoint.MetadataType.ToString()
+                                Endpoint = endpoint.Endpoint
                             };
 
                             var cacheEntry = pollingService.GetMetadataCacheEntry(endpoint.Id);
@@ -219,251 +204,36 @@ namespace MvcDemo.Services
                                 issuer.HasMetadata = true;
                                 issuer.LastMetadataFetch = cacheEntry.CachedAt;
 
-                                // Extract metadata
-                                var entityDescriptor = cacheEntry.Metadata as EntityDescriptor;
-                                if (entityDescriptor != null)
+                                // Extract metadata based on type
+                                if (cacheEntry.Metadata != null)
                                 {
-                                    issuer.EntityId = entityDescriptor.EntityId?.Id;
+                                    var wsFedDoc = cacheEntry.Metadata;
+                                    issuer.EntityId = wsFedDoc.Issuer;
 
-                                    // Organization information (if available)
-                                    if (entityDescriptor.Organization != null)
+                                    // Signing certificates from WsFederationMetadataDocument
+                                    if (wsFedDoc.SigningCertificates != null)
                                     {
-                                        issuer.OrganizationName = entityDescriptor.Organization.Names?.FirstOrDefault()?.Name;
-                                        issuer.OrganizationDisplayName = entityDescriptor.Organization.DisplayNames?.FirstOrDefault()?.Name;
-                                        issuer.OrganizationUrl = entityDescriptor.Organization.Urls?.FirstOrDefault()?.Uri?.AbsoluteUri;
-                                    }
-
-                                    // Contact information
-                                    if (entityDescriptor.Contacts != null && entityDescriptor.Contacts.Any())
-                                    {
-                                        var technicalContact = entityDescriptor.Contacts.FirstOrDefault(c => c.Type == ContactType.Technical);
-                                        if (technicalContact != null)
+                                        foreach (var cert in wsFedDoc.SigningCertificates)
                                         {
-                                            issuer.TechnicalContactEmail = technicalContact.EmailAddresses?.FirstOrDefault();
-                                            issuer.TechnicalContactGivenName = technicalContact.GivenName;
-                                            issuer.TechnicalContactSurname = technicalContact.Surname;
-                                        }
-
-                                        var supportContact = entityDescriptor.Contacts.FirstOrDefault(c => c.Type == ContactType.Support);
-                                        if (supportContact != null)
-                                        {
-                                            issuer.SupportContactEmail = supportContact.EmailAddresses?.FirstOrDefault();
+                                            var certViewModel = new SigningCertificateViewModel
+                                            {
+                                                Subject = cert.Subject,
+                                                Issuer = cert.Issuer,
+                                                Thumbprint = cert.Thumbprint,
+                                                NotBefore = cert.NotBefore,
+                                                NotAfter = cert.NotAfter,
+                                                Status = GetCertificateStatus(cert)
+                                            };
+                                            AddCertificateIfNotExists(issuer.SigningCertificates, certViewModel);
                                         }
                                     }
 
-                                    // Get roles
-                                    var roles = entityDescriptor.RoleDescriptors;
-                                    if (roles.Any())
-                                    {
-                                        foreach (var role in roles)
-                                        {
-                                            if (role is IdentityProviderSingleSignOnDescriptor)
-                                            {
-                                                issuer.RoleType = "Identity Provider";
-                                                var idpDescriptor = role as IdentityProviderSingleSignOnDescriptor;
-
-                                                // Protocol support
-                                                if (idpDescriptor.ProtocolsSupported != null)
-                                                {
-                                                    issuer.ProtocolsSupported = idpDescriptor.ProtocolsSupported.Select(u => u.AbsoluteUri).ToList();
-                                                }
-
-                                                // Endpoints: SingleSignOnServices
-                                                foreach (var sso in idpDescriptor.SingleSignOnServices)
-                                                {
-                                                    issuer.Endpoints.Add(new IssuerEndpointViewModel
-                                                    {
-                                                        Binding = sso.Binding?.AbsoluteUri,
-                                                        Location = sso.Location?.AbsoluteUri
-                                                    });
-                                                }
-
-                                                // NameID formats supported
-                                                if (idpDescriptor.NameIdentifierFormats != null)
-                                                {
-                                                    issuer.NameIdFormats = idpDescriptor.NameIdentifierFormats.Select(n => n.AbsoluteUri).ToList();
-                                                }
-
-                                                // Single logout services
-                                                if (idpDescriptor.SingleLogoutServices != null)
-                                                {
-                                                    foreach (var slo in idpDescriptor.SingleLogoutServices)
-                                                    {
-                                                        issuer.SingleLogoutEndpoints.Add(new IssuerEndpointViewModel
-                                                        {
-                                                            Binding = slo.Binding?.AbsoluteUri,
-                                                            Location = slo.Location?.AbsoluteUri
-                                                        });
-                                                    }
-                                                }
-
-                                                // Signing certificates
-                                                foreach (var keyDescriptor in idpDescriptor.Keys.Where(k => k.Use == KeyType.Signing))
-                                                {
-                                                    var cert = ExtractCertificate(keyDescriptor);
-                                                    if (cert != null)
-                                                    {
-                                                        AddCertificateIfNotExists(issuer.SigningCertificates, cert);
-                                                    }
-                                                }
-
-                                                // Encryption certificates
-                                                foreach (var keyDescriptor in idpDescriptor.Keys.Where(k => k.Use == KeyType.Encryption))
-                                                {
-                                                    var cert = ExtractCertificate(keyDescriptor);
-                                                    if (cert != null)
-                                                    {
-                                                        AddCertificateIfNotExists(issuer.EncryptionCertificates, cert);
-                                                    }
-                                                }
-                                            }
-                                            else if (role is ServiceProviderSingleSignOnDescriptor)
-                                            {
-                                                issuer.RoleType = "Service Provider";
-                                                var spDescriptor = role as ServiceProviderSingleSignOnDescriptor;
-
-                                                // Protocol support
-                                                if (spDescriptor.ProtocolsSupported != null)
-                                                {
-                                                    issuer.ProtocolsSupported = spDescriptor.ProtocolsSupported.Select(u => u.AbsoluteUri).ToList();
-                                                }
-
-                                                // Endpoints: AssertionConsumerServices
-                                                foreach (var acs in spDescriptor.AssertionConsumerServices)
-                                                {
-                                                    issuer.Endpoints.Add(new IssuerEndpointViewModel
-                                                    {
-                                                        Binding = acs.Value.Binding?.AbsoluteUri,
-                                                        Location = acs.Value.Location?.AbsoluteUri,
-                                                        Index = acs.Value.Index,
-                                                        IsDefault = acs.Value.IsDefault
-                                                    });
-                                                }
-
-                                                // NameID formats supported
-                                                if (spDescriptor.NameIdentifierFormats != null)
-                                                {
-                                                    issuer.NameIdFormats = spDescriptor.NameIdentifierFormats.Select(n => n.AbsoluteUri).ToList();
-                                                }
-
-                                                // Single logout services
-                                                if (spDescriptor.SingleLogoutServices != null)
-                                                {
-                                                    foreach (var slo in spDescriptor.SingleLogoutServices)
-                                                    {
-                                                        issuer.SingleLogoutEndpoints.Add(new IssuerEndpointViewModel
-                                                        {
-                                                            Binding = slo.Binding?.AbsoluteUri,
-                                                            Location = slo.Location?.AbsoluteUri
-                                                        });
-                                                    }
-                                                }
-
-                                                // Signing certificates
-                                                foreach (var keyDescriptor in spDescriptor.Keys.Where(k => k.Use == KeyType.Signing))
-                                                {
-                                                    var cert = ExtractCertificate(keyDescriptor);
-                                                    if (cert != null)
-                                                    {
-                                                        AddCertificateIfNotExists(issuer.SigningCertificates, cert);
-                                                    }
-                                                }
-
-                                                // Encryption certificates
-                                                foreach (var keyDescriptor in spDescriptor.Keys.Where(k => k.Use == KeyType.Encryption))
-                                                {
-                                                    var cert = ExtractCertificate(keyDescriptor);
-                                                    if (cert != null)
-                                                    {
-                                                        AddCertificateIfNotExists(issuer.EncryptionCertificates, cert);
-                                                    }
-                                                }
-                                            }
-                                            else if (role is ApplicationServiceDescriptor)
-                                            {
-                                                issuer.RoleType = "Application Service";
-                                                var appDescriptor = role as ApplicationServiceDescriptor;
-
-                                                // Protocol support
-                                                if (appDescriptor.ProtocolsSupported != null)
-                                                {
-                                                    issuer.ProtocolsSupported = appDescriptor.ProtocolsSupported.Select(u => u.AbsoluteUri).ToList();
-                                                }
-
-                                                // Note: ApplicationServiceEndpoints property may not be available in this version
-                                                // Add a placeholder endpoint to indicate this role exists
-                                                issuer.Endpoints.Add(new IssuerEndpointViewModel
-                                                {
-                                                    Binding = "Application Service",
-                                                    Location = "Application Service endpoints available"
-                                                });
-
-                                                // Signing certificates
-                                                foreach (var keyDescriptor in appDescriptor.Keys.Where(k => k.Use == KeyType.Signing))
-                                                {
-                                                    var cert = ExtractCertificate(keyDescriptor);
-                                                    if (cert != null)
-                                                    {
-                                                        AddCertificateIfNotExists(issuer.SigningCertificates, cert);
-                                                    }
-                                                }
-
-                                                // Encryption certificates
-                                                foreach (var keyDescriptor in appDescriptor.Keys.Where(k => k.Use == KeyType.Encryption))
-                                                {
-                                                    var cert = ExtractCertificate(keyDescriptor);
-                                                    if (cert != null)
-                                                    {
-                                                        AddCertificateIfNotExists(issuer.EncryptionCertificates, cert);
-                                                    }
-                                                }
-                                            }
-                                            else if (role is SecurityTokenServiceDescriptor)
-                                            {
-                                                issuer.RoleType = "Security Token Service";
-                                                var stsDescriptor = role as SecurityTokenServiceDescriptor;
-
-                                                // Protocol support
-                                                if (stsDescriptor.ProtocolsSupported != null)
-                                                {
-                                                    issuer.ProtocolsSupported = stsDescriptor.ProtocolsSupported.Select(u => u.AbsoluteUri).ToList();
-                                                }
-
-                                                // Note: SecurityTokenServiceEndpoints property may not be available in this version
-                                                // Add a placeholder endpoint to indicate this role exists
-                                                issuer.Endpoints.Add(new IssuerEndpointViewModel
-                                                {
-                                                    Binding = "Security Token Service",
-                                                    Location = "Security Token Service endpoints available"
-                                                });
-
-                                                // Signing certificates
-                                                foreach (var keyDescriptor in stsDescriptor.Keys.Where(k => k.Use == KeyType.Signing))
-                                                {
-                                                    var cert = ExtractCertificate(keyDescriptor);
-                                                    if (cert != null)
-                                                    {
-                                                        AddCertificateIfNotExists(issuer.SigningCertificates, cert);
-                                                    }
-                                                }
-
-                                                // Encryption certificates
-                                                foreach (var keyDescriptor in stsDescriptor.Keys.Where(k => k.Use == KeyType.Encryption))
-                                                {
-                                                    var cert = ExtractCertificate(keyDescriptor);
-                                                    if (cert != null)
-                                                    {
-                                                        AddCertificateIfNotExists(issuer.EncryptionCertificates, cert);
-                                                    }
-                                                }
-                                            }
-                                            else
-                                            {
-                                                // Handle any other role types we encounter
-                                                issuer.RoleType = role.GetType().Name.Replace("Descriptor", "").Replace("SingleSignOn", "");
-                                            }
-                                        }
-                                    }
+                                    issuer.RoleType = "WS-Federation / SAML2 Token Service";
+                                }
+                                else
+                                {
+                                    issuer.HasMetadata = false;
+                                    issuer.MetadataError = "Metadata has not been fetched yet. It will be available after the next polling cycle.";
                                 }
                             }
                             else
@@ -524,31 +294,6 @@ namespace MvcDemo.Services
                 System.Diagnostics.Trace.TraceError(
                     string.Format("IssuerManagementService: Error initiating immediate poll for issuer '{0}': {1}", issuerId, ex.Message));
             }
-        }
-
-        private static SigningCertificateViewModel ExtractCertificate(KeyDescriptor keyDescriptor)
-        {
-            var keyInfo = keyDescriptor.KeyInfo;
-            if (keyInfo != null)
-            {
-                foreach (var clause in keyInfo)
-                {
-                    if (clause is X509RawDataKeyIdentifierClause x509Clause)
-                    {
-                        var cert = new X509Certificate2(x509Clause.GetX509RawData());
-                        return new SigningCertificateViewModel
-                        {
-                            Subject = cert.Subject,
-                            Issuer = cert.Issuer,
-                            Thumbprint = cert.Thumbprint,
-                            NotBefore = cert.NotBefore,
-                            NotAfter = cert.NotAfter,
-                            Status = GetCertificateStatus(cert)
-                        };
-                    }
-                }
-            }
-            return null;
         }
 
         private static string GetCertificateStatus(X509Certificate2 cert)

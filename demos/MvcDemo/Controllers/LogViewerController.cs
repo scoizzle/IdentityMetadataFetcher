@@ -1,6 +1,6 @@
+using MvcDemo.Utilities;
 using System;
 using System.Web.Mvc;
-using MvcDemo.Utilities;
 
 namespace MvcDemo.Controllers
 {

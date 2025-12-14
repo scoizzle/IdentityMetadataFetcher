@@ -1,9 +1,9 @@
+using MvcDemo.Models;
+using MvcDemo.Services;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Web.Mvc;
-using MvcDemo.Models;
-using MvcDemo.Services;
 
 namespace MvcDemo.Controllers
 {

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net462;net47;net48</TargetFrameworks>
+    <TargetFrameworks>net462;net472;net481</TargetFrameworks>
     <RootNamespace>IdentityMetadataFetcher.Iis</RootNamespace>
     <AssemblyName>IdentityMetadataFetcher.Iis</AssemblyName>
     <LangVersion>latest</LangVersion>
@@ -12,9 +12,13 @@
   <ItemGroup>
     <Reference Include="System.Configuration" />
     <Reference Include="System.IdentityModel" />
-    
     <Reference Include="System.IdentityModel.Services" />
     <Reference Include="System.Web" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.WsFederation" Version="8.15.0" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens.Saml" Version="8.15.0" />
   </ItemGroup>
 
   <ItemGroup>

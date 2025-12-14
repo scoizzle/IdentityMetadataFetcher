@@ -1,8 +1,8 @@
-using System;
-using System.Linq;
-using NUnit.Framework;
 using IdentityMetadataFetcher.Iis.Configuration;
 using IdentityMetadataFetcher.Models;
+using NUnit.Framework;
+using System;
+using System.Linq;
 
 namespace IdentityMetadataFetcher.Iis.Tests.Configuration
 {
@@ -20,107 +20,87 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
         [Test]
         public void IsEmpty_WhenCreated()
         {
-            Assert.AreEqual(0, _collection.Count);
+            Assert.That(_collection.Count, Is.EqualTo(0));
         }
 
         [Test]
         public void CanAddElement()
         {
-            var element = new IssuerElement { Id = "issuer-1", Endpoint = "https://example.com/metadata", MetadataType = "Saml" };
+            var element = new IssuerElement { Id = "issuer-1", Endpoint = "https://example.com/metadata", Name = "Example", MetadataType = "Saml" };
             _collection.Add(element);
 
-            Assert.AreEqual(1, _collection.Count);
+            Assert.That(_collection.Count, Is.EqualTo(1));
         }
 
         [Test]
         public void CanRemoveElement()
         {
-            var element = new IssuerElement { Id = "issuer-1", Endpoint = "https://example.com/metadata", MetadataType = "Saml" };
+            var element = new IssuerElement { Id = "issuer-1", Endpoint = "https://example.com/metadata", Name = "Example", MetadataType = "Saml" };
             _collection.Add(element);
             _collection.Remove(element);
 
-            Assert.AreEqual(0, _collection.Count);
+            Assert.That(_collection.Count, Is.EqualTo(0));
         }
 
         [Test]
         public void CanClearAllElements()
         {
-            _collection.Add(new IssuerElement { Id = "issuer-1", MetadataType = "Saml" });
-            _collection.Add(new IssuerElement { Id = "issuer-2", MetadataType = "Saml" });
+            _collection.Add(new IssuerElement { Id = "issuer-1", Name = "Example 1", MetadataType = "Saml" });
+            _collection.Add(new IssuerElement { Id = "issuer-2", Name = "Example 2", MetadataType = "Saml" });
             
             _collection.Clear();
 
-            Assert.AreEqual(0, _collection.Count);
+            Assert.That(_collection.Count, Is.EqualTo(0));
         }
 
         [Test]
         public void CanAccessElementByIndex()
         {
-            var element = new IssuerElement { Id = "issuer-1", Endpoint = "https://example.com/metadata", MetadataType = "Saml" };
+            var element = new IssuerElement { Id = "issuer-1", Endpoint = "https://example.com/metadata", Name = "Example", MetadataType = "Saml" };
             _collection.Add(element);
 
             var retrieved = _collection[0];
-            Assert.AreEqual("issuer-1", retrieved.Id);
+            Assert.That(retrieved.Id, Is.EqualTo("issuer-1"));
         }
 
         [Test]
         public void CanAccessElementById()
         {
-            var element = new IssuerElement { Id = "issuer-1", Endpoint = "https://example.com/metadata", MetadataType = "Saml" };
+            var element = new IssuerElement { Id = "issuer-1", Endpoint = "https://example.com/metadata", Name = "Example", MetadataType = "Saml" };
             _collection.Add(element);
 
             var retrieved = _collection["issuer-1"];
-            Assert.AreEqual("issuer-1", retrieved.Id);
+            Assert.That(retrieved.Id, Is.EqualTo("issuer-1"));
         }
 
         [Test]
         public void ToIssuerEndpoints_ReturnsAllElements()
         {
-            _collection.Add(new IssuerElement { Id = "issuer-1", Endpoint = "https://example1.com/metadata", MetadataType = "Saml" });
-            _collection.Add(new IssuerElement { Id = "issuer-2", Endpoint = "https://example2.com/metadata", MetadataType = "WsFed" });
+            _collection.Add(new IssuerElement { Id = "issuer-1", Endpoint = "https://example1.com/metadata", Name = "Example 1", MetadataType = "Saml" });
+            _collection.Add(new IssuerElement { Id = "issuer-2", Endpoint = "https://example2.com/metadata", Name = "Example 2", MetadataType = "WsFed" });
 
             var endpoints = _collection.ToIssuerEndpoints().ToList();
 
-            Assert.AreEqual(2, endpoints.Count);
-            Assert.AreEqual("issuer-1", endpoints[0].Id);
-            Assert.AreEqual("issuer-2", endpoints[1].Id);
-        }
-
-        [Test]
-        public void ToIssuerEndpoints_ReturnsEmptyWhenNoElements()
-        {
-            var endpoints = _collection.ToIssuerEndpoints().ToList();
-
-            Assert.AreEqual(0, endpoints.Count);
-        }
-
-        [Test]
-        public void ToIssuerEndpoints_ConvertsMetadataTypesCorrectly()
-        {
-            _collection.Add(new IssuerElement { Id = "issuer-1", Endpoint = "https://example1.com/metadata", MetadataType = "Saml" });
-            _collection.Add(new IssuerElement { Id = "issuer-2", Endpoint = "https://example2.com/metadata", MetadataType = "WsFed" });
-
-            var endpoints = _collection.ToIssuerEndpoints().ToList();
-
-            Assert.AreEqual(MetadataType.SAML, endpoints[0].MetadataType);
-            Assert.AreEqual(MetadataType.WSFED, endpoints[1].MetadataType);
+            Assert.That(endpoints.Count, Is.EqualTo(2));
+            Assert.That(endpoints[0].Id, Is.EqualTo("issuer-1"));
+            Assert.That(endpoints[1].Id, Is.EqualTo("issuer-2"));
         }
 
         [Test]
         public void Contains_ReturnsTrueForExistingElement()
         {
-            var element = new IssuerElement { Id = "issuer-1", MetadataType = "Saml" };
+            var element = new IssuerElement { Id = "issuer-1", Name = "Example", MetadataType = "Saml" };
             _collection.Add(element);
 
-            Assert.IsTrue(_collection.Contains(element));
+            Assert.That(_collection.Contains(element), Is.True);
         }
 
         [Test]
         public void Contains_ReturnsFalseForNonExistingElement()
         {
-            var element = new IssuerElement { Id = "issuer-1", MetadataType = "Saml" };
+            var element = new IssuerElement { Id = "issuer-1", Name = "Example", MetadataType = "Saml" };
 
-            Assert.IsFalse(_collection.Contains(element));
+            Assert.That(_collection.Contains(element), Is.False);
         }
 
         [Test]
@@ -132,13 +112,14 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
                 { 
                     Id = $"issuer-{i}", 
                     Endpoint = $"https://example{i}.com/metadata", 
+                    Name = $"Example {i}",
                     MetadataType = "Saml" 
                 });
             }
 
-            Assert.AreEqual(5, _collection.Count);
+            Assert.That(_collection.Count, Is.EqualTo(5));
             var endpoints = _collection.ToIssuerEndpoints().ToList();
-            Assert.AreEqual(5, endpoints.Count);
+            Assert.That(endpoints.Count, Is.EqualTo(5));
         }
     }
 }

@@ -26,6 +26,12 @@ jobs:
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v2
     
+    - name: Setup .NET Framework
+      run: |
+        # Install .NET Framework 4.8.1 Developer Pack (includes targeting pack)
+        choco install netfx-4.8.1-devpack -y
+      shell: pwsh
+    
     - name: Restore dependencies
       run: nuget restore IdentityMetadataFetcher.sln
     
@@ -34,8 +40,8 @@ jobs:
     
     - name: Run tests
       run: |
-        dotnet test tests/IdentityMetadataFetcher.Tests/IdentityMetadataFetcher.Tests.csproj --configuration ${{ matrix.configuration }} --logger "trx;LogFileName=test-results.trx" --framework net48
-        dotnet test tests/IdentityMetadataFetcher.Iis.Tests/IdentityMetadataFetcher.Iis.Tests.csproj --configuration ${{ matrix.configuration }} --logger "trx;LogFileName=test-results-iis.trx" --framework net48
+        dotnet test tests/IdentityMetadataFetcher.Tests/IdentityMetadataFetcher.Tests.csproj --configuration ${{ matrix.configuration }} --logger "trx;LogFileName=test-results.trx" --framework net481
+        dotnet test tests/IdentityMetadataFetcher.Iis.Tests/IdentityMetadataFetcher.Iis.Tests.csproj --configuration ${{ matrix.configuration }} --logger "trx;LogFileName=test-results-iis.trx" --framework net481
     
     - name: Upload test results
       uses: actions/upload-artifact@v4

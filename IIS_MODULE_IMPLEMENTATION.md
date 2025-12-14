@@ -39,7 +39,7 @@ The IIS module extends the core `IdentityMetadataFetcher` library with automatic
                     │   (Core Library)            │
                     │                             │
                     │  - HTTP downloads           │
-                    │  - MetadataSerializer       │
+                    │  - WsFederationMetadataSerializer│
                     │  - Metadata parsing         │
                     └─────────────────────────────┘
 ```
@@ -172,7 +172,7 @@ MetadataCache
 ├── Dictionary<string, MetadataCacheEntry>
 │   ├── "issuer-id-1" → MetadataCacheEntry
 │   │   ├── IssuerId: string
-│   │   ├── Metadata: MetadataBase (from System.IdentityModel.Metadata)
+│   │   ├── Metadata: WsFederationConfiguration (from Microsoft.IdentityModel.Protocols.WsFederation)
 │   │   ├── RawXml: string
 │   │   └── CachedAt: DateTime
 │   │
@@ -199,7 +199,7 @@ public class MetadataCache
         }
     }
     
-    public MetadataBase GetMetadata(...)
+    public WsFederationConfiguration GetMetadata(...)
     {
         lock (_lockObject)  // Safe concurrent reads
         {
@@ -380,7 +380,7 @@ var results = await fetcher
 
 ### Using MetadataSerializer
 
-The core library internally uses System.IdentityModel.Metadata:
+The core library internally uses Microsoft.IdentityModel.Protocols.WsFederation:
 
 ```csharp
 // In MetadataFetcher.ParseMetadata()

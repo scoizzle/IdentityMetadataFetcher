@@ -1,7 +1,7 @@
-using NUnit.Framework;
+using IdentityMetadataFetcher.Exceptions;
 using IdentityMetadataFetcher.Models;
 using IdentityMetadataFetcher.Services;
-using IdentityMetadataFetcher.Exceptions;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,7 +32,7 @@ namespace IdentityMetadataFetcher.Tests
         public void Constructor_WithoutOptions_CreatesDefaultOptions()
         {
             var fetcher = new MetadataFetcher();
-            Assert.IsNotNull(fetcher);
+            Assert.That(fetcher, Is.Not.Null);
         }
 
         [Test]
@@ -40,7 +40,7 @@ namespace IdentityMetadataFetcher.Tests
         {
             var options = new MetadataFetchOptions { DefaultTimeoutMs = 15000 };
             var fetcher = new MetadataFetcher(options);
-            Assert.IsNotNull(fetcher);
+            Assert.That(fetcher, Is.Not.Null);
         }
 
         [Test]
@@ -52,7 +52,7 @@ namespace IdentityMetadataFetcher.Tests
         [Test]
         public void FetchMetadata_WithEmptyEndpointUrl_ThrowsArgumentException()
         {
-            var endpoint = new IssuerEndpoint { Id = "test", Endpoint = "", MetadataType = MetadataType.SAML };
+            var endpoint = new IssuerEndpoint { Id = "test", Endpoint = "" };
             Assert.Throws<ArgumentException>(() => _fetcher.FetchMetadata(endpoint));
         }
 
@@ -63,16 +63,15 @@ namespace IdentityMetadataFetcher.Tests
             {
                 Id = "test-invalid",
                 Endpoint = "http://invalid-endpoint-that-does-not-exist-12345.example.com/metadata",
-                Name = "Invalid Endpoint",
-                MetadataType = MetadataType.SAML
+                Name = "Invalid Endpoint"
             };
 
             var result = _fetcher.FetchMetadata(endpoint);
 
-            Assert.IsFalse(result.IsSuccess);
-            Assert.IsNotNull(result.Exception);
-            Assert.IsNotNull(result.ErrorMessage);
-            Assert.AreEqual(endpoint, result.Endpoint);
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Exception, Is.Not.Null);
+            Assert.That(result.ErrorMessage, Is.Not.Null);
+            Assert.That(result.Endpoint, Is.EqualTo(endpoint));
         }
 
         [Test]
@@ -84,7 +83,7 @@ namespace IdentityMetadataFetcher.Tests
         [Test]
         public async Task FetchMetadataAsync_WithEmptyEndpointUrl_ThrowsArgumentException()
         {
-            var endpoint = new IssuerEndpoint { Id = "test", Endpoint = "", MetadataType = MetadataType.SAML };
+            var endpoint = new IssuerEndpoint { Id = "test", Endpoint = "" };
             Assert.ThrowsAsync<ArgumentException>(async () => await _fetcher.FetchMetadataAsync(endpoint));
         }
 
@@ -95,16 +94,15 @@ namespace IdentityMetadataFetcher.Tests
             {
                 Id = "test-invalid",
                 Endpoint = "http://invalid-endpoint-that-does-not-exist-12345.example.com/metadata",
-                Name = "Invalid Endpoint",
-                MetadataType = MetadataType.SAML
+                Name = "Invalid Endpoint"
             };
 
             var result = await _fetcher.FetchMetadataAsync(endpoint);
 
-            Assert.IsFalse(result.IsSuccess);
-            Assert.IsNotNull(result.Exception);
-            Assert.IsNotNull(result.ErrorMessage);
-            Assert.AreEqual(endpoint, result.Endpoint);
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Exception, Is.Not.Null);
+            Assert.That(result.ErrorMessage, Is.Not.Null);
+            Assert.That(result.Endpoint, Is.EqualTo(endpoint));
         }
 
         [Test]
@@ -118,15 +116,15 @@ namespace IdentityMetadataFetcher.Tests
         {
             var endpoints = new[]
             {
-                new IssuerEndpoint { Id = "ep1", Endpoint = "http://invalid1.example.com/metadata", Name = "Invalid 1", MetadataType = MetadataType.SAML },
-                new IssuerEndpoint { Id = "ep2", Endpoint = "http://invalid2.example.com/metadata", Name = "Invalid 2", MetadataType = MetadataType.WSFED }
+                new IssuerEndpoint { Id = "ep1", Endpoint = "http://invalid1.example.com/metadata", Name = "Invalid 1" },
+                new IssuerEndpoint { Id = "ep2", Endpoint = "http://invalid2.example.com/metadata", Name = "Invalid 2" }
             };
 
             var results = _fetcher.FetchMetadataFromMultipleEndpoints(endpoints).ToList();
 
-            Assert.AreEqual(2, results.Count);
-            Assert.IsFalse(results[0].IsSuccess);
-            Assert.IsFalse(results[1].IsSuccess);
+            Assert.That(results.Count, Is.EqualTo(2));
+            Assert.That(results[0].IsSuccess, Is.False);
+            Assert.That(results[1].IsSuccess, Is.False);
         }
 
         [Test]
@@ -140,59 +138,58 @@ namespace IdentityMetadataFetcher.Tests
         {
             var endpoints = new[]
             {
-                new IssuerEndpoint { Id = "ep1", Endpoint = "http://invalid1.example.com/metadata", Name = "Invalid 1", MetadataType = MetadataType.SAML },
-                new IssuerEndpoint { Id = "ep2", Endpoint = "http://invalid2.example.com/metadata", Name = "Invalid 2", MetadataType = MetadataType.WSFED }
+                new IssuerEndpoint { Id = "ep1", Endpoint = "http://invalid1.example.com/metadata", Name = "Invalid 1" },
+                new IssuerEndpoint { Id = "ep2", Endpoint = "http://invalid2.example.com/metadata", Name = "Invalid 2" }
             };
 
             var results = (await _fetcher.FetchMetadataFromMultipleEndpointsAsync(endpoints)).ToList();
 
-            Assert.AreEqual(2, results.Count);
-            Assert.IsFalse(results[0].IsSuccess);
-            Assert.IsFalse(results[1].IsSuccess);
+            Assert.That(results.Count, Is.EqualTo(2));
+            Assert.That(results[0].IsSuccess, Is.False);
+            Assert.That(results[1].IsSuccess, Is.False);
         }
 
         [Test]
         public void FetchMetadataFromMultipleEndpoints_WithEmptyList_ReturnsEmptyCollection()
         {
             var results = _fetcher.FetchMetadataFromMultipleEndpoints(new List<IssuerEndpoint>()).ToList();
-            Assert.AreEqual(0, results.Count);
+            Assert.That(results.Count, Is.EqualTo(0));
         }
 
         [Test]
         public async Task FetchMetadataFromMultipleEndpointsAsync_WithEmptyList_ReturnsEmptyCollection()
         {
             var results = (await _fetcher.FetchMetadataFromMultipleEndpointsAsync(new List<IssuerEndpoint>())).ToList();
-            Assert.AreEqual(0, results.Count);
+            Assert.That(results.Count, Is.EqualTo(0));
         }
 
         [Test]
         public void MetadataFetchResult_DefaultValues()
         {
             var result = new MetadataFetchResult();
-            Assert.IsTrue(result.FetchedAt <= DateTime.UtcNow);
-            Assert.IsTrue(result.FetchedAt >= DateTime.UtcNow.AddSeconds(-1));
+            Assert.That(result.FetchedAt, Is.LessThanOrEqualTo(DateTime.UtcNow));
+            Assert.That(result.FetchedAt, Is.GreaterThanOrEqualTo(DateTime.UtcNow.AddSeconds(-1)));
         }
 
         [Test]
         public void IssuerEndpoint_ConstructorWithParameters()
         {
-            var endpoint = new IssuerEndpoint("id1", "http://example.com/metadata", "Example", MetadataType.SAML);
-            Assert.AreEqual("id1", endpoint.Id);
-            Assert.AreEqual("http://example.com/metadata", endpoint.Endpoint);
-            Assert.AreEqual("Example", endpoint.Name);
-            Assert.AreEqual(MetadataType.SAML, endpoint.MetadataType);
+            var endpoint = new IssuerEndpoint("id1", "http://example.com/metadata", "Example");
+            Assert.That(endpoint.Id, Is.EqualTo("id1"));
+            Assert.That(endpoint.Endpoint, Is.EqualTo("http://example.com/metadata"));
+            Assert.That(endpoint.Name, Is.EqualTo("Example"));
         }
 
         [Test]
         public void MetadataFetchOptions_DefaultValues()
         {
             var options = new MetadataFetchOptions();
-            Assert.AreEqual(30000, options.DefaultTimeoutMs);
-            Assert.IsTrue(options.ContinueOnError);
-            Assert.IsTrue(options.ValidateServerCertificate);
-            Assert.AreEqual(0, options.MaxRetries);
-            Assert.IsFalse(options.CacheMetadata);
-            Assert.AreEqual(60, options.CacheDurationMinutes);
+            Assert.That(options.DefaultTimeoutMs, Is.EqualTo(30000));
+            Assert.That(options.ContinueOnError, Is.True);
+            Assert.That(options.ValidateServerCertificate, Is.True);
+            Assert.That(options.MaxRetries, Is.EqualTo(0));
+            Assert.That(options.CacheMetadata, Is.False);
+            Assert.That(options.CacheDurationMinutes, Is.EqualTo(60));
         }
     }
 }

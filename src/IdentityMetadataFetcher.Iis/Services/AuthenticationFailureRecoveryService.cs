@@ -1,9 +1,9 @@
+using IdentityMetadataFetcher.Models;
+using IdentityMetadataFetcher.Services; // Now references core library
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using IdentityMetadataFetcher.Models;
-using IdentityMetadataFetcher.Services; // Now references core library
 
 namespace IdentityMetadataFetcher.Iis.Services
 {
@@ -116,14 +116,12 @@ namespace IdentityMetadataFetcher.Iis.Services
                 
                 if (cachedEntry != null && cachedEntry.Metadata != null)
                 {
-                    // Try to match by EntityId in the metadata
-                    var entityDescriptor = cachedEntry.Metadata as System.IdentityModel.Metadata.EntityDescriptor;
-                    if (entityDescriptor != null && entityDescriptor.EntityId != null)
+                    // Try to match by Issuer in the metadata
+                    var issuer = cachedEntry.Metadata.Issuer;
+                    if (!string.IsNullOrEmpty(issuer))
                     {
-                        var entityId = entityDescriptor.EntityId.Id;
-                        
                         if (!string.IsNullOrEmpty(issuerFromException) && 
-                            entityId.Equals(issuerFromException, StringComparison.OrdinalIgnoreCase))
+                            issuer.Equals(issuerFromException, StringComparison.OrdinalIgnoreCase))
                         {
                             matches.Add(endpoint);
                             continue;

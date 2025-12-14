@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**SAML Metadata Fetcher** is a production-ready .NET class library that enables developers to fetch and parse metadata for WS-Federation (WSFED) and SAML issuers from multiple endpoint sources. The library provides a simple, flexible API built on top of the System.IdentityModel.Metadata framework.
+**SAML Metadata Fetcher** is a production-ready .NET class library that enables developers to fetch and parse metadata for WS-Federation (WSFED) and SAML issuers from multiple endpoint sources. The library provides a simple, flexible API built on Microsoft.IdentityModel packages.
 
 **Target Audience**: Enterprise developers building identity integration solutions
 
@@ -16,7 +16,7 @@
 - [x] Synchronous API
 - [x] Asynchronous API (async/await)
 - [x] Comprehensive error handling
-- [x] System.IdentityModel.Metadata integration
+- [x] Microsoft.IdentityModel integration
 
 ### Configuration & Control ✓
 
@@ -114,7 +114,7 @@ Examples & Configuration:
 
 **Framework Dependencies** (built-in to .NET Framework):
 - System.IdentityModel (WIF)
-- System.IdentityModel.Metadata (MetadataSerializer)
+- Microsoft.IdentityModel.Protocols.WsFederation (WsFederationMetadataSerializer)
 - System.IdentityModel.Services (Federation services)
 - System.Net.Http (HttpClient)
 - System.Xml (XML parsing)

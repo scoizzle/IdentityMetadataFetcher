@@ -86,7 +86,7 @@ IdentityMetadataFetcher/bin/Release/IdentityMetadataFetcher.dll    (Release)
 |-------|----------|
 | "Project file could not be loaded" | Ensure .csproj files are well-formed XML |
 | "Missing Microsoft.CSharp" | Install .NET Framework 4.5 Developer Pack |
-| "Cannot find type System.IdentityModel.Metadata" | Add reference to System.IdentityModel.Metadata |
+| "Cannot find type WsFederationConfiguration" | Install Microsoft.IdentityModel.Protocols.WsFederation NuGet package |
 | Tests don't appear | Right-click project > Properties > Framework 4.5+; Rebuild |
 | "Could not resolve" errors | Close and reopen solution; Clean then Rebuild |
 

@@ -9,7 +9,7 @@ The SAML Metadata Fetcher is a .NET Framework 4.5+ class library designed to fac
 1. **Simplicity**: Easy to use with sensible defaults
 2. **Flexibility**: Highly configurable for various scenarios
 3. **Robustness**: Comprehensive error handling and resilience options
-4. **Standards Compliance**: Leverages built-in System.IdentityModel.Metadata APIs
+4. **Standards Compliance**: Uses Microsoft.IdentityModel packages for modern identity support
 5. **Async Support**: Full async/await support alongside synchronous APIs
 
 ## Architecture
@@ -58,8 +58,8 @@ The SAML Metadata Fetcher is a .NET Framework 4.5+ class library designed to fac
          ▼
 ┌─────────────────────────────────────────────────────┐
 │    System.IdentityModel                             │
-│    ├─ System.IdentityModel.Metadata                 │
-│    │  └─ MetadataSerializer                         │
+│    ├─ Microsoft.IdentityModel.Protocols.WsFederation│
+│    │  └─ WsFederationMetadataSerializer             │
 │    ├─ System.Net.Http                               │
 │    │  └─ HttpClient                                 │
 │    └─ System.Xml                                    │
@@ -90,7 +90,7 @@ The concrete implementation of IMetadataFetcher.
 
 **Responsibilities:**
 - Download metadata XML from endpoints via HTTP
-- Parse XML using MetadataSerializer
+- Parse XML using WsFederationMetadataSerializer
 - Handle errors and retries
 - Manage configuration options
 
@@ -99,7 +99,7 @@ The concrete implementation of IMetadataFetcher.
 - `FetchMetadataInternalAsync(IssuerEndpoint)` - Core async fetch logic
 - `DownloadMetadataXml(string, int)` - HTTP download with retries
 - `DownloadMetadataXmlAsync(string, int)` - Async HTTP download
-- `ParseMetadata(string, MetadataType)` - XML parsing using MetadataSerializer
+- `ParseMetadata(string, MetadataType)` - XML parsing using WsFederationMetadataSerializer
 
 **Internal Flow:**
 
@@ -143,7 +143,7 @@ Model containing the result of a fetch operation.
 **Properties:**
 - `Endpoint` (IssuerEndpoint) - The queried endpoint
 - `IsSuccess` (bool) - Operation success/failure
-- `Metadata` (MetadataBase) - Parsed metadata (if successful)
+- `Metadata` (WsFederationConfiguration) - Parsed metadata (if successful)
 - `RawMetadata` (string) - Raw XML (if successful)
 - `Exception` (Exception) - Exception (if failed)
 - `ErrorMessage` (string) - Error description (if failed)
@@ -353,7 +353,7 @@ The MetadataFetcher is **stateless** and therefore **thread-safe**:
 - No static state
 - No instance state mutation
 - HttpClient is thread-safe
-- Each operation creates new XmlReader and MetadataSerializer
+- Each operation creates new XmlReader and WsFederationMetadataSerializer
 
 **Implications:**
 - Single instance can serve multiple concurrent requests

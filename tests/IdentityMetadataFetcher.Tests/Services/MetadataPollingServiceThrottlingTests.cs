@@ -1,11 +1,11 @@
+using IdentityMetadataFetcher.Models;
+using IdentityMetadataFetcher.Services;
+using IdentityMetadataFetcher.Tests.Mocks;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using NUnit.Framework;
-using IdentityMetadataFetcher.Tests.Mocks;
-using IdentityMetadataFetcher.Models;
-using IdentityMetadataFetcher.Services;
 
 namespace IdentityMetadataFetcher.Tests.Services
 {
@@ -24,8 +24,8 @@ namespace IdentityMetadataFetcher.Tests.Services
             
             _endpoints = new List<IssuerEndpoint>
             {
-                new IssuerEndpoint("issuer1", "https://issuer1.example.com/metadata", "Issuer 1", MetadataType.SAML),
-                new IssuerEndpoint("issuer2", "https://issuer2.example.com/metadata", "Issuer 2", MetadataType.WSFED)
+                new IssuerEndpoint("issuer1", "https://issuer1.example.com/metadata", "Issuer 1"),
+                new IssuerEndpoint("issuer2", "https://issuer2.example.com/metadata", "Issuer 2")
             };
         }
 
@@ -33,7 +33,7 @@ namespace IdentityMetadataFetcher.Tests.Services
         public void Constructor_WithMinimumPollInterval_CreatesService()
         {
             var service = new MetadataPollingService(_mockFetcher, _cache, _endpoints, 60, 5);
-            Assert.IsNotNull(service);
+            Assert.That(service, Is.Not.Null);
             service.Dispose();
         }
 
@@ -42,9 +42,9 @@ namespace IdentityMetadataFetcher.Tests.Services
         {
             var service = new MetadataPollingService(_mockFetcher, _cache, _endpoints, 60, 0);
             
-            Assert.IsTrue(service.ShouldPollIssuer("issuer1"));
-            Assert.IsTrue(service.ShouldPollIssuer("issuer1"));
-            Assert.IsTrue(service.ShouldPollIssuer("issuer1"));
+            Assert.That(service.ShouldPollIssuer("issuer1"), Is.True);
+            Assert.That(service.ShouldPollIssuer("issuer1"), Is.True);
+            Assert.That(service.ShouldPollIssuer("issuer1"), Is.True);
             
             service.Dispose();
         }
@@ -56,7 +56,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             
             var result = service.ShouldPollIssuer("issuer1");
             
-            Assert.IsTrue(result);
+            Assert.That(result, Is.True);
             service.Dispose();
         }
 
@@ -71,7 +71,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             // Immediately check if should poll again
             var result = service.ShouldPollIssuer("issuer1");
             
-            Assert.IsFalse(result);
+            Assert.That(result, Is.False);
             service.Dispose();
         }
 
@@ -90,7 +90,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             // Check if should poll again (with 0 minute interval, should be true)
             var result = service.ShouldPollIssuer("issuer1");
             
-            Assert.IsTrue(result);
+            Assert.That(result, Is.True);
             service.Dispose();
         }
 
@@ -101,7 +101,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             
             var result = await service.PollIssuerNowAsync("issuer1");
             
-            Assert.IsTrue(result);
+            Assert.That(result, Is.True);
             service.Dispose();
         }
 
@@ -112,11 +112,11 @@ namespace IdentityMetadataFetcher.Tests.Services
             
             // First poll
             var result1 = await service.PollIssuerNowAsync("issuer1");
-            Assert.IsTrue(result1);
+            Assert.That(result1, Is.True);
             
             // Second poll immediately
             var result2 = await service.PollIssuerNowAsync("issuer1");
-            Assert.IsFalse(result2); // Should be throttled
+            Assert.That(result2, Is.False); // Should be throttled
             
             service.Dispose();
         }
@@ -128,11 +128,11 @@ namespace IdentityMetadataFetcher.Tests.Services
             
             // Poll issuer1
             var result1 = await service.PollIssuerNowAsync("issuer1");
-            Assert.IsTrue(result1);
+            Assert.That(result1, Is.True);
             
             // Poll issuer2 (different issuer, should succeed)
             var result2 = await service.PollIssuerNowAsync("issuer2");
-            Assert.IsTrue(result2);
+            Assert.That(result2, Is.True);
             
             service.Dispose();
         }
@@ -166,7 +166,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             
             var result = await service.PollIssuerNowAsync("unknown-issuer");
             
-            Assert.IsFalse(result);
+            Assert.That(result, Is.False);
             service.Dispose();
         }
 
@@ -177,7 +177,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             
             var timestamp = service.GetLastPollTimestamp("issuer1");
             
-            Assert.IsNull(timestamp);
+            Assert.That(timestamp, Is.Null);
             service.Dispose();
         }
 
@@ -192,9 +192,9 @@ namespace IdentityMetadataFetcher.Tests.Services
             
             var timestamp = service.GetLastPollTimestamp("issuer1");
             
-            Assert.IsNotNull(timestamp);
-            Assert.IsTrue(timestamp.Value >= before);
-            Assert.IsTrue(timestamp.Value <= after);
+            Assert.That(timestamp, Is.Not.Null);
+            Assert.That(timestamp.Value, Is.GreaterThanOrEqualTo(before));
+            Assert.That(timestamp.Value, Is.LessThanOrEqualTo(after));
             
             service.Dispose();
         }
@@ -206,7 +206,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             
             var timestamp = service.GetLastGlobalPollTimestamp();
             
-            Assert.IsNull(timestamp);
+            Assert.That(timestamp, Is.Null);
             service.Dispose();
         }
 
@@ -221,9 +221,9 @@ namespace IdentityMetadataFetcher.Tests.Services
             
             var timestamp = service.GetLastGlobalPollTimestamp();
             
-            Assert.IsNotNull(timestamp);
-            Assert.IsTrue(timestamp.Value >= before);
-            Assert.IsTrue(timestamp.Value <= after);
+            Assert.That(timestamp, Is.Not.Null);
+            Assert.That(timestamp.Value, Is.GreaterThanOrEqualTo(before));
+            Assert.That(timestamp.Value, Is.LessThanOrEqualTo(after));
             
             service.Dispose();
         }
@@ -238,8 +238,8 @@ namespace IdentityMetadataFetcher.Tests.Services
             var timestamp1 = service.GetLastPollTimestamp("issuer1");
             var timestamp2 = service.GetLastPollTimestamp("issuer2");
             
-            Assert.IsNotNull(timestamp1);
-            Assert.IsNotNull(timestamp2);
+            Assert.That(timestamp1, Is.Not.Null);
+            Assert.That(timestamp2, Is.Not.Null);
             
             service.Dispose();
         }
@@ -253,10 +253,10 @@ namespace IdentityMetadataFetcher.Tests.Services
             await service.PollIssuerNowAsync("issuer1");
             
             // issuer1 should be throttled
-            Assert.IsFalse(service.ShouldPollIssuer("issuer1"));
+            Assert.That(service.ShouldPollIssuer("issuer1"), Is.False);
             
             // issuer2 should NOT be throttled
-            Assert.IsTrue(service.ShouldPollIssuer("issuer2"));
+            Assert.That(service.ShouldPollIssuer("issuer2"), Is.True);
             
             service.Dispose();
         }
@@ -271,8 +271,8 @@ namespace IdentityMetadataFetcher.Tests.Services
             
             // Check cache
             var cached = _cache.GetCacheEntry("issuer1");
-            Assert.IsNotNull(cached);
-            Assert.IsNotNull(cached.Metadata);
+            Assert.That(cached, Is.Not.Null);
+            Assert.That(cached.Metadata, Is.Not.Null);
             
             service.Dispose();
         }
@@ -288,7 +288,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             
             // Timestamp should still be updated (to prevent retrying immediately)
             var timestamp = service.GetLastPollTimestamp("issuer1");
-            Assert.IsNotNull(timestamp);
+            Assert.That(timestamp, Is.Not.Null);
             
             service.Dispose();
         }
@@ -318,12 +318,12 @@ namespace IdentityMetadataFetcher.Tests.Services
             var fetcher = new MockMetadataFetcher();
             var endpoints = new List<IssuerEndpoint>
             {
-                new IssuerEndpoint("issuer1", "https://issuer1.example.com/metadata", "Issuer 1", MetadataType.SAML),
+                new IssuerEndpoint("issuer1", "https://issuer1.example.com/metadata", "Issuer 1"),
             };
             var service = new MetadataPollingService(fetcher, cache, endpoints, 60, 5);
 
             var result = await service.PollIssuerNowAsync("non-existent");
-            Assert.IsFalse(result);
+            Assert.That(result, Is.False);
         }
 
         [Test]
@@ -333,8 +333,8 @@ namespace IdentityMetadataFetcher.Tests.Services
             var fetcher = new MockMetadataFetcher();
             var endpoints = new List<IssuerEndpoint>
             {
-                new IssuerEndpoint("issuer1", "https://issuer1.example.com/metadata", "Issuer 1", MetadataType.SAML),
-                new IssuerEndpoint("issuer2", "https://issuer2.example.com/metadata", "Issuer 2", MetadataType.WSFED)
+                new IssuerEndpoint("issuer1", "https://issuer1.example.com/metadata", "Issuer 1"),
+                new IssuerEndpoint("issuer2", "https://issuer2.example.com/metadata", "Issuer 2")
             };
             var service = new MetadataPollingService(fetcher, cache, endpoints, 60, 5);
 
@@ -346,7 +346,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             var t2 = service.PollNowAsync();
             await Task.WhenAll(t1, t2);
 
-            Assert.AreEqual(1, started);
+            Assert.That(started, Is.EqualTo(1));
         }
     }
 }

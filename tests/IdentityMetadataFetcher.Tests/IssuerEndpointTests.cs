@@ -1,5 +1,5 @@
-using NUnit.Framework;
 using IdentityMetadataFetcher.Models;
+using NUnit.Framework;
 
 namespace IdentityMetadataFetcher.Tests
 {
@@ -10,21 +10,20 @@ namespace IdentityMetadataFetcher.Tests
         public void Constructor_Default_CreatesEmptyEndpoint()
         {
             var endpoint = new IssuerEndpoint();
-            Assert.IsNull(endpoint.Id);
-            Assert.IsNull(endpoint.Endpoint);
-            Assert.IsNull(endpoint.Name);
-            Assert.IsNull(endpoint.Timeout);
+            Assert.That(endpoint.Id, Is.Null);
+            Assert.That(endpoint.Endpoint, Is.Null);
+            Assert.That(endpoint.Name, Is.Null);
+            Assert.That(endpoint.Timeout, Is.Null);
         }
 
         [Test]
         public void Constructor_WithParameters_SetsAllProperties()
         {
-            var endpoint = new IssuerEndpoint("test-id", "http://example.com/metadata", "Test Issuer", MetadataType.SAML);
+            var endpoint = new IssuerEndpoint("test-id", "http://example.com/metadata", "Test Issuer");
             
-            Assert.AreEqual("test-id", endpoint.Id);
-            Assert.AreEqual("http://example.com/metadata", endpoint.Endpoint);
-            Assert.AreEqual("Test Issuer", endpoint.Name);
-            Assert.AreEqual(MetadataType.SAML, endpoint.MetadataType);
+            Assert.That(endpoint.Id, Is.EqualTo("test-id"));
+            Assert.That(endpoint.Endpoint, Is.EqualTo("http://example.com/metadata"));
+            Assert.That(endpoint.Name, Is.EqualTo("Test Issuer"));
         }
 
         [Test]
@@ -35,39 +34,23 @@ namespace IdentityMetadataFetcher.Tests
             endpoint.Id = "new-id";
             endpoint.Endpoint = "http://issuer.example.com/metadata";
             endpoint.Name = "New Issuer";
-            endpoint.MetadataType = MetadataType.WSFED;
             endpoint.Timeout = 15000;
 
-            Assert.AreEqual("new-id", endpoint.Id);
-            Assert.AreEqual("http://issuer.example.com/metadata", endpoint.Endpoint);
-            Assert.AreEqual("New Issuer", endpoint.Name);
-            Assert.AreEqual(MetadataType.WSFED, endpoint.MetadataType);
-            Assert.AreEqual(15000, endpoint.Timeout);
-        }
-
-        [Test]
-        public void MetadataType_SAML_IsValidValue()
-        {
-            var endpoint = new IssuerEndpoint { MetadataType = MetadataType.SAML };
-            Assert.AreEqual(MetadataType.SAML, endpoint.MetadataType);
-        }
-
-        [Test]
-        public void MetadataType_WSFED_IsValidValue()
-        {
-            var endpoint = new IssuerEndpoint { MetadataType = MetadataType.WSFED };
-            Assert.AreEqual(MetadataType.WSFED, endpoint.MetadataType);
+            Assert.That(endpoint.Id, Is.EqualTo("new-id"));
+            Assert.That(endpoint.Endpoint, Is.EqualTo("http://issuer.example.com/metadata"));
+            Assert.That(endpoint.Name, Is.EqualTo("New Issuer"));
+            Assert.That(endpoint.Timeout, Is.EqualTo(15000));
         }
 
         [Test]
         public void Timeout_CanBeNullOrInteger()
         {
             var endpoint1 = new IssuerEndpoint();
-            Assert.IsNull(endpoint1.Timeout);
+            Assert.That(endpoint1.Timeout, Is.Null);
 
             var endpoint2 = new IssuerEndpoint();
             endpoint2.Timeout = 30000;
-            Assert.AreEqual(30000, endpoint2.Timeout);
+            Assert.That(endpoint2.Timeout, Is.EqualTo(30000));
         }
     }
 }

@@ -1,12 +1,12 @@
+using IdentityMetadataFetcher.Models;
 using System;
 using System.Collections.Generic;
-using System.IdentityModel.Metadata;
 using System.Linq;
 
 namespace IdentityMetadataFetcher.Services
 {
     /// <summary>
-    /// Thread-safe cache for metadata objects from System.IdentityModel.Metadata.
+    /// Thread-safe cache for metadata documents.
     /// Can be used in any .NET Framework application (console, service, web, etc.)
     /// </summary>
     public class MetadataCache
@@ -22,7 +22,7 @@ namespace IdentityMetadataFetcher.Services
         /// <summary>
         /// Stores metadata in the cache.
         /// </summary>
-        public void AddOrUpdateMetadata(string issuerId, MetadataBase metadata, string rawXml)
+        public void AddOrUpdateMetadata(string issuerId, WsFederationMetadataDocument metadata, string rawXml)
         {
             if (string.IsNullOrWhiteSpace(issuerId))
                 throw new ArgumentException("issuerId cannot be null or empty", nameof(issuerId));
@@ -45,7 +45,7 @@ namespace IdentityMetadataFetcher.Services
         /// <summary>
         /// Retrieves metadata from the cache.
         /// </summary>
-        public MetadataBase GetMetadata(string issuerId)
+        public WsFederationMetadataDocument GetMetadata(string issuerId)
         {
             if (string.IsNullOrWhiteSpace(issuerId))
                 throw new ArgumentException("issuerId cannot be null or empty", nameof(issuerId));
@@ -164,9 +164,9 @@ namespace IdentityMetadataFetcher.Services
         public string IssuerId { get; set; }
 
         /// <summary>
-        /// Gets or sets the parsed metadata object from System.IdentityModel.Metadata.
+        /// Gets or sets the parsed metadata document.
         /// </summary>
-        public MetadataBase Metadata { get; set; }
+        public WsFederationMetadataDocument Metadata { get; set; }
 
         /// <summary>
         /// Gets or sets the raw XML representation of the metadata.

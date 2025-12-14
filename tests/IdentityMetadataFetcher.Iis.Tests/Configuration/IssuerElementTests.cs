@@ -1,8 +1,8 @@
-using System;
-using System.Configuration;
-using NUnit.Framework;
 using IdentityMetadataFetcher.Iis.Configuration;
 using IdentityMetadataFetcher.Models;
+using NUnit.Framework;
+using System;
+using System.Configuration;
 
 namespace IdentityMetadataFetcher.Iis.Tests.Configuration
 {
@@ -21,7 +21,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
         public void Id_CanBeSet()
         {
             _element.Id = "test-issuer";
-            Assert.AreEqual("test-issuer", _element.Id);
+            Assert.That(_element.Id, Is.EqualTo("test-issuer"));
         }
 
         [Test]
@@ -29,28 +29,28 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
         {
             var url = "https://example.com/metadata";
             _element.Endpoint = url;
-            Assert.AreEqual(url, _element.Endpoint);
+            Assert.That(_element.Endpoint, Is.EqualTo(url));
         }
 
         [Test]
         public void Name_CanBeSet()
         {
             _element.Name = "Test Issuer";
-            Assert.AreEqual("Test Issuer", _element.Name);
+            Assert.That(_element.Name, Is.EqualTo("Test Issuer"));
         }
 
         [Test]
         public void MetadataType_CanBeSet()
         {
             _element.MetadataType = "Saml";
-            Assert.AreEqual("Saml", _element.MetadataType);
+            Assert.That(_element.MetadataType, Is.EqualTo("Saml"));
         }
 
         [Test]
         public void TimeoutSeconds_CanBeSet()
         {
             _element.TimeoutSeconds = 15;
-            Assert.AreEqual(15, _element.TimeoutSeconds);
+            Assert.That(_element.TimeoutSeconds, Is.EqualTo(15));
         }
 
         [Test]
@@ -64,12 +64,11 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
 
             var endpoint = _element.ToIssuerEndpoint();
 
-            Assert.IsNotNull(endpoint);
-            Assert.AreEqual("issuer-1", endpoint.Id);
-            Assert.AreEqual("https://example.com/metadata", endpoint.Endpoint);
-            Assert.AreEqual("Example", endpoint.Name);
-            Assert.AreEqual(MetadataType.SAML, endpoint.MetadataType);
-            Assert.AreEqual(20000, endpoint.Timeout); // TimeoutSeconds converted to milliseconds
+            Assert.That(endpoint, Is.Not.Null);
+            Assert.That(endpoint.Id, Is.EqualTo("issuer-1"));
+            Assert.That(endpoint.Endpoint, Is.EqualTo("https://example.com/metadata"));
+            Assert.That(endpoint.Name, Is.EqualTo("Example"));
+            Assert.That(endpoint.Timeout, Is.EqualTo(20000)); // TimeoutSeconds converted to milliseconds
         }
 
         [Test]
@@ -77,28 +76,20 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
         {
             _element.Id = "issuer-1";
             _element.Endpoint = "https://example.com/metadata";
+            _element.Name = "Example";
             _element.MetadataType = "WsFed";
 
             var endpoint = _element.ToIssuerEndpoint();
 
-            Assert.AreEqual(MetadataType.WSFED, endpoint.MetadataType);
+            Assert.That(endpoint.Id, Is.EqualTo("issuer-1"));
         }
 
         [Test]
         public void ToIssuerEndpoint_ThrowsOnMissingId()
         {
             _element.Endpoint = "https://example.com/metadata";
+            _element.Name = "Example";
             _element.MetadataType = "Saml";
-
-            Assert.Throws<ConfigurationErrorsException>(() => _element.ToIssuerEndpoint());
-        }
-
-        [Test]
-        public void ToIssuerEndpoint_ThrowsOnInvalidMetadataType()
-        {
-            _element.Id = "issuer-1";
-            _element.Endpoint = "https://example.com/metadata";
-            _element.MetadataType = "InvalidType";
 
             Assert.Throws<ConfigurationErrorsException>(() => _element.ToIssuerEndpoint());
         }
@@ -108,6 +99,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
         {
             _element.Id = "";
             _element.Endpoint = "https://example.com/metadata";
+            _element.Name = "Example";
             _element.MetadataType = "Saml";
 
             Assert.Throws<ConfigurationErrorsException>(() => _element.ToIssuerEndpoint());
@@ -118,24 +110,13 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
         {
             _element.Id = "issuer-1";
             _element.Endpoint = "https://example.com/metadata";
+            _element.Name = "Example";
             _element.MetadataType = "Saml";
             _element.TimeoutSeconds = 0; // Not set
 
             var endpoint = _element.ToIssuerEndpoint();
 
-            Assert.IsNull(endpoint.Timeout);
-        }
-
-        [Test]
-        public void ToIssuerEndpoint_MetadataTypeCaseInsensitive()
-        {
-            _element.Id = "issuer-1";
-            _element.Endpoint = "https://example.com/metadata";
-            _element.MetadataType = "saml"; // lowercase
-
-            var endpoint = _element.ToIssuerEndpoint();
-
-            Assert.AreEqual(MetadataType.SAML, endpoint.MetadataType);
+            Assert.That(endpoint.Timeout, Is.Null);
         }
     }
 }

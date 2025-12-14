@@ -1,12 +1,14 @@
+using IdentityMetadataFetcher.Iis.Services;
+using IdentityMetadataFetcher.Iis.Tests.Mocks;
+using IdentityMetadataFetcher.Models;
+using IdentityMetadataFetcher.Services; // Core library
+using Microsoft.IdentityModel.Protocols.WsFederation;
+using Microsoft.IdentityModel.Tokens;
+using NUnit.Framework;
 using System;
-using System.IdentityModel.Metadata;
 using System.IdentityModel.Tokens;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
-using NUnit.Framework;
-using IdentityMetadataFetcher.Iis.Services;
-using IdentityMetadataFetcher.Iis.Tests.Mocks;
-using IdentityMetadataFetcher.Services; // Core library
 
 namespace IdentityMetadataFetcher.Iis.Tests.Services
 {
@@ -44,10 +46,11 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         [Test]
         public void Apply_WithEmptyMetadata_DoesNotThrow()
         {
+            var config = new WsFederationConfiguration();
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "test-issuer",
-                Metadata = new EntityDescriptor(),
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };
@@ -56,15 +59,18 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         }
 
         [Test]
-        public void Apply_WithNullRoleDescriptors_DoesNotThrow()
+        public void Apply_WithEmptySigningKeys_DoesNotThrow()
         {
-            var entity = new EntityDescriptor();
-            entity.RoleDescriptors.Clear();
+            // SigningKeys collection exists but is empty by default
+            var config = new WsFederationConfiguration
+            {
+                Issuer = "https://test.example.com"
+            };
 
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "test-issuer",
-                Metadata = entity,
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };
@@ -77,12 +83,12 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         {
             // This test validates the overall flow but cannot fully test System.IdentityModel
             // runtime configuration in a unit test context without extensive mocking
-            var entity = CreateEntityDescriptorWithSigningCert();
+            var config = CreateConfigurationWithSigningCert();
 
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "test-issuer",
-                Metadata = entity,
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };
@@ -94,12 +100,12 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         [Test]
         public void Apply_WithInvalidThumbprint_HandlesGracefully()
         {
-            var entity = CreateEntityDescriptorWithInvalidThumbprint();
+            var config = CreateConfigurationWithInvalidKey();
 
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "test-issuer",
-                Metadata = entity,
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };
@@ -110,12 +116,15 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         [Test]
         public void Apply_WithNullIssuerDisplayName_UsesCacheEntryIssuerId()
         {
-            var entity = new EntityDescriptor();
+            var config = new WsFederationConfiguration
+            {
+                Issuer = "https://test.example.com"
+            };
             
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "fallback-issuer-id",
-                Metadata = entity,
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };
@@ -127,12 +136,15 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         [Test]
         public void Apply_WithEmptyIssuerDisplayName_UsesCacheEntryIssuerId()
         {
-            var entity = new EntityDescriptor();
+            var config = new WsFederationConfiguration
+            {
+                Issuer = "https://test.example.com"
+            };
             
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "fallback-issuer-id",
-                Metadata = entity,
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };
@@ -144,12 +156,12 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         [Test]
         public void Apply_WithMultipleSigningCertificates_ProcessesAll()
         {
-            var entity = CreateEntityDescriptorWithMultipleSigningCerts();
+            var config = CreateConfigurationWithMultipleSigningCerts();
 
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "test-issuer",
-                Metadata = entity,
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };
@@ -158,14 +170,14 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         }
 
         [Test]
-        public void Apply_WithUnspecifiedKeyType_IncludesCertificate()
+        public void Apply_WithValidSigningKey_ProcessesCertificate()
         {
-            var entity = CreateEntityDescriptorWithUnspecifiedKeyType();
+            var config = CreateConfigurationWithSigningCert();
 
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "test-issuer",
-                Metadata = entity,
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };
@@ -174,14 +186,14 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         }
 
         [Test]
-        public void Apply_WithEncryptionKeyType_SkipsCertificate()
+        public void Apply_WithRsaSecurityKey_HandlesGracefully()
         {
-            var entity = CreateEntityDescriptorWithEncryptionKey();
+            var config = CreateConfigurationWithRsaKey();
 
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "test-issuer",
-                Metadata = entity,
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };
@@ -190,14 +202,14 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         }
 
         [Test]
-        public void Apply_WithPassiveStsEndpoint_UpdatesIssuer()
+        public void Apply_WithTokenEndpoint_UpdatesIssuer()
         {
-            var entity = CreateEntityDescriptorWithPassiveSts();
+            var config = CreateConfigurationWithTokenEndpoint();
 
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "test-issuer",
-                Metadata = entity,
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };
@@ -207,14 +219,14 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         }
 
         [Test]
-        public void Apply_WithoutPassiveStsEndpoint_DoesNotUpdateIssuer()
+        public void Apply_WithoutTokenEndpoint_DoesNotUpdateIssuer()
         {
-            var entity = CreateEntityDescriptorWithoutPassiveSts();
+            var config = CreateConfigurationWithoutTokenEndpoint();
 
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "test-issuer",
-                Metadata = entity,
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };
@@ -223,14 +235,14 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         }
 
         [Test]
-        public void Apply_WithMixedKeyTypes_ProcessesOnlySigningAndUnspecified()
+        public void Apply_WithMixedSecurityKeys_ProcessesAllX509Keys()
         {
-            var entity = CreateEntityDescriptorWithMixedKeyTypes();
+            var config = CreateConfigurationWithMixedKeyTypes();
 
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "test-issuer",
-                Metadata = entity,
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };
@@ -239,14 +251,14 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         }
 
         [Test]
-        public void Apply_WithCorruptedCertificateData_HandlesGracefully()
+        public void Apply_WithInvalidSecurityKey_HandlesGracefully()
         {
-            var entity = CreateEntityDescriptorWithCorruptedCert();
+            var config = CreateConfigurationWithInvalidKey();
 
             var entry = new MetadataCacheEntry
             {
                 IssuerId = "test-issuer",
-                Metadata = entity,
+                Metadata = new WsFederationMetadataDocument(config, "<EntityDescriptor />"),
                 RawXml = "<EntityDescriptor />",
                 CachedAt = DateTime.UtcNow
             };
@@ -256,217 +268,109 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
 
         #region Helper Methods
 
-        private EntityDescriptor CreateEntityDescriptorWithSigningCert()
+        private WsFederationConfiguration CreateConfigurationWithSigningCert()
         {
-            var entity = new EntityDescriptor();
-            entity.EntityId = new EntityId("https://test.example.com");
-            
-            var role = new MockRoleDescriptor();
-            
-            // Create a test certificate
-            var cert = CreateTestCertificate();
-            var keyInfo = new X509RawDataKeyIdentifierClause(cert);
-            
-            var keyDescriptor = new KeyDescriptor
+            var config = new WsFederationConfiguration
             {
-                Use = KeyType.Signing
+                Issuer = "https://test.example.com"
             };
-            keyDescriptor.KeyInfo.Add(keyInfo);
             
-            role.Keys.Add(keyDescriptor);
-            entity.RoleDescriptors.Add(role);
+            // Create a test certificate and wrap it in X509SecurityKey
+            var cert = CreateTestCertificate();
+            var x509Key = new X509SecurityKey(cert);
+            config.SigningKeys.Add(x509Key);
             
-            return entity;
+            return config;
         }
 
-        private EntityDescriptor CreateEntityDescriptorWithMultipleSigningCerts()
+        private WsFederationConfiguration CreateConfigurationWithMultipleSigningCerts()
         {
-            var entity = new EntityDescriptor();
-            entity.EntityId = new EntityId("https://test.example.com");
-            
-            var role = new MockRoleDescriptor();
+            var config = new WsFederationConfiguration
+            {
+                Issuer = "https://test.example.com"
+            };
             
             // Add multiple signing certificates
             for (int i = 0; i < 3; i++)
             {
                 var cert = CreateTestCertificate();
-                var keyInfo = new X509RawDataKeyIdentifierClause(cert);
-                
-                var keyDescriptor = new KeyDescriptor
-                {
-                    Use = KeyType.Signing
-                };
-                keyDescriptor.KeyInfo.Add(keyInfo);
-                
-                role.Keys.Add(keyDescriptor);
+                var x509Key = new X509SecurityKey(cert);
+                config.SigningKeys.Add(x509Key);
             }
             
-            entity.RoleDescriptors.Add(role);
-            return entity;
+            return config;
         }
 
-        private EntityDescriptor CreateEntityDescriptorWithUnspecifiedKeyType()
+        private WsFederationConfiguration CreateConfigurationWithRsaKey()
         {
-            var entity = new EntityDescriptor();
-            entity.EntityId = new EntityId("https://test.example.com");
-            
-            var role = new MockRoleDescriptor();
-            
-            var cert = CreateTestCertificate();
-            var keyInfo = new X509RawDataKeyIdentifierClause(cert);
-            
-            var keyDescriptor = new KeyDescriptor
+            var config = new WsFederationConfiguration
             {
-                Use = KeyType.Unspecified
-            };
-            keyDescriptor.KeyInfo.Add(keyInfo);
-            
-            role.Keys.Add(keyDescriptor);
-            entity.RoleDescriptors.Add(role);
-            
-            return entity;
-        }
-
-        private EntityDescriptor CreateEntityDescriptorWithEncryptionKey()
-        {
-            var entity = new EntityDescriptor();
-            entity.EntityId = new EntityId("https://test.example.com");
-            
-            var role = new MockRoleDescriptor();
-            
-            var cert = CreateTestCertificate();
-            var keyInfo = new X509RawDataKeyIdentifierClause(cert);
-            
-            var keyDescriptor = new KeyDescriptor
-            {
-                Use = KeyType.Encryption
-            };
-            keyDescriptor.KeyInfo.Add(keyInfo);
-            
-            role.Keys.Add(keyDescriptor);
-            entity.RoleDescriptors.Add(role);
-            
-            return entity;
-        }
-
-        private EntityDescriptor CreateEntityDescriptorWithMixedKeyTypes()
-        {
-            var entity = new EntityDescriptor();
-            entity.EntityId = new EntityId("https://test.example.com");
-            
-            var role = new MockRoleDescriptor();
-            
-            // Add signing key
-            var signingCert = CreateTestCertificate();
-            var signingKeyInfo = new X509RawDataKeyIdentifierClause(signingCert);
-            var signingKeyDescriptor = new KeyDescriptor { Use = KeyType.Signing };
-            signingKeyDescriptor.KeyInfo.Add(signingKeyInfo);
-            role.Keys.Add(signingKeyDescriptor);
-            
-            // Add encryption key
-            var encryptionCert = CreateTestCertificate();
-            var encryptionKeyInfo = new X509RawDataKeyIdentifierClause(encryptionCert);
-            var encryptionKeyDescriptor = new KeyDescriptor { Use = KeyType.Encryption };
-            encryptionKeyDescriptor.KeyInfo.Add(encryptionKeyInfo);
-            role.Keys.Add(encryptionKeyDescriptor);
-            
-            // Add unspecified key
-            var unspecifiedCert = CreateTestCertificate();
-            var unspecifiedKeyInfo = new X509RawDataKeyIdentifierClause(unspecifiedCert);
-            var unspecifiedKeyDescriptor = new KeyDescriptor { Use = KeyType.Unspecified };
-            unspecifiedKeyDescriptor.KeyInfo.Add(unspecifiedKeyInfo);
-            role.Keys.Add(unspecifiedKeyDescriptor);
-            
-            entity.RoleDescriptors.Add(role);
-            return entity;
-        }
-
-        private EntityDescriptor CreateEntityDescriptorWithInvalidThumbprint()
-        {
-            var entity = new EntityDescriptor();
-            entity.EntityId = new EntityId("https://test.example.com");
-            
-            var role = new MockRoleDescriptor();
-            
-            // Create a key descriptor without proper certificate data
-            var keyDescriptor = new KeyDescriptor
-            {
-                Use = KeyType.Signing
+                Issuer = "https://test.example.com"
             };
             
-            // Add an empty or invalid thumbprint clause
-            try
-            {
-                var invalidThumbprint = new byte[0];
-                var thumbprintClause = new X509ThumbprintKeyIdentifierClause(invalidThumbprint);
-                keyDescriptor.KeyInfo.Add(thumbprintClause);
-            }
-            catch
-            {
-                // Expected: Creating a clause with invalid thumbprint may throw
-                // Leave KeyInfo empty to test error handling in the updater
-            }
+            // Add an RSA key (no certificate) - don't dispose RSA while it's referenced
+            var rsa = System.Security.Cryptography.RSA.Create();
+            var rsaKey = new Microsoft.IdentityModel.Tokens.RsaSecurityKey(rsa);
+            config.SigningKeys.Add(rsaKey);
             
-            role.Keys.Add(keyDescriptor);
-            entity.RoleDescriptors.Add(role);
-            
-            return entity;
+            return config;
         }
 
-        private EntityDescriptor CreateEntityDescriptorWithCorruptedCert()
+        private WsFederationConfiguration CreateConfigurationWithMixedKeyTypes()
         {
-            var entity = new EntityDescriptor();
-            entity.EntityId = new EntityId("https://test.example.com");
-            
-            var role = new MockRoleDescriptor();
-            
-            var keyDescriptor = new KeyDescriptor
+            var config = new WsFederationConfiguration
             {
-                Use = KeyType.Signing
+                Issuer = "https://test.example.com"
             };
             
-            // Try to create a corrupted certificate - if this fails, we just return empty
-            try
-            {
-                var corruptedData = new byte[] { 0x00, 0x01, 0x02, 0x03 }; // Invalid cert data
-                var keyInfo = new X509RawDataKeyIdentifierClause(corruptedData);
-                keyDescriptor.KeyInfo.Add(keyInfo);
-            }
-            catch
-            {
-                // Expected: Creating a clause with corrupted data may throw
-                // Leave KeyInfo empty to test error handling in the updater
-            }
+            // Add X509 key
+            var cert1 = CreateTestCertificate();
+            config.SigningKeys.Add(new X509SecurityKey(cert1));
             
-            role.Keys.Add(keyDescriptor);
-            entity.RoleDescriptors.Add(role);
+            // Add RSA key - don't dispose RSA while it's referenced
+            var rsa = System.Security.Cryptography.RSA.Create();
+            config.SigningKeys.Add(new Microsoft.IdentityModel.Tokens.RsaSecurityKey(rsa));
             
-            return entity;
+            // Add another X509 key
+            var cert2 = CreateTestCertificate();
+            config.SigningKeys.Add(new X509SecurityKey(cert2));
+            
+            return config;
         }
 
-        private EntityDescriptor CreateEntityDescriptorWithPassiveSts()
+        private WsFederationConfiguration CreateConfigurationWithInvalidKey()
         {
-            var entity = new EntityDescriptor();
-            entity.EntityId = new EntityId("https://test.example.com");
+            var config = new WsFederationConfiguration
+            {
+                Issuer = "https://test.example.com"
+            };
             
-            var sts = new SecurityTokenServiceDescriptor();
-            var endpoint = new System.IdentityModel.Protocols.WSTrust.EndpointReference("https://sts.example.com/wsfed");
-            sts.PassiveRequestorEndpoints.Add(endpoint);
+            // Add a mock key (will be handled gracefully)
+            config.SigningKeys.Add(new MockSecurityKey());
             
-            entity.RoleDescriptors.Add(sts);
-            
-            return entity;
+            return config;
         }
 
-        private EntityDescriptor CreateEntityDescriptorWithoutPassiveSts()
+        private WsFederationConfiguration CreateConfigurationWithTokenEndpoint()
         {
-            var entity = new EntityDescriptor();
-            entity.EntityId = new EntityId("https://test.example.com");
+            var config = new WsFederationConfiguration
+            {
+                Issuer = "https://test.example.com",
+                TokenEndpoint = "https://sts.example.com/wsfed"
+            };
             
-            var role = new MockRoleDescriptor();
-            entity.RoleDescriptors.Add(role);
+            return config;
+        }
+
+        private WsFederationConfiguration CreateConfigurationWithoutTokenEndpoint()
+        {
+            var config = new WsFederationConfiguration
+            {
+                Issuer = "https://test.example.com",
+                TokenEndpoint = null
+            };
             
-            return entity;
+            return config;
         }
 
         private X509Certificate2 CreateTestCertificate()

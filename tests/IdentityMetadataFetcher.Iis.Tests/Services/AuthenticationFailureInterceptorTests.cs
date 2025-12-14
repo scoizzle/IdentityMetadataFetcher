@@ -1,7 +1,7 @@
-using System;
-using System.IdentityModel.Tokens;
-using NUnit.Framework;
 using IdentityMetadataFetcher.Iis.Services;
+using Microsoft.IdentityModel.Tokens;
+using NUnit.Framework;
+using System;
 
 namespace IdentityMetadataFetcher.Iis.Tests.Services
 {
@@ -20,7 +20,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         public void IsCertificateTrustFailure_WithNull_ReturnsFalse()
         {
             var result = _interceptor.IsCertificateTrustFailure(null);
-            Assert.IsFalse(result);
+            Assert.That(result, Is.False);
         }
 
         [Test]
@@ -28,7 +28,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         {
             var exception = new SecurityTokenValidationException("ID4037: The key needed to verify the signature could not be resolved");
             var result = _interceptor.IsCertificateTrustFailure(exception);
-            Assert.IsTrue(result);
+            Assert.That(result, Is.True);
         }
 
         [Test]
@@ -36,7 +36,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         {
             var exception = new SecurityTokenValidationException("ID4175: The issuer of the security token was not recognized");
             var result = _interceptor.IsCertificateTrustFailure(exception);
-            Assert.IsTrue(result);
+            Assert.That(result, Is.True);
         }
 
         [Test]
@@ -44,7 +44,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         {
             var exception = new SecurityTokenValidationException("ID4022: The key needed to decrypt the token could not be resolved");
             var result = _interceptor.IsCertificateTrustFailure(exception);
-            Assert.IsTrue(result);
+            Assert.That(result, Is.True);
         }
 
         [Test]
@@ -52,7 +52,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         {
             var exception = new SecurityTokenException("Signature verification failed");
             var result = _interceptor.IsCertificateTrustFailure(exception);
-            Assert.IsTrue(result);
+            Assert.That(result, Is.True);
         }
 
         [Test]
@@ -60,7 +60,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         {
             var exception = new SecurityTokenException("Invalid certificate");
             var result = _interceptor.IsCertificateTrustFailure(exception);
-            Assert.IsTrue(result);
+            Assert.That(result, Is.True);
         }
 
         [Test]
@@ -68,7 +68,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         {
             var exception = new SecurityTokenException("X509 validation failed");
             var result = _interceptor.IsCertificateTrustFailure(exception);
-            Assert.IsTrue(result);
+            Assert.That(result, Is.True);
         }
 
         [Test]
@@ -78,7 +78,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
             var result = _interceptor.IsCertificateTrustFailure(exception);
             // This should return true because we check for generic "issuer" in the message
             // but if the message doesn't contain any of our keywords, it would return false
-            Assert.IsFalse(result);
+            Assert.That(result, Is.False);
         }
 
         [Test]
@@ -86,7 +86,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         {
             var exception = new InvalidOperationException("Some other error");
             var result = _interceptor.IsCertificateTrustFailure(exception);
-            Assert.IsFalse(result);
+            Assert.That(result, Is.False);
         }
 
         [Test]
@@ -96,14 +96,14 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
             var outerException = new Exception("Outer exception", innerException);
             
             var result = _interceptor.IsCertificateTrustFailure(outerException);
-            Assert.IsTrue(result);
+            Assert.That(result, Is.True);
         }
 
         [Test]
         public void ExtractIssuerFromException_WithNull_ReturnsNull()
         {
             var result = _interceptor.ExtractIssuerFromException(null);
-            Assert.IsNull(result);
+            Assert.That(result, Is.Null);
         }
 
         [Test]
@@ -111,7 +111,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         {
             var exception = new SecurityTokenException("Error from issuer 'https://sts.example.com'");
             var result = _interceptor.ExtractIssuerFromException(exception);
-            Assert.AreEqual("https://sts.example.com", result);
+            Assert.That(result, Is.EqualTo("https://sts.example.com"));
         }
 
         [Test]
@@ -119,7 +119,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         {
             var exception = new SecurityTokenException("Error from issuer \"urn:example:issuer:123\"");
             var result = _interceptor.ExtractIssuerFromException(exception);
-            Assert.AreEqual("urn:example:issuer:123", result);
+            Assert.That(result, Is.EqualTo("urn:example:issuer:123"));
         }
 
         [Test]
@@ -129,7 +129,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
             var outerException = new Exception("Outer", innerException);
             
             var result = _interceptor.ExtractIssuerFromException(outerException);
-            Assert.AreEqual("https://login.example.com", result);
+            Assert.That(result, Is.EqualTo("https://login.example.com"));
         }
 
         [Test]
@@ -137,7 +137,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         {
             var exception = new SecurityTokenException("Generic error without issuer");
             var result = _interceptor.ExtractIssuerFromException(exception);
-            Assert.IsNull(result);
+            Assert.That(result, Is.Null);
         }
 
         [Test]
@@ -145,7 +145,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         {
             var exception = new InvalidOperationException("Some error");
             var result = _interceptor.ExtractIssuerFromException(exception);
-            Assert.IsNull(result);
+            Assert.That(result, Is.Null);
         }
 
         [Test]
@@ -153,7 +153,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         {
             var exception = new SecurityTokenException("The key needed for validation was not found");
             var result = _interceptor.IsCertificateTrustFailure(exception);
-            Assert.IsTrue(result);
+            Assert.That(result, Is.True);
         }
 
         [Test]
@@ -161,7 +161,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         {
             var exception = new SecurityTokenException("The issuer was not recognized");
             var result = _interceptor.IsCertificateTrustFailure(exception);
-            Assert.IsTrue(result);
+            Assert.That(result, Is.True);
         }
 
         [Test]
@@ -169,7 +169,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         {
             var exception = new SecurityTokenException("Error FROM ISSUER 'https://sts.example.com'");
             var result = _interceptor.ExtractIssuerFromException(exception);
-            Assert.AreEqual("https://sts.example.com", result);
+            Assert.That(result, Is.EqualTo("https://sts.example.com"));
         }
 
         [Test]
@@ -177,7 +177,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         {
             var exception = new SecurityTokenException("Error from issuer \"https://sts.example.com\"");
             var result = _interceptor.ExtractIssuerFromException(exception);
-            Assert.AreEqual("https://sts.example.com", result);
+            Assert.That(result, Is.EqualTo("https://sts.example.com"));
         }
 
         [Test]
@@ -185,7 +185,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Services
         {
             var exception = new SecurityTokenException("Error from issuer https://sts.example.com in the request");
             var result = _interceptor.ExtractIssuerFromException(exception);
-            Assert.AreEqual("https://sts.example.com", result);
+            Assert.That(result, Is.EqualTo("https://sts.example.com"));
         }
     }
 }

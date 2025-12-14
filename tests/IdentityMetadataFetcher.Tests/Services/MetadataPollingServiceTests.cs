@@ -1,11 +1,11 @@
+using IdentityMetadataFetcher.Models;
+using IdentityMetadataFetcher.Services;
+using IdentityMetadataFetcher.Tests.Mocks;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using NUnit.Framework;
-using IdentityMetadataFetcher.Tests.Mocks;
-using IdentityMetadataFetcher.Models;
-using IdentityMetadataFetcher.Services;
 
 namespace IdentityMetadataFetcher.Tests.Services
 {
@@ -25,8 +25,8 @@ namespace IdentityMetadataFetcher.Tests.Services
             
             _endpoints = new List<IssuerEndpoint>
             {
-                new IssuerEndpoint { Id = "issuer-1", Endpoint = "https://example1.com/metadata", Name = "Example 1", MetadataType = MetadataType.SAML },
-                new IssuerEndpoint { Id = "issuer-2", Endpoint = "https://example2.com/metadata", Name = "Example 2", MetadataType = MetadataType.WSFED }
+                new IssuerEndpoint { Id = "issuer-1", Endpoint = "https://example1.com/metadata", Name = "Example 1" },
+                new IssuerEndpoint { Id = "issuer-2", Endpoint = "https://example2.com/metadata", Name = "Example 2" }
             };
 
             _service = new MetadataPollingService(_fetcher, _cache, _endpoints, pollingIntervalMinutes: 60);
@@ -41,7 +41,7 @@ namespace IdentityMetadataFetcher.Tests.Services
         [Test]
         public void CanBeCreated()
         {
-            Assert.IsNotNull(_service);
+            Assert.That(_service, Is.Not.Null);
         }
 
         [Test]
@@ -50,7 +50,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             await _service.PollNowAsync();
 
             var allEntries = _cache.GetAllEntries().ToList();
-            Assert.GreaterOrEqual(allEntries.Count, 1);
+            Assert.That(allEntries.Count, Is.GreaterThanOrEqualTo(1));
         }
 
         [Test]
@@ -61,7 +61,7 @@ namespace IdentityMetadataFetcher.Tests.Services
 
             await _service.PollNowAsync();
 
-            Assert.IsTrue(eventRaised);
+            Assert.That(eventRaised, Is.True);
         }
 
         [Test]
@@ -72,7 +72,7 @@ namespace IdentityMetadataFetcher.Tests.Services
 
             await _service.PollNowAsync();
 
-            Assert.IsTrue(eventRaised);
+            Assert.That(eventRaised, Is.True);
         }
 
         [Test]
@@ -83,7 +83,7 @@ namespace IdentityMetadataFetcher.Tests.Services
 
             await _service.PollNowAsync();
 
-            Assert.Greater(eventsRaised.Count, 0);
+            Assert.That(eventsRaised.Count, Is.GreaterThan(0));
         }
 
         [Test]
@@ -96,7 +96,7 @@ namespace IdentityMetadataFetcher.Tests.Services
 
             await _service.PollNowAsync();
 
-            Assert.IsTrue(errorEventRaised);
+            Assert.That(errorEventRaised, Is.True);
         }
 
         [Test]
@@ -107,7 +107,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             await _service.PollNowAsync();
 
             // issuer-2 should still be cached despite issuer-1 failure
-            Assert.IsTrue(_cache.HasMetadata("issuer-2"));
+            Assert.That(_cache.HasMetadata("issuer-2"), Is.True);
         }
 
         [Test]
@@ -118,8 +118,8 @@ namespace IdentityMetadataFetcher.Tests.Services
 
             await _service.PollNowAsync();
 
-            Assert.IsNotNull(eventArgs);
-            Assert.Greater(eventArgs.SuccessCount, 0);
+            Assert.That(eventArgs, Is.Not.Null);
+            Assert.That(eventArgs.SuccessCount, Is.GreaterThan(0));
         }
 
         [Test]
@@ -131,7 +131,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             System.Threading.Thread.Sleep(100);
 
             var allEntries = _cache.GetAllEntries().ToList();
-            Assert.Greater(allEntries.Count, 0);
+            Assert.That(allEntries.Count, Is.GreaterThan(0));
 
             _service.Stop();
         }
@@ -148,7 +148,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             System.Threading.Thread.Sleep(100);
             var countAfterWait = _cache.GetAllEntries().Count();
 
-            Assert.AreEqual(countAfterStop, countAfterWait);
+            Assert.That(countAfterStop, Is.EqualTo(countAfterWait));
         }
 
         [Test]
@@ -164,7 +164,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             await Task.WhenAll(task1, task2);
 
             // Should only increment once due to concurrent poll prevention
-            Assert.AreEqual(1, pollCount);
+            Assert.That(pollCount, Is.EqualTo(1));
         }
 
         [Test]
@@ -172,8 +172,8 @@ namespace IdentityMetadataFetcher.Tests.Services
         {
             await _service.PollNowAsync();
 
-            Assert.IsTrue(_cache.HasMetadata("issuer-1"));
-            Assert.IsTrue(_cache.HasMetadata("issuer-2"));
+            Assert.That(_cache.HasMetadata("issuer-1"), Is.True);
+            Assert.That(_cache.HasMetadata("issuer-2"), Is.True);
         }
 
         [Test]
@@ -182,7 +182,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             await _service.PollNowAsync();
 
             var rawXml = _cache.GetRawMetadata("issuer-1");
-            Assert.IsNotEmpty(rawXml);
+            Assert.That(rawXml, Is.Not.Empty);
         }
 
         [Test]
@@ -193,9 +193,9 @@ namespace IdentityMetadataFetcher.Tests.Services
 
             await _service.PollNowAsync();
 
-            Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(_endpoints.Count, eventArgs.TotalCount);
-            Assert.Greater(eventArgs.SuccessCount, 0);
+            Assert.That(eventArgs, Is.Not.Null);
+            Assert.That(eventArgs.TotalCount, Is.EqualTo(_endpoints.Count));
+            Assert.That(eventArgs.SuccessCount, Is.GreaterThan(0));
         }
 
         [Test]
@@ -208,9 +208,9 @@ namespace IdentityMetadataFetcher.Tests.Services
 
             await _service.PollNowAsync();
 
-            Assert.IsNotNull(errorArgs);
-            Assert.AreEqual("issuer-1", errorArgs.IssuerId);
-            Assert.IsNotEmpty(errorArgs.ErrorMessage);
+            Assert.That(errorArgs, Is.Not.Null);
+            Assert.That(errorArgs.IssuerId, Is.EqualTo("issuer-1"));
+            Assert.That(errorArgs.ErrorMessage, Is.Not.Empty);
         }
 
         [Test]
@@ -223,9 +223,9 @@ namespace IdentityMetadataFetcher.Tests.Services
             await _service.PollNowAsync();
             var after = DateTime.UtcNow;
 
-            Assert.IsNotNull(eventArgs);
-            Assert.GreaterOrEqual(eventArgs.UpdatedAt, before);
-            Assert.LessOrEqual(eventArgs.UpdatedAt, after);
+            Assert.That(eventArgs, Is.Not.Null);
+            Assert.That(eventArgs.UpdatedAt, Is.GreaterThanOrEqualTo(before));
+            Assert.That(eventArgs.UpdatedAt, Is.LessThanOrEqualTo(after));
         }
 
         [Test]
@@ -235,7 +235,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             var fetcher = new MockMetadataFetcher();
             var endpoints = new List<IssuerEndpoint>
             {
-                new IssuerEndpoint { Id = "issuer-1", Endpoint = "https://example1.com/metadata", Name = "Example 1", MetadataType = MetadataType.SAML },
+                new IssuerEndpoint { Id = "issuer-1", Endpoint = "https://example1.com/metadata", Name = "Example 1" },
             };
             var service = new MetadataPollingService(fetcher, cache, endpoints, pollingIntervalMinutes: 60);
 
@@ -251,7 +251,7 @@ namespace IdentityMetadataFetcher.Tests.Services
             service.Start();
             System.Threading.Thread.Sleep(50);
 
-            Assert.AreEqual(1, startedCount, "Start should trigger only a single initial poll and be idempotent.");
+            Assert.That(startedCount, Is.EqualTo(1), "Start should trigger only a single initial poll and be idempotent.");
 
             service.Stop();
         }

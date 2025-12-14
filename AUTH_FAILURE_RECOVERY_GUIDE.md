@@ -276,13 +276,14 @@ Restart-WebAppPool -Name "YourAppPoolName"
 // Diagnostic code to list all certificates
 var cache = MetadataPollingHttpModule.MetadataCache;
 var entry = cache.GetCacheEntry("azure-ad");
-var entity = entry.Metadata as EntityDescriptor;
+var config = entry.Metadata;
 
-foreach (var role in entity.RoleDescriptors)
+foreach (var key in config.SigningKeys)
 {
-    foreach (var key in role.Keys)
+    if (key is Microsoft.IdentityModel.Tokens.X509SecurityKey x509Key)
     {
         // Log each certificate thumbprint
+        var thumbprint = x509Key.Certificate.Thumbprint;
     }
 }
 ```
