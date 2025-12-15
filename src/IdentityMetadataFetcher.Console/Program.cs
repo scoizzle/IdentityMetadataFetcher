@@ -163,14 +163,7 @@ namespace IdentityMetadataFetcher.ConsoleApp
                         return 2;
                     }
 
-                    if (result.Metadata is WsFederationMetadataDocument wsFedDoc)
-                    {
-                        PrintMetadataSummary(wsFedDoc);
-                    }
-                    else if (result.Metadata is OpenIdConnectMetadataDocument oidcDoc)
-                    {
-                        PrintOidcMetadataSummary(oidcDoc);
-                    }
+                    PrintMetadataSummary(result.Metadata);
 
                     if (showRaw && !string.IsNullOrWhiteSpace(result.RawMetadata))
                     {
@@ -289,6 +282,50 @@ namespace IdentityMetadataFetcher.ConsoleApp
                 // Created timestamp
                 Console.WriteLine();
                 Console.WriteLine($"Created At: {wsFedDoc.CreatedAt:u}");
+            }
+            // Handle OpenIdConnectMetadataDocument
+            else if (metadata is OpenIdConnectMetadataDocument oidcDoc)
+            {
+                Console.WriteLine();
+                Console.WriteLine("OIDC Summary:");
+                Console.WriteLine(new string('-', 80));
+                
+                // Issuer
+                if (!string.IsNullOrEmpty(oidcDoc.Issuer))
+                {
+                    Console.WriteLine($"Issuer: {oidcDoc.Issuer}");
+                }
+
+                // Endpoints
+                if (oidcDoc.Endpoints != null && oidcDoc.Endpoints.Any())
+                {
+                    Console.WriteLine();
+                    Console.WriteLine($"Endpoints ({oidcDoc.Endpoints.Count}):");
+                    foreach (var ep in oidcDoc.Endpoints)
+                    {
+                        Console.WriteLine($"  {ep.Key}: {ep.Value}");
+                    }
+                }
+
+                // Signing certificates
+                if (oidcDoc.SigningCertificates != null && oidcDoc.SigningCertificates.Any())
+                {
+                    Console.WriteLine();
+                    Console.WriteLine($"Signing Certificates ({oidcDoc.SigningCertificates.Count}):");
+                    PrintCertificateInformation(oidcDoc.SigningCertificates);
+                }
+
+                // Signing keys from configuration
+                if (oidcDoc.Configuration?.SigningKeys != null && oidcDoc.Configuration.SigningKeys.Any())
+                {
+                    Console.WriteLine();
+                    Console.WriteLine($"Signing Keys ({oidcDoc.Configuration.SigningKeys.Count}):");
+                    PrintKeyInformation(oidcDoc.Configuration.SigningKeys);
+                }
+
+                // Created timestamp
+                Console.WriteLine();
+                Console.WriteLine($"Created At: {oidcDoc.CreatedAt:u}");
             }
             // Fallback for WsFederationConfiguration (if passed directly)
             else if (metadata is WsFederationConfiguration fedMetadata)
@@ -423,54 +460,5 @@ namespace IdentityMetadataFetcher.ConsoleApp
             }
         }
 
-        private static void PrintOidcMetadataSummary(OpenIdConnectMetadataDocument oidcDoc)
-        {
-            if (oidcDoc == null)
-            {
-                Console.WriteLine("No OIDC metadata received.");
-                return;
-            }
-
-            Console.WriteLine();
-            Console.WriteLine("OIDC Summary:");
-            Console.WriteLine(new string('-', 80));
-            
-            // Issuer
-            if (!string.IsNullOrEmpty(oidcDoc.Issuer))
-            {
-                Console.WriteLine($"Issuer: {oidcDoc.Issuer}");
-            }
-
-            // Endpoints
-            if (oidcDoc.Endpoints != null && oidcDoc.Endpoints.Any())
-            {
-                Console.WriteLine();
-                Console.WriteLine($"Endpoints ({oidcDoc.Endpoints.Count}):");
-                foreach (var ep in oidcDoc.Endpoints)
-                {
-                    Console.WriteLine($"  {ep.Key}: {ep.Value}");
-                }
-            }
-
-            // Signing certificates
-            if (oidcDoc.SigningCertificates != null && oidcDoc.SigningCertificates.Any())
-            {
-                Console.WriteLine();
-                Console.WriteLine($"Signing Certificates ({oidcDoc.SigningCertificates.Count}):");
-                PrintCertificateInformation(oidcDoc.SigningCertificates);
-            }
-
-            // Signing keys from configuration
-            if (oidcDoc.Configuration?.SigningKeys != null && oidcDoc.Configuration.SigningKeys.Any())
-            {
-                Console.WriteLine();
-                Console.WriteLine($"Signing Keys ({oidcDoc.Configuration.SigningKeys.Count}):");
-                PrintKeyInformation(oidcDoc.Configuration.SigningKeys);
-            }
-
-            // Created timestamp
-            Console.WriteLine();
-            Console.WriteLine($"Created At: {oidcDoc.CreatedAt:u}");
-        }
     }
 }

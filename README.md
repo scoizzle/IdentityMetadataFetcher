@@ -614,7 +614,7 @@ With auto-apply disabled, you can still:
 
 ## 🖥️ Console Utility
 
-A Windows-only console tool is included to fetch metadata from a URL and display a friendly summary.
+A Windows-only console tool is included to fetch metadata from a URL and display a friendly summary. Supports both WS-Federation/SAML and OIDC metadata formats.
 
 - Project: `src/IdentityMetadataFetcher.Console`
 - Target: `.NET Framework 4.8`
@@ -627,19 +627,35 @@ A Windows-only console tool is included to fetch metadata from a URL and display
 msbuild /t:restore
 msbuild /t:build /p:GenerateFullPaths=true /consoleloggerparameters:NoSummary
 
-# Run: Azure AD federation metadata
+# Run: Azure AD WS-Federation metadata
 IdentityMetadataFetcher.Console.exe https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml
 
-# Include raw XML output
-IdentityMetadataFetcher.Console.exe https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml --raw
+# Run: Google OIDC metadata
+IdentityMetadataFetcher.Console.exe https://accounts.google.com/.well-known/openid-configuration
+
+# Include raw metadata output (XML or JSON)
+IdentityMetadataFetcher.Console.exe https://accounts.google.com/.well-known/openid-configuration --raw
 ```
 
 ### Output
 
-- Entity ID
-- Roles discovered (STS / IDP)
-- Endpoints (Passive Requestor / Single Sign-On)
-- Signing Keys (key info types)
+The console utility automatically detects the metadata format and displays:
+
+**WS-Federation/SAML Metadata:**
+- Issuer
+- Token Endpoint
+- Endpoints (Passive STS, etc.)
+- Signing Certificates
+- Signing Keys
+
+**OIDC Metadata:**
+- Issuer
+- Authorization Endpoint
+- Token Endpoint
+- UserInfo Endpoint
+- JWKs URI
+- Signing Certificates
+- Signing Keys
 
 ---
 
