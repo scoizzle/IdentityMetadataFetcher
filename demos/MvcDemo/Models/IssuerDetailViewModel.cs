@@ -26,7 +26,6 @@ namespace MvcDemo.Models
         public string Id { get; set; }
         public string Name { get; set; }
         public string Endpoint { get; set; }
-        public string MetadataType { get; set; }
         public bool HasMetadata { get; set; }
         public DateTime? LastMetadataFetch { get; set; }
         public string RoleType { get; set; }

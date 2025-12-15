@@ -119,7 +119,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-8 mb-4">
+                            <div class="col-md-12 mb-4">
                                 <label for="Endpoint" class="form-label fw-semibold">
                                     <i class="fas fa-globe me-2 text-primary"></i>
                                     Metadata Endpoint <span class="text-danger">*</span>
@@ -135,26 +135,6 @@
                                     <small class="text-muted">
                                         <i class="fas fa-info-circle me-1"></i>
                                         The URL where the issuer publishes its SAML metadata
-                                    </small>
-                                </div>
-                            </div>
-
-                            <div class="col-md-4 mb-4">
-                                <label for="MetadataType" class="form-label fw-semibold">
-                                    <i class="fas fa-file-code me-2 text-primary"></i>
-                                    Metadata Type <span class="text-danger">*</span>
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light">
-                                        <i class="fas fa-cogs"></i>
-                                    </span>
-                                    @Html.DropDownListFor(m => m.MetadataType, new SelectList(new[] { "SAML", "WSFED" }), new { @class = "form-select form-select-lg", required = "required" })
-                                </div>
-                                @Html.ValidationMessageFor(m => m.MetadataType, "", new { @class = "invalid-feedback" })
-                                <div class="form-text">
-                                    <small class="text-muted">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        The format of the metadata (SAML or WSFED)
                                     </small>
                                 </div>
                             </div>
@@ -174,8 +154,7 @@
                                         <code class="d-block bg-white p-3 rounded border font-monospace small">
                                             &lt;add id="@Model.Id"
                                                  endpoint="@Model.Endpoint"
-                                                 name="@Model.Name"
-                                                 metadataType="@Model.MetadataType" /&gt;
+                                                 name="@Model.Name" /&gt;
                                         </code>
                                     </div>
                                 </div>
@@ -343,13 +322,11 @@
         // Store original values
         originalValues.name = document.getElementById('Name').value;
         originalValues.endpoint = document.getElementById('Endpoint').value;
-        originalValues.metadataType = document.getElementById('MetadataType').value;
     });
 
     function resetForm() {
         document.getElementById('Name').value = originalValues.name;
         document.getElementById('Endpoint').value = originalValues.endpoint;
-        document.getElementById('MetadataType').value = originalValues.metadataType;
 
         // Clear validation states
         const invalidFields = document.querySelectorAll('.is-invalid');
