@@ -25,5 +25,15 @@ namespace IdentityMetadataFetcher.Models
         /// Gets or sets the maximum number of retry attempts for failed requests.
         /// </summary>
         public int MaxRetries { get; set; } = 0;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to cache metadata.
+        /// </summary>
+        public bool CacheMetadata { get; set; } = false;
+
+        /// <summary>
+        /// Gets or sets the cache duration in minutes.
+        /// </summary>
+        public int CacheDurationMinutes { get; set; } = 60;
     }
 }
