@@ -21,7 +21,7 @@ namespace MvcDemo.Models
         public System.DateTime? NotBefore { get; set; }
         public System.DateTime? NotOnOrAfter { get; set; }
         public System.Collections.Generic.List<string> Audiences { get; set; } = new System.Collections.Generic.List<string>();
-        public System.Collections.Generic.Dictionary<string, string> Claims { get; set; } = new System.Collections.Generic.Dictionary<string, string>();
+        public System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, string>> Claims { get; set; } = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, string>>();
 
         // Validation details - track which checks passed/failed
         public bool? SignatureValid { get; set; }
