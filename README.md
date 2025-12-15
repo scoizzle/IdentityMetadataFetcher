@@ -1,8 +1,8 @@
-# SAML Metadata Fetcher
+# Identity Metadata Fetcher
 
 [![Build Status](https://github.com/scoizzle/IdentityMetadataFetcher/actions/workflows/build.yml/badge.svg)](https://github.com/scoizzle/IdentityMetadataFetcher/actions/workflows/build.yml)
 
-A production-ready .NET class library for fetching and parsing SAML and WS-Federation (WSFED) metadata from multiple identity provider endpoints. Includes an IIS module for automatic metadata polling and caching.
+A production-ready .NET class library for fetching and parsing SAML, WS-Federation (WSFED), and OpenID Connect (OIDC) metadata from multiple identity provider endpoints. Includes an IIS module for automatic metadata polling and caching.
 
 ## 🚀 Getting Started
 
@@ -13,11 +13,14 @@ The fastest way to try it is the console utility:
 msbuild /t:restore
 msbuild /t:build /p:GenerateFullPaths=true /consoleloggerparameters:NoSummary
 
-# Run: fetch and summarize metadata
+# Run: fetch and summarize WS-Federation metadata
 IdentityMetadataFetcher.Console.exe https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml
 
-# Print raw XML too
-IdentityMetadataFetcher.Console.exe https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml --raw
+# Run: fetch and summarize OIDC metadata
+IdentityMetadataFetcher.Console.exe https://accounts.google.com/.well-known/openid-configuration
+
+# Print raw metadata too
+IdentityMetadataFetcher.Console.exe https://accounts.google.com/.well-known/openid-configuration --raw
 ```
 
 See full details in the Console Utility section below.
@@ -25,11 +28,10 @@ See full details in the Console Utility section below.
 ## Features
 
 - **📦 Dual Components**: Core library for direct usage + IIS HTTP module for ASP.NET applications
-- **🔄 Multiple Metadata Types**: Support for both WSFED and SAML metadata formats
+- **🔄 Multiple Metadata Types**: Support for WSFED, SAML, and OpenID Connect (OIDC) metadata formats
 - **🚀 Sync & Async APIs**: Choose between blocking and async/await patterns for optimal performance
 - **⚙️ Highly Configurable**: Control timeouts, retries, SSL validation, and error handling
 - **🛡️ Production-Ready**: Comprehensive error handling, thread-safe design, and full unit test coverage
-- **🔌 Zero Dependencies**: Uses only .NET Framework built-in assemblies
 - **♻️ IIS Auto-Polling**: Automatic background metadata refresh with configurable intervals
 - **💾 In-Memory Caching**: Fast access to cached metadata in ASP.NET applications
 - **🔒 Auto-Apply to IdentityModel**: Optional runtime updates to System.IdentityModel configuration
@@ -37,13 +39,14 @@ See full details in the Console Utility section below.
 ## Requirements
 
 - .NET Framework 4.6.2, 4.7, or 4.8
-- Microsoft.IdentityModel.Protocols.WsFederation 8.1.2+ (NuGet package)
-- Microsoft.IdentityModel.Tokens.Saml 8.1.2+ (NuGet package)
+- Microsoft.IdentityModel.Protocols.OpenIdConnect 8.15.0+ (NuGet package)
+- Microsoft.IdentityModel.Protocols.WsFederation 8.15.0+ (NuGet package)
+- Microsoft.IdentityModel.Tokens.Saml 8.15.0+ (NuGet package)
 - System.IdentityModel.Services (built-in to .NET Framework - IIS module only)
 
 > **⚠️ Windows Only**: This library targets .NET Framework and requires a Windows environment to build and run.
 >
-> **📦 Microsoft.IdentityModel Migration**: The library has been fully migrated to Microsoft.IdentityModel packages. Metadata is now returned as `WsFederationConfiguration` instead of the legacy `EntityDescriptor`. See [MIGRATION_COMPLETE.md](MIGRATION_COMPLETE.md) for full details.
+> **📦 Microsoft.IdentityModel Migration**: The library has been fully migrated to Microsoft.IdentityModel packages. Metadata is now returned as `WsFederationConfiguration` or `OpenIdConnectConfiguration` instead of the legacy `EntityDescriptor`. See [MIGRATION_COMPLETE.md](MIGRATION_COMPLETE.md) for full details.
 
 ---
 
@@ -188,15 +191,22 @@ var failureCount = results.Count(r => !r.IsSuccess);
 Console.WriteLine($"Completed: {successCount} succeeded, {failureCount} failed");
 ```
 
-#### Processing Retrieved Metadata
+#### Processing WS-Federation/SAML Metadata
 
 ```csharp
+var endpoint = new IssuerEndpoint
+{
+    Id = "azure-ad",
+    Endpoint = "https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml",
+    Name = "Azure AD"
+};
+
 var result = await fetcher.FetchMetadataAsync(endpoint);
 
-if (result.IsSuccess)
+if (result.IsSuccess && result.Metadata != null)
 {
     // Access WsFederationConfiguration
-    var config = result.Metadata;
+    var config = result.Metadata.Configuration;
     
     Console.WriteLine($"Issuer: {config.Issuer}");
     Console.WriteLine($"Token Endpoint: {config.TokenEndpoint}");
@@ -212,6 +222,59 @@ if (result.IsSuccess)
     
     // Access raw XML metadata if needed
     var rawXml = result.RawMetadata;
+}
+```
+
+#### Processing OpenID Connect (OIDC) Metadata
+
+```csharp
+var endpoint = new IssuerEndpoint
+{
+    Id = "google-oidc",
+    Endpoint = "https://accounts.google.com/.well-known/openid-configuration",
+    Name = "Google OIDC"
+};
+
+var result = await fetcher.FetchMetadataAsync(endpoint);
+
+if (result.IsSuccess && result.OidcMetadata != null)
+{
+    // Access OpenIdConnectConfiguration
+    var config = result.OidcMetadata.Configuration;
+    
+    Console.WriteLine($"Issuer: {config.Issuer}");
+    Console.WriteLine($"Authorization Endpoint: {config.AuthorizationEndpoint}");
+    Console.WriteLine($"Token Endpoint: {config.TokenEndpoint}");
+    Console.WriteLine($"UserInfo Endpoint: {config.UserInfoEndpoint}");
+    
+    // Access signing keys
+    foreach (var key in config.SigningKeys)
+    {
+        Console.WriteLine($"Key ID: {key.KeyId}");
+    }
+    
+    // Access raw JSON metadata if needed
+    var rawJson = result.RawMetadata;
+}
+```
+
+#### Handling Both Metadata Types
+
+```csharp
+var result = await fetcher.FetchMetadataAsync(endpoint);
+
+if (result.IsSuccess)
+{
+    if (result.Metadata != null)
+    {
+        // Process WS-Federation/SAML metadata
+        Console.WriteLine($"WS-Fed/SAML Issuer: {result.Metadata.Issuer}");
+    }
+    else if (result.OidcMetadata != null)
+    {
+        // Process OIDC metadata
+        Console.WriteLine($"OIDC Issuer: {result.OidcMetadata.Issuer}");
+    }
 }
 ```
 
