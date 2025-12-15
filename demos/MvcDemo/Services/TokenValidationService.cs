@@ -1,14 +1,14 @@
 using IdentityMetadataFetcher.Iis.Modules;
 using IdentityMetadataFetcher.Models;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.IdentityModel.Tokens.Saml2;
 using MvcDemo.Models;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.IdentityModel.Tokens.Saml2;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 
 namespace MvcDemo.Services
 {
