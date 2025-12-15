@@ -123,7 +123,7 @@ namespace MvcDemo.Services
                 {
                     foreach (var kvp in validationResult.Claims)
                     {
-                        result.Claims.Add(new KeyValuePair<string, string>(claim.Key, claim.Value));
+                        result.Claims.Add(kvp);
                     }
                 }
                 
@@ -798,10 +798,7 @@ namespace MvcDemo.Services
                 {
                     foreach (var kvp in validationResult.Claims)
                     {
-                        if (!result.Claims.ContainsKey(kvp.Key))
-                        {
-                            result.Claims.Add(kvp.Key, kvp.Value);
-                        }
+                        result.Claims.Add(kvp);
                     }
                 }
                 
@@ -948,10 +945,8 @@ namespace MvcDemo.Services
                             // Use claim type without namespace for readability
                             var shortKey = key.Contains("/") ? key.Substring(key.LastIndexOf("/") + 1) : key;
                             
-                            if (!result.Claims.ContainsKey(shortKey))
-                            {
-                                result.Claims.Add(shortKey, value);
-                            }
+                            // Add all claims including duplicates
+                            result.Claims.Add(new KeyValuePair<string, string>(shortKey, value));
                         }
                     }
 
