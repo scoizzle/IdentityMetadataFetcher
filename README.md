@@ -110,8 +110,7 @@ var endpoint = new IssuerEndpoint
 {
     Id = "azure-ad",
     Endpoint = "https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml",
-    Name = "Azure AD",
-    MetadataType = MetadataType.WSFED
+    Name = "Azure AD"
 };
 
 // Fetch metadata synchronously
@@ -151,15 +150,13 @@ var endpoints = new[]
     {
         Id = "saml-provider",
         Endpoint = "https://issuer1.example.com/metadata",
-        Name = "SAML Identity Provider",
-        MetadataType = MetadataType.SAML
+        Name = "SAML Identity Provider"
     },
     new IssuerEndpoint
     {
         Id = "wsfed-provider",
         Endpoint = "https://issuer2.example.com/metadata",
-        Name = "WS-Fed Identity Provider",
-        MetadataType = MetadataType.WSFED
+        Name = "WS-Fed Identity Provider"
     }
 };
 
@@ -279,7 +276,6 @@ var endpoint = new IssuerEndpoint
     Id = "slow-issuer",
     Endpoint = "https://slow-issuer.example.com/metadata",
     Name = "Slow Issuer",
-    MetadataType = MetadataType.SAML,
     Timeout = 60000  // 60 second timeout just for this endpoint
 };
 
@@ -336,21 +332,18 @@ Add configuration sections to define metadata endpoints and polling behavior:
       <!-- Azure AD -->
       <add id="azure-ad" 
            endpoint="https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml" 
-           name="Azure Active Directory" 
-           metadataType="WSFED" />
+           name="Azure Active Directory" />
       
       <!-- Auth0 with custom timeout -->
       <add id="auth0" 
            endpoint="https://example.auth0.com/samlp/metadata" 
            name="Auth0" 
-           metadataType="SAML" 
            timeoutSeconds="45" />
       
       <!-- Okta -->
       <add id="okta" 
            endpoint="https://dev-12345.okta.com/app/123/sso/saml/metadata" 
-           name="Okta" 
-           metadataType="SAML" />
+           name="Okta" />
     </issuers>
   </samlMetadataPolling>
 </configuration>
@@ -378,7 +371,6 @@ Each `<add>` element defines an issuer endpoint:
 | `id` | string | Yes | Unique identifier for the issuer |
 | `endpoint` | string | Yes | Full URL to the metadata endpoint |
 | `name` | string | Yes | Human-readable issuer name |
-| `metadataType` | enum | Yes | Either "WSFED" or "SAML" |
 | `timeoutSeconds` | int | No | Override default timeout for this endpoint (5-300) |
 
 ---
@@ -400,8 +392,7 @@ Set `autoApplyIdentityModel="true"` in your configuration:
   <issuers>
     <add id="azure-ad" 
          endpoint="https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml" 
-         name="Azure Active Directory" 
-         metadataType="WSFED" />
+         name="Azure Active Directory" />
   </issuers>
 </samlMetadataPolling>
 ```
@@ -442,8 +433,7 @@ When `autoApplyIdentityModel` is enabled, the module also provides **automatic r
   <issuers>
     <add id="azure-ad" 
          endpoint="https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml" 
-         name="Azure Active Directory" 
-         metadataType="WSFED" />
+         name="Azure Active Directory" />
   </issuers>
 </samlMetadataPolling>
 ```
@@ -510,8 +500,7 @@ Before enabling this feature in production:
     <!-- Only trusted, HTTPS endpoints -->
     <add id="azure-ad" 
          endpoint="https://login.microsoftonline.com/your-tenant-id/federationmetadata/2007-06/federationmetadata.xml" 
-         name="Azure Active Directory" 
-         metadataType="WSFED" />
+         name="Azure Active Directory" />
   </issuers>
 </samlMetadataPolling>
 ```
@@ -548,8 +537,7 @@ If you prefer manual control over IdentityModel configuration, keep the default 
   <issuers>
     <add id="azure-ad" 
          endpoint="https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml" 
-         name="Azure Active Directory" 
-         metadataType="WSFED" />
+         name="Azure Active Directory" />
   </issuers>
 </samlMetadataPolling>
 ```
@@ -732,7 +720,6 @@ dotnet test tests/IdentityMetadataFetcher.Tests/IdentityMetadataFetcher.Tests.cs
 - **`IssuerEndpoint`** - Endpoint configuration model
 - **`MetadataFetchResult`** - Result container with success/failure information
 - **`MetadataFetchOptions`** - Configuration options for fetcher behavior
-- **`MetadataType`** - Enum: `WSFED` or `SAML`
 
 #### IIS Module Classes
 
@@ -764,7 +751,7 @@ dotnet test tests/IdentityMetadataFetcher.Tests/IdentityMetadataFetcher.Tests.cs
 | Problem | Solution |
 |---------|----------|
 | **HttpRequestException** | Verify endpoint URL, check network/firewall, validate SSL certificate, increase timeout |
-| **MetadataFetchException** | Ensure endpoint returns valid metadata, verify `MetadataType` is correct |
+| **MetadataFetchException** | Ensure endpoint returns valid metadata |
 | **TimeoutException** | Increase `DefaultTimeoutMs` or per-endpoint `Timeout`, check endpoint responsiveness |
 | **Build Errors** | Ensure .NET Framework 4.5+ is installed, restore NuGet packages, clean and rebuild |
 | **IIS Module Not Loading** | Verify DLLs are in bin directory, check Web.config registration, review IIS logs |

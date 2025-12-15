@@ -120,7 +120,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-8 mb-4">
+                            <div class="col-md-12 mb-4">
                                 <label for="Endpoint" class="form-label fw-semibold">
                                     <i class="fas fa-globe me-2 text-primary"></i>
                                     Metadata Endpoint <span class="text-danger">*</span>
@@ -136,26 +136,6 @@
                                     <small class="text-muted">
                                         <i class="fas fa-info-circle me-1"></i>
                                         The URL where the issuer publishes its SAML metadata
-                                    </small>
-                                </div>
-                            </div>
-
-                            <div class="col-md-4 mb-4">
-                                <label for="MetadataType" class="form-label fw-semibold">
-                                    <i class="fas fa-file-code me-2 text-primary"></i>
-                                    Metadata Type <span class="text-danger">*</span>
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light">
-                                        <i class="fas fa-cogs"></i>
-                                    </span>
-                                    @Html.DropDownListFor(m => m.MetadataType, new SelectList(new[] { "SAML", "WSFED" }), new { @class = "form-select form-select-lg", required = "required" })
-                                </div>
-                                @Html.ValidationMessageFor(m => m.MetadataType, "", new { @class = "invalid-feedback" })
-                                <div class="form-text">
-                                    <small class="text-muted">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        The format of the metadata (SAML or WSFED)
                                     </small>
                                 </div>
                             </div>
@@ -175,8 +155,7 @@
                                         <code class="d-block bg-white p-3 rounded border font-monospace small">
                                             &lt;add id="<span id="preview-id">@(Model.Id ?? "issuer-id")</span>"
                                                  endpoint="<span id="preview-endpoint">@(Model.Endpoint ?? "https://...")</span>"
-                                                 name="<span id="preview-name">@(Model.Name ?? "Issuer Name")</span>"
-                                                 metadataType="<span id="preview-type">@(Model.MetadataType ?? "SAML")</span>" /&gt;
+                                                 name="<span id="preview-name">@(Model.Name ?? "Issuer Name")</span>" /&gt;
                                         </code>
                                     </div>
                                 </div>
@@ -320,21 +299,18 @@
         const idField = document.getElementById('Id');
         const nameField = document.getElementById('Name');
         const endpointField = document.getElementById('Endpoint');
-        const typeField = document.getElementById('MetadataType');
 
         const previewId = document.getElementById('preview-id');
         const previewName = document.getElementById('preview-name');
         const previewEndpoint = document.getElementById('preview-endpoint');
-        const previewType = document.getElementById('preview-type');
 
         function updatePreview() {
             previewId.textContent = idField.value || 'issuer-id';
             previewName.textContent = nameField.value || 'Issuer Name';
             previewEndpoint.textContent = endpointField.value || 'https://...';
-            previewType.textContent = typeField.value || 'SAML';
         }
 
-        [idField, nameField, endpointField, typeField].forEach(field => {
+        [idField, nameField, endpointField].forEach(field => {
             field.addEventListener('input', updatePreview);
         });
 
@@ -345,12 +321,10 @@
         document.getElementById('Id').value = '';
         document.getElementById('Name').value = '';
         document.getElementById('Endpoint').value = '';
-        document.getElementById('MetadataType').value = 'SAML';
 
         // Update preview
         document.getElementById('preview-id').textContent = 'issuer-id';
         document.getElementById('preview-name').textContent = 'Issuer Name';
         document.getElementById('preview-endpoint').textContent = 'https://...';
-        document.getElementById('preview-type').textContent = 'SAML';
     }
 </script>

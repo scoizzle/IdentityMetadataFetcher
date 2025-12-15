@@ -43,8 +43,7 @@ The SAML Metadata Fetcher is a .NET Framework 4.5+ class library designed to fac
 │  │  Models                                      │   │
 │  │  ├─ IssuerEndpoint                           │   │
 │  │  ├─ MetadataFetchResult                      │   │
-│  │  ├─ MetadataFetchOptions                     │   │
-│  │  └─ MetadataType (Enum)                      │   │
+│  │  └─ MetadataFetchOptions                     │   │
 │  └──────────────────────────────────────────────┘   │
 │                                                       │
 │  ┌──────────────────────────────────────────────┐   │
@@ -99,7 +98,7 @@ The concrete implementation of IMetadataFetcher.
 - `FetchMetadataInternalAsync(IssuerEndpoint)` - Core async fetch logic
 - `DownloadMetadataXml(string, int)` - HTTP download with retries
 - `DownloadMetadataXmlAsync(string, int)` - Async HTTP download
-- `ParseMetadata(string, MetadataType)` - XML parsing using WsFederationMetadataSerializer
+- `ParseMetadata(string)` - XML parsing using WsFederationMetadataSerializer
 
 **Internal Flow:**
 
@@ -130,7 +129,6 @@ Model representing a single metadata endpoint.
 - `Id` (string) - Unique identifier
 - `Endpoint` (string) - URL to metadata document
 - `Name` (string) - Human-readable name
-- `MetadataType` (enum) - WSFED or SAML
 - `Timeout` (int?) - Optional endpoint-specific timeout
 
 **Usage:**

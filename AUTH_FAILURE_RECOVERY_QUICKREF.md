@@ -10,8 +10,7 @@
   <issuers>
     <add id="azure-ad" 
          endpoint="https://login.microsoftonline.com/tenant-id/federationmetadata/2007-06/federationmetadata.xml" 
-         name="Azure AD" 
-         metadataType="WSFED" />
+         name="Azure AD" />
   </issuers>
 </samlMetadataPolling>
 ```
@@ -138,8 +137,7 @@ if (recoveryService != null)
   <issuers>
     <add id="azure-ad" 
          endpoint="https://login.microsoftonline.com/your-tenant-id/federationmetadata/2007-06/federationmetadata.xml" 
-         name="Azure Active Directory" 
-         metadataType="WSFED" />
+         name="Azure Active Directory" />
   </issuers>
 </samlMetadataPolling>
 ```

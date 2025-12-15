@@ -26,7 +26,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
         [Test]
         public void CanAddElement()
         {
-            var element = new IssuerElement { Id = "issuer-1", Endpoint = "https://example.com/metadata", Name = "Example", MetadataType = "Saml" };
+            var element = new IssuerElement { Id = "issuer-1", Endpoint = "https://example.com/metadata", Name = "Example" };
             _collection.Add(element);
 
             Assert.That(_collection.Count, Is.EqualTo(1));
@@ -35,7 +35,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
         [Test]
         public void CanRemoveElement()
         {
-            var element = new IssuerElement { Id = "issuer-1", Endpoint = "https://example.com/metadata", Name = "Example", MetadataType = "Saml" };
+            var element = new IssuerElement { Id = "issuer-1", Endpoint = "https://example.com/metadata", Name = "Example" };
             _collection.Add(element);
             _collection.Remove(element);
 
@@ -45,8 +45,8 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
         [Test]
         public void CanClearAllElements()
         {
-            _collection.Add(new IssuerElement { Id = "issuer-1", Name = "Example 1", MetadataType = "Saml" });
-            _collection.Add(new IssuerElement { Id = "issuer-2", Name = "Example 2", MetadataType = "Saml" });
+            _collection.Add(new IssuerElement { Id = "issuer-1", Name = "Example 1" });
+            _collection.Add(new IssuerElement { Id = "issuer-2", Name = "Example 2" });
             
             _collection.Clear();
 
@@ -56,7 +56,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
         [Test]
         public void CanAccessElementByIndex()
         {
-            var element = new IssuerElement { Id = "issuer-1", Endpoint = "https://example.com/metadata", Name = "Example", MetadataType = "Saml" };
+            var element = new IssuerElement { Id = "issuer-1", Endpoint = "https://example.com/metadata", Name = "Example" };
             _collection.Add(element);
 
             var retrieved = _collection[0];
@@ -66,7 +66,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
         [Test]
         public void CanAccessElementById()
         {
-            var element = new IssuerElement { Id = "issuer-1", Endpoint = "https://example.com/metadata", Name = "Example", MetadataType = "Saml" };
+            var element = new IssuerElement { Id = "issuer-1", Endpoint = "https://example.com/metadata", Name = "Example" };
             _collection.Add(element);
 
             var retrieved = _collection["issuer-1"];
@@ -76,8 +76,8 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
         [Test]
         public void ToIssuerEndpoints_ReturnsAllElements()
         {
-            _collection.Add(new IssuerElement { Id = "issuer-1", Endpoint = "https://example1.com/metadata", Name = "Example 1", MetadataType = "Saml" });
-            _collection.Add(new IssuerElement { Id = "issuer-2", Endpoint = "https://example2.com/metadata", Name = "Example 2", MetadataType = "WsFed" });
+            _collection.Add(new IssuerElement { Id = "issuer-1", Endpoint = "https://example1.com/metadata", Name = "Example 1" });
+            _collection.Add(new IssuerElement { Id = "issuer-2", Endpoint = "https://example2.com/metadata", Name = "Example 2" });
 
             var endpoints = _collection.ToIssuerEndpoints().ToList();
 
@@ -89,7 +89,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
         [Test]
         public void Contains_ReturnsTrueForExistingElement()
         {
-            var element = new IssuerElement { Id = "issuer-1", Name = "Example", MetadataType = "Saml" };
+            var element = new IssuerElement { Id = "issuer-1", Name = "Example" };
             _collection.Add(element);
 
             Assert.That(_collection.Contains(element), Is.True);
@@ -98,7 +98,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
         [Test]
         public void Contains_ReturnsFalseForNonExistingElement()
         {
-            var element = new IssuerElement { Id = "issuer-1", Name = "Example", MetadataType = "Saml" };
+            var element = new IssuerElement { Id = "issuer-1", Name = "Example" };
 
             Assert.That(_collection.Contains(element), Is.False);
         }
@@ -112,8 +112,7 @@ namespace IdentityMetadataFetcher.Iis.Tests.Configuration
                 { 
                     Id = $"issuer-{i}", 
                     Endpoint = $"https://example{i}.com/metadata", 
-                    Name = $"Example {i}",
-                    MetadataType = "Saml" 
+                    Name = $"Example {i}"
                 });
             }
 

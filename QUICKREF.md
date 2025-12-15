@@ -24,7 +24,7 @@ var endpoint = new IssuerEndpoint
     Id = "issuer1",
     Endpoint = "https://issuer.example.com/metadata",
     Name = "My Issuer",
-    MetadataType = MetadataType.SAML
+
 };
 
 var result = fetcher.FetchMetadata(endpoint);
@@ -44,8 +44,8 @@ var result = await fetcher.FetchMetadataAsync(endpoint);
 ```csharp
 var endpoints = new[]
 {
-    new IssuerEndpoint { Id = "ep1", Endpoint = "...", Name = "EP1", MetadataType = MetadataType.SAML },
-    new IssuerEndpoint { Id = "ep2", Endpoint = "...", Name = "EP2", MetadataType = MetadataType.WSFED }
+    new IssuerEndpoint { Id = "ep1", Endpoint = "...", Name = "EP1",},
+    new IssuerEndpoint { Id = "ep2", Endpoint = "...", Name = "EP2",}
 };
 
 var results = fetcher.FetchMetadataFromMultipleEndpoints(endpoints);
@@ -102,7 +102,7 @@ var fetcher = new MetadataFetcher(options);
 var endpoint = new IssuerEndpoint
 {
     Endpoint = "https://slow-issuer.example.com/metadata",
-    MetadataType = MetadataType.SAML,
+
     Timeout = 60000  // 60 seconds for this endpoint only
 };
 ```
@@ -142,7 +142,7 @@ if (!result.IsSuccess)
 ```csharp
 try
 {
-    var endpoint = new IssuerEndpoint { Endpoint = null, MetadataType = MetadataType.SAML };
+    var endpoint = new IssuerEndpoint { Endpoint = null,};
     fetcher.FetchMetadata(endpoint);  // Throws ArgumentException
 }
 catch (ArgumentException ex)
@@ -161,13 +161,7 @@ catch (MetadataFetchException ex)
 
 ## Metadata Types
 
-```csharp
-public enum MetadataType
-{
-    WSFED,  // WS-Federation (common for Azure AD, ADFS)
-    SAML    // SAML 2.0 (common for SAML providers)
-}
-```
+
 
 ## Result Object Properties
 
@@ -236,8 +230,7 @@ Task.WhenAll(
 | Timeout errors | Increase `DefaultTimeoutMs` or set per-endpoint `Timeout` |
 | SSL certificate errors | Set `ValidateServerCertificate = false` for dev/test only |
 | Network errors | Set `MaxRetries > 0` for automatic retry |
-| "Invalid metadata XML" | Verify endpoint returns valid XML, check `MetadataType` is correct |
-| Wrong metadata format | Ensure `MetadataType.SAML` for SAML, `MetadataType.WSFED` for WS-Fed |
+| "Invalid metadata XML" | Verify endpoint returns valid XML |
 | ArgumentException thrown | Check for null endpoints and valid endpoint URLs |
 
 ## Performance Tips
@@ -279,7 +272,6 @@ Task.WhenAll(
 - **MetadataFetchResult** - Result model
 - **MetadataFetchOptions** - Configuration model
 - **MetadataFetchException** - Custom exception
-- **MetadataType** - Enum (SAML, WSFED)
 
 ## Dependencies
 

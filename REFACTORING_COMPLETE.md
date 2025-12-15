@@ -212,8 +212,7 @@ var endpoints = new List<IssuerEndpoint>
 {
     new IssuerEndpoint("azure-ad", 
         "https://login.microsoftonline.com/tenant/metadata", 
-        "Azure AD", 
-        MetadataType.WSFED)
+        "Azure AD")
 };
 
 // Start polling (60 minute interval, 5 minute throttle)
@@ -246,8 +245,7 @@ var metadata = cache.GetMetadata("azure-ad");
     <issuers>
       <add id="azure-ad" 
            endpoint="https://..." 
-           name="Azure AD" 
-           metadataType="WSFED" />
+           name="Azure AD" />
     </issuers>
   </samlMetadataPolling>
 </configuration>

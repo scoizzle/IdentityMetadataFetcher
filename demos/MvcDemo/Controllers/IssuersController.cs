@@ -26,10 +26,7 @@ namespace MvcDemo.Controllers
         /// </summary>
         public ActionResult Create()
         {
-            return View(new IssuerViewModel
-            {
-                MetadataType = "SAML" // Default to SAML
-            });
+            return View(new IssuerViewModel());
         }
 
         /// <summary>
@@ -67,7 +64,7 @@ namespace MvcDemo.Controllers
                 if (IssuerManagementService.AddIssuer(model))
                 {
                     System.Diagnostics.Trace.TraceInformation(
-                        $"IssuersController: Create issuer - ID: {model.Id}, Name: {model.Name}, Endpoint: {model.Endpoint}, Type: {model.MetadataType}");
+                        $"IssuersController: Create issuer - ID: {model.Id}, Name: {model.Name}, Endpoint: {model.Endpoint}");
 
                     TempData["SuccessMessage"] = $"Issuer '{model.Name}' has been added and is now being monitored.";
                     return RedirectToAction("Index");
@@ -110,8 +107,7 @@ namespace MvcDemo.Controllers
             {
                 Id = issuer.Id,
                 Name = issuer.Name,
-                Endpoint = issuer.Endpoint,
-                MetadataType = issuer.MetadataType
+                Endpoint = issuer.Endpoint
             };
 
             return View(editModel);
@@ -150,7 +146,7 @@ namespace MvcDemo.Controllers
                 if (IssuerManagementService.UpdateIssuer(model))
                 {
                     System.Diagnostics.Trace.TraceInformation(
-                        $"IssuersController: Edit issuer - ID: {model.Id}, Name: {model.Name}, Endpoint: {model.Endpoint}, Type: {model.MetadataType}");
+                        $"IssuersController: Edit issuer - ID: {model.Id}, Name: {model.Name}, Endpoint: {model.Endpoint}");
 
                     TempData["SuccessMessage"] = $"Issuer '{model.Name}' has been updated.";
                     return RedirectToAction("Index");

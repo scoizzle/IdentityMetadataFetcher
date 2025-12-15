@@ -86,7 +86,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `IssuerEndpoint` - Encapsulates endpoint configuration
   - `MetadataFetchResult` - Contains fetch results with success/failure info
   - `MetadataFetchOptions` - Configures fetcher behavior
-  - `MetadataType` enum - Distinguishes WSFED vs SAML
 
 - **Services**:
   - `IMetadataFetcher` interface - Service contract
@@ -132,9 +131,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MetadataFetchResult (class)
 - MetadataFetchOptions (class)
 - MetadataFetchException (exception)
-
-**Public Enums** (1):
-- MetadataType (WSFED, SAML)
 
 **Public Methods** (4 on IMetadataFetcher):
 - FetchMetadata(IssuerEndpoint)

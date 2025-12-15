@@ -221,7 +221,7 @@ IdentityMetadataFetcher/
    var fetcher = new MetadataFetcher();
    var endpoint = new IssuerEndpoint { 
        Endpoint = "https://...", 
-       MetadataType = MetadataType.SAML 
+
    };
    var result = await fetcher.FetchMetadataAsync(endpoint);
    ```
@@ -259,7 +259,6 @@ IdentityMetadataFetcher/
 | `IssuerEndpoint` | Endpoint configuration |
 | `MetadataFetchResult` | Operation result |
 | `MetadataFetchOptions` | Fetch options |
-| `MetadataType` | Enum (SAML, WSFED) |
 | `MetadataFetchException` | Custom exception |
 
 ### Public Methods (IMetadataFetcher)
