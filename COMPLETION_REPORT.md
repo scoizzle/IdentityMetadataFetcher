@@ -255,7 +255,7 @@ A fully-featured .NET 4.5+ class library for fetching and parsing WSFED and SAML
 var endpoint = new IssuerEndpoint
 {
     Endpoint = "https://issuer.example.com/metadata",
-    MetadataType = MetadataType.SAML
+
 };
 var result = await fetcher.FetchMetadataAsync(endpoint);
 if (result.IsSuccess)

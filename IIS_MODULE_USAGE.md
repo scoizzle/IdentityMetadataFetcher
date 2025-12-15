@@ -45,12 +45,12 @@ Add a configuration section in your `Web.config`:
       <add id="azure-ad" 
            endpoint="https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml" 
            name="Azure Active Directory" 
-           metadataType="WSFED" />
+/>
       
       <add id="auth0" 
            endpoint="https://example.auth0.com/samlp/metadata" 
            name="Auth0" 
-           metadataType="SAML" 
+
            timeoutSeconds="45" />
     </issuers>
   </samlMetadataPolling>
@@ -82,7 +82,6 @@ Contains one or more `<add>` elements defining issuer endpoints.
 | `id` | string | Yes | Unique identifier for the issuer (must be unique) |
 | `endpoint` | string | Yes | Full URL to the metadata endpoint |
 | `name` | string | Yes | Human-readable issuer name |
-| `metadataType` | enum | Yes | Either "WSFED" or "SAML" |
 | `timeoutSeconds` | int | No | Override default timeout for this endpoint (5-300) |
 
 ## Complete Example Web.config
@@ -106,20 +105,20 @@ Contains one or more `<add>` elements defining issuer endpoints.
       <add id="azure-ad" 
            endpoint="https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml" 
            name="Azure Active Directory" 
-           metadataType="WSFED" />
+/>
       
       <!-- Auth0 with custom timeout -->
       <add id="auth0" 
            endpoint="https://example.auth0.com/samlp/metadata" 
            name="Auth0" 
-           metadataType="SAML" 
+
            timeoutSeconds="45" />
       
       <!-- Okta -->
       <add id="okta" 
            endpoint="https://dev-12345.okta.com/app/123/sso/saml/metadata" 
            name="Okta" 
-           metadataType="SAML" />
+/>
     </issuers>
   </samlMetadataPolling>
 

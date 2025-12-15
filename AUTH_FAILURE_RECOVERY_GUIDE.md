@@ -66,7 +66,7 @@ The `authFailureRecoveryIntervalMinutes` setting controls throttling at the **`M
     <add id="azure-ad" 
          endpoint="https://login.microsoftonline.com/your-tenant/federationmetadata/2007-06/federationmetadata.xml" 
          name="Azure Active Directory" 
-         metadataType="WSFED" />
+/>
   </issuers>
 </samlMetadataPolling>
 ```
