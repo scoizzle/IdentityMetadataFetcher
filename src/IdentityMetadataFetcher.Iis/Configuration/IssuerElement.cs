@@ -40,16 +40,6 @@ namespace IdentityMetadataFetcher.Iis.Configuration
         }
 
         /// <summary>
-        /// Gets or sets the metadata type (WSFED or SAML).
-        /// </summary>
-        [ConfigurationProperty("metadataType", IsRequired = true)]
-        public string MetadataType
-        {
-            get { return (string)this["metadataType"]; }
-            set { this["metadataType"] = value; }
-        }
-
-        /// <summary>
         /// Gets or sets the optional per-endpoint timeout in seconds.
         /// </summary>
         [ConfigurationProperty("timeoutSeconds", IsRequired = false)]

@@ -22,12 +22,10 @@ namespace IdentityMetadataFetcher.Iis.Configuration
     ///     <issuers>
     ///       <add id="azure-ad" 
     ///            endpoint="https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml" 
-    ///            name="Azure AD" 
-    ///            metadataType="WSFED" />
+    ///            name="Azure AD" />
     ///       <add id="auth0" 
     ///            endpoint="https://example.auth0.com/samlp/metadata" 
-    ///            name="Auth0" 
-    ///            metadataType="SAML" />
+    ///            name="Auth0" />
     ///     </issuers>
     ///   </samlMetadataPolling>
     /// </configuration>
