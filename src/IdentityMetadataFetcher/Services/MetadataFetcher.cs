@@ -71,7 +71,7 @@ namespace IdentityMetadataFetcher.Services
                 }
                 
                 result.IsSuccess = true;
-                result.Document = document;
+                result.Metadata = document;
                 result.RawMetadata = metadataContent;
                 return result;
             }
@@ -116,7 +116,7 @@ namespace IdentityMetadataFetcher.Services
                 }
                 
                 result.IsSuccess = true;
-                result.Document = document;
+                result.Metadata = document;
                 result.RawMetadata = metadataContent;
                 return result;
             }

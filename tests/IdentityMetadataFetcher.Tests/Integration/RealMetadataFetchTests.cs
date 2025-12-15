@@ -253,7 +253,8 @@ namespace IdentityMetadataFetcher.Tests.Integration
             // Assert
             Assert.That(result.IsSuccess, Is.True, $"Fetch failed: {result.ErrorMessage}");
             
-            var wsFedDoc = result.Metadata;
+            var wsFedDoc = result.Metadata as WsFederationMetadataDocument;
+            Assert.That(wsFedDoc, Is.Not.Null);
             Assert.That(wsFedDoc.SigningCertificates.Count, Is.GreaterThan(0));
             Assert.That(wsFedDoc.Configuration, Is.Not.Null);
             Assert.That(wsFedDoc.Configuration.Issuer, Is.Not.Null.And.Not.Empty);
@@ -281,7 +282,7 @@ namespace IdentityMetadataFetcher.Tests.Integration
             // Assert
             Assert.That(result.IsSuccess, Is.True);
             
-            var wsFedDoc = result.Metadata;
+            var wsFedDoc = result.Metadata as WsFederationMetadataDocument;
             Assert.That(wsFedDoc, Is.Not.Null);
 
             // Verify WS-Federation specific properties

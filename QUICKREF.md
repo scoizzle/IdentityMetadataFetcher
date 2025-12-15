@@ -50,9 +50,9 @@ var oidcEndpoint = new IssuerEndpoint
 };
 
 var result = await fetcher.FetchMetadataAsync(oidcEndpoint);
-if (result.IsSuccess && result.OidcMetadata != null)
+if (result.IsSuccess && result.Metadata is OpenIdConnectMetadataDocument oidcDoc)
 {
-    var config = result.OidcMetadata.Configuration;
+    var config = oidcDoc.Configuration;
     Console.WriteLine($"Issuer: {config.Issuer}");
     Console.WriteLine($"Token Endpoint: {config.TokenEndpoint}");
 }
@@ -191,13 +191,9 @@ result.IsSuccess              // bool - Was fetch successful?
 result.FetchedAt              // DateTime - When was it fetched? (UTC)
 result.Endpoint               // IssuerEndpoint - Which endpoint?
 
-// On Success (WS-Fed/SAML)
-result.Metadata               // WsFederationMetadataDocument - Parsed WS-Fed/SAML metadata
-result.RawMetadata            // string - Original XML
-
-// On Success (OIDC)
-result.OidcMetadata           // OpenIdConnectMetadataDocument - Parsed OIDC metadata
-result.RawMetadata            // string - Original JSON
+// On Success
+result.Metadata               // MetadataDocument - Parsed metadata (WsFederationMetadataDocument or OpenIdConnectMetadataDocument)
+result.RawMetadata            // string - Original XML or JSON
 
 // On Failure
 result.ErrorMessage           // string - Human-readable error

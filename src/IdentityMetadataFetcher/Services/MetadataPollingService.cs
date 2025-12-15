@@ -219,12 +219,12 @@ namespace IdentityMetadataFetcher.Services
 
                 foreach (var result in results)
                 {
-                    if (result.IsSuccess && result.Document != null)
+                    if (result.IsSuccess && result.Metadata != null)
                     {
                         // Update cache with new metadata
                         _metadataCache.AddOrUpdateMetadata(
                             result.Endpoint.Id,
-                            result.Document,
+                            result.Metadata,
                             result.RawMetadata);
 
                         // Update poll timestamp for this issuer
@@ -278,12 +278,12 @@ namespace IdentityMetadataFetcher.Services
 
             var result = await _metadataFetcher.FetchMetadataAsync(endpoint);
 
-            if (result.IsSuccess && result.Document != null)
+            if (result.IsSuccess && result.Metadata != null)
             {
                 // Update cache with new metadata
                 _metadataCache.AddOrUpdateMetadata(
                     result.Endpoint.Id,
-                    result.Document,
+                    result.Metadata,
                     result.RawMetadata);
 
                 // Update poll timestamp for this issuer

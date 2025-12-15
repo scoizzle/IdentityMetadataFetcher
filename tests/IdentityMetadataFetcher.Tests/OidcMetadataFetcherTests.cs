@@ -42,9 +42,9 @@ namespace IdentityMetadataFetcher.Tests
 
             // Assert
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Document, Is.Not.Null);
-            Assert.That(result.Document, Is.InstanceOf<OpenIdConnectMetadataDocument>());
-            var oidcDoc = result.Document as OpenIdConnectMetadataDocument;
+            Assert.That(result.Metadata, Is.Not.Null);
+            Assert.That(result.Metadata, Is.InstanceOf<OpenIdConnectMetadataDocument>());
+            var oidcDoc = result.Metadata as OpenIdConnectMetadataDocument;
             Assert.That(oidcDoc.Issuer, Is.Not.Null.And.Not.Empty);
             Assert.That(result.RawMetadata, Is.Not.Null.And.Not.Empty);
             Assert.That(result.RawMetadata.TrimStart(), Does.StartWith("{"));
@@ -68,9 +68,9 @@ namespace IdentityMetadataFetcher.Tests
 
             // Assert
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Document, Is.Not.Null);
-            Assert.That(result.Document, Is.InstanceOf<OpenIdConnectMetadataDocument>());
-            var oidcDoc = result.Document as OpenIdConnectMetadataDocument;
+            Assert.That(result.Metadata, Is.Not.Null);
+            Assert.That(result.Metadata, Is.InstanceOf<OpenIdConnectMetadataDocument>());
+            var oidcDoc = result.Metadata as OpenIdConnectMetadataDocument;
             Assert.That(oidcDoc.Issuer, Is.Not.Null.And.Not.Empty);
             Assert.That(result.RawMetadata, Is.Not.Null.And.Not.Empty);
         }
@@ -93,9 +93,9 @@ namespace IdentityMetadataFetcher.Tests
 
             // Assert
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Document, Is.Not.Null);
-            Assert.That(result.Document, Is.InstanceOf<OpenIdConnectMetadataDocument>());
-            var oidcDoc = result.Document as OpenIdConnectMetadataDocument;
+            Assert.That(result.Metadata, Is.Not.Null);
+            Assert.That(result.Metadata, Is.InstanceOf<OpenIdConnectMetadataDocument>());
+            var oidcDoc = result.Metadata as OpenIdConnectMetadataDocument;
             Assert.That(oidcDoc.Configuration, Is.Not.Null);
             Assert.That(oidcDoc.Configuration.AuthorizationEndpoint, Is.Not.Null.And.Not.Empty);
             Assert.That(oidcDoc.Configuration.TokenEndpoint, Is.Not.Null.And.Not.Empty);
@@ -119,9 +119,9 @@ namespace IdentityMetadataFetcher.Tests
 
             // Assert
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Document, Is.Not.Null);
-            Assert.That(result.Document, Is.InstanceOf<OpenIdConnectMetadataDocument>());
-            var oidcDoc = result.Document as OpenIdConnectMetadataDocument;
+            Assert.That(result.Metadata, Is.Not.Null);
+            Assert.That(result.Metadata, Is.InstanceOf<OpenIdConnectMetadataDocument>());
+            var oidcDoc = result.Metadata as OpenIdConnectMetadataDocument;
             Assert.That(oidcDoc.Configuration.SigningKeys, Is.Not.Null);
             Assert.That(oidcDoc.Configuration.SigningKeys.Count, Is.GreaterThan(0));
         }
@@ -144,9 +144,9 @@ namespace IdentityMetadataFetcher.Tests
 
             // Assert
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Document, Is.Not.Null);
-            Assert.That(result.Document, Is.InstanceOf<OpenIdConnectMetadataDocument>());
-            var oidcDoc = result.Document as OpenIdConnectMetadataDocument;
+            Assert.That(result.Metadata, Is.Not.Null);
+            Assert.That(result.Metadata, Is.InstanceOf<OpenIdConnectMetadataDocument>());
+            var oidcDoc = result.Metadata as OpenIdConnectMetadataDocument;
             Assert.That(oidcDoc.Endpoints, Is.Not.Null);
             Assert.That(oidcDoc.Endpoints.ContainsKey("AuthorizationEndpoint"), Is.True);
             Assert.That(oidcDoc.Endpoints.ContainsKey("TokenEndpoint"), Is.True);
@@ -171,8 +171,8 @@ namespace IdentityMetadataFetcher.Tests
 
             // Assert
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Document, Is.Not.Null);
-            Assert.That(result.Document, Is.InstanceOf<WsFederationMetadataDocument>());
+            Assert.That(result.Metadata, Is.Not.Null);
+            Assert.That(result.Metadata, Is.InstanceOf<WsFederationMetadataDocument>());
             Assert.That(result.RawMetadata, Is.Not.Null.And.Not.Empty);
             Assert.That(result.RawMetadata.TrimStart(), Does.StartWith("<"));
         }

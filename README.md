@@ -237,10 +237,10 @@ var endpoint = new IssuerEndpoint
 
 var result = await fetcher.FetchMetadataAsync(endpoint);
 
-if (result.IsSuccess && result.OidcMetadata != null)
+if (result.IsSuccess && result.Metadata is OpenIdConnectMetadataDocument oidcDoc)
 {
     // Access OpenIdConnectConfiguration
-    var config = result.OidcMetadata.Configuration;
+    var config = oidcDoc.Configuration;
     
     Console.WriteLine($"Issuer: {config.Issuer}");
     Console.WriteLine($"Authorization Endpoint: {config.AuthorizationEndpoint}");
@@ -265,15 +265,15 @@ var result = await fetcher.FetchMetadataAsync(endpoint);
 
 if (result.IsSuccess)
 {
-    if (result.Metadata != null)
+    if (result.Metadata is WsFederationMetadataDocument wsFedDoc)
     {
         // Process WS-Federation/SAML metadata
-        Console.WriteLine($"WS-Fed/SAML Issuer: {result.Metadata.Issuer}");
+        Console.WriteLine($"WS-Fed/SAML Issuer: {wsFedDoc.Issuer}");
     }
-    else if (result.OidcMetadata != null)
+    else if (result.Metadata is OpenIdConnectMetadataDocument oidcDoc)
     {
         // Process OIDC metadata
-        Console.WriteLine($"OIDC Issuer: {result.OidcMetadata.Issuer}");
+        Console.WriteLine($"OIDC Issuer: {oidcDoc.Issuer}");
     }
 }
 ```

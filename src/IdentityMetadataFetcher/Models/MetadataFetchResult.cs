@@ -20,27 +20,7 @@ namespace IdentityMetadataFetcher.Models
         /// <summary>
         /// Gets or sets the parsed metadata document if fetch was successful.
         /// </summary>
-        public MetadataDocument Document { get; set; }
-
-        /// <summary>
-        /// Gets or sets the parsed WS-Federation metadata document if fetch was successful.
-        /// </summary>
-        [Obsolete("Use Document property instead. This property will be removed in a future version.")]
-        public WsFederationMetadataDocument Metadata
-        {
-            get => Document as WsFederationMetadataDocument;
-            set => Document = value;
-        }
-
-        /// <summary>
-        /// Gets or sets the parsed OpenID Connect metadata document if fetch was successful.
-        /// </summary>
-        [Obsolete("Use Document property instead. This property will be removed in a future version.")]
-        public OpenIdConnectMetadataDocument OidcMetadata
-        {
-            get => Document as OpenIdConnectMetadataDocument;
-            set => Document = value;
-        }
+        public MetadataDocument Metadata { get; set; }
 
         /// <summary>
         /// Gets or sets the raw metadata (XML or JSON) if fetch was successful.
@@ -70,33 +50,15 @@ namespace IdentityMetadataFetcher.Models
         /// <summary>
         /// Creates a successful result for any metadata document type.
         /// </summary>
-        public static MetadataFetchResult Success(IssuerEndpoint endpoint, MetadataDocument document, string rawMetadata)
+        public static MetadataFetchResult Success(IssuerEndpoint endpoint, MetadataDocument metadata, string rawMetadata)
         {
             return new MetadataFetchResult
             {
                 Endpoint = endpoint,
                 IsSuccess = true,
-                Document = document,
+                Metadata = metadata,
                 RawMetadata = rawMetadata
             };
-        }
-
-        /// <summary>
-        /// Creates a successful result for WS-Federation metadata.
-        /// </summary>
-        [Obsolete("Use Success(IssuerEndpoint, MetadataDocument, string) instead.")]
-        public static MetadataFetchResult Success(IssuerEndpoint endpoint, WsFederationMetadataDocument metadata, string rawMetadata)
-        {
-            return Success(endpoint, (MetadataDocument)metadata, rawMetadata);
-        }
-
-        /// <summary>
-        /// Creates a successful result for OpenID Connect metadata.
-        /// </summary>
-        [Obsolete("Use Success(IssuerEndpoint, MetadataDocument, string) instead.")]
-        public static MetadataFetchResult SuccessOidc(IssuerEndpoint endpoint, OpenIdConnectMetadataDocument oidcMetadata, string rawMetadata)
-        {
-            return Success(endpoint, (MetadataDocument)oidcMetadata, rawMetadata);
         }
 
         /// <summary>
