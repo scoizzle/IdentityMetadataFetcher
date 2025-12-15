@@ -392,8 +392,7 @@ Set `autoApplyIdentityModel="true"` in your configuration:
   <issuers>
     <add id="azure-ad" 
          endpoint="https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml" 
-         name="Azure Active Directory" 
-/>
+         name="Azure Active Directory" />
   </issuers>
 </samlMetadataPolling>
 ```
@@ -434,8 +433,7 @@ When `autoApplyIdentityModel` is enabled, the module also provides **automatic r
   <issuers>
     <add id="azure-ad" 
          endpoint="https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml" 
-         name="Azure Active Directory" 
-/>
+         name="Azure Active Directory" />
   </issuers>
 </samlMetadataPolling>
 ```
@@ -502,8 +500,7 @@ Before enabling this feature in production:
     <!-- Only trusted, HTTPS endpoints -->
     <add id="azure-ad" 
          endpoint="https://login.microsoftonline.com/your-tenant-id/federationmetadata/2007-06/federationmetadata.xml" 
-         name="Azure Active Directory" 
-/>
+         name="Azure Active Directory" />
   </issuers>
 </samlMetadataPolling>
 ```
@@ -540,8 +537,7 @@ If you prefer manual control over IdentityModel configuration, keep the default 
   <issuers>
     <add id="azure-ad" 
          endpoint="https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml" 
-         name="Azure Active Directory" 
-/>
+         name="Azure Active Directory" />
   </issuers>
 </samlMetadataPolling>
 ```

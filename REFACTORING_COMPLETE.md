@@ -245,8 +245,7 @@ var metadata = cache.GetMetadata("azure-ad");
     <issuers>
       <add id="azure-ad" 
            endpoint="https://..." 
-           name="Azure AD" 
-/>
+           name="Azure AD" />
     </issuers>
   </samlMetadataPolling>
 </configuration>

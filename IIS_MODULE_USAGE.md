@@ -44,8 +44,7 @@ Add a configuration section in your `Web.config`:
     <issuers>
       <add id="azure-ad" 
            endpoint="https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml" 
-           name="Azure Active Directory" 
-/>
+           name="Azure Active Directory" />
       
       <add id="auth0" 
            endpoint="https://example.auth0.com/samlp/metadata" 
@@ -104,8 +103,7 @@ Contains one or more `<add>` elements defining issuer endpoints.
       <!-- Azure AD -->
       <add id="azure-ad" 
            endpoint="https://login.microsoftonline.com/common/federationmetadata/2007-06/federationmetadata.xml" 
-           name="Azure Active Directory" 
-/>
+           name="Azure Active Directory" />
       
       <!-- Auth0 with custom timeout -->
       <add id="auth0" 
@@ -117,8 +115,7 @@ Contains one or more `<add>` elements defining issuer endpoints.
       <!-- Okta -->
       <add id="okta" 
            endpoint="https://dev-12345.okta.com/app/123/sso/saml/metadata" 
-           name="Okta" 
-/>
+           name="Okta" />
     </issuers>
   </samlMetadataPolling>
 

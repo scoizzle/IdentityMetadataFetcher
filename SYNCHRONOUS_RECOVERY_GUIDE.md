@@ -18,8 +18,7 @@ By default, authentication failure recovery happens **asynchronously** - the cur
   <issuers>
     <add id="azure-ad" 
          endpoint="https://login.microsoftonline.com/tenant-id/federationmetadata/2007-06/federationmetadata.xml" 
-         name="Azure AD" 
-/>
+         name="Azure AD" />
   </issuers>
 </samlMetadataPolling>
 ```
