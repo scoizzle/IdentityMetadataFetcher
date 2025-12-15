@@ -18,12 +18,17 @@ namespace IdentityMetadataFetcher.Models
         public bool IsSuccess { get; set; }
 
         /// <summary>
-        /// Gets or sets the parsed metadata document if fetch was successful.
+        /// Gets or sets the parsed WS-Federation metadata document if fetch was successful.
         /// </summary>
         public WsFederationMetadataDocument Metadata { get; set; }
 
         /// <summary>
-        /// Gets or sets the raw metadata XML if fetch was successful.
+        /// Gets or sets the parsed OpenID Connect metadata document if fetch was successful.
+        /// </summary>
+        public OpenIdConnectMetadataDocument OidcMetadata { get; set; }
+
+        /// <summary>
+        /// Gets or sets the raw metadata (XML or JSON) if fetch was successful.
         /// </summary>
         public string RawMetadata { get; set; }
 
@@ -48,7 +53,7 @@ namespace IdentityMetadataFetcher.Models
         }
 
         /// <summary>
-        /// Creates a successful result.
+        /// Creates a successful result for WS-Federation metadata.
         /// </summary>
         public static MetadataFetchResult Success(IssuerEndpoint endpoint, WsFederationMetadataDocument metadata, string rawMetadata)
         {
@@ -57,6 +62,20 @@ namespace IdentityMetadataFetcher.Models
                 Endpoint = endpoint,
                 IsSuccess = true,
                 Metadata = metadata,
+                RawMetadata = rawMetadata
+            };
+        }
+
+        /// <summary>
+        /// Creates a successful result for OpenID Connect metadata.
+        /// </summary>
+        public static MetadataFetchResult SuccessOidc(IssuerEndpoint endpoint, OpenIdConnectMetadataDocument oidcMetadata, string rawMetadata)
+        {
+            return new MetadataFetchResult
+            {
+                Endpoint = endpoint,
+                IsSuccess = true,
+                OidcMetadata = oidcMetadata,
                 RawMetadata = rawMetadata
             };
         }

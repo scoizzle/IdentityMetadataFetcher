@@ -155,7 +155,7 @@ namespace IdentityMetadataFetcher.ConsoleApp
 
                     var result = await fetcher.FetchMetadataAsync(endpoint);
 
-                    if (result.Metadata == null)
+                    if (result.Metadata == null && result.OidcMetadata == null)
                     {
                         Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine("No metadata returned.");
@@ -163,12 +163,19 @@ namespace IdentityMetadataFetcher.ConsoleApp
                         return 2;
                     }
 
-                    PrintMetadataSummary(result.Metadata);
+                    if (result.Metadata != null)
+                    {
+                        PrintMetadataSummary(result.Metadata);
+                    }
+                    else if (result.OidcMetadata != null)
+                    {
+                        PrintOidcMetadataSummary(result.OidcMetadata);
+                    }
 
                     if (showRaw && !string.IsNullOrWhiteSpace(result.RawMetadata))
                     {
                         Console.WriteLine();
-                        Console.WriteLine("Raw XML:");
+                        Console.WriteLine(result.RawMetadata.TrimStart().StartsWith("{") ? "Raw JSON:" : "Raw XML:");
                         Console.WriteLine(new string('-', 80));
                         Console.WriteLine(result.RawMetadata);
                     }
@@ -414,6 +421,56 @@ namespace IdentityMetadataFetcher.ConsoleApp
                 PrintCertificateInfo(cert, "    ");
                 certIndex++;
             }
+        }
+
+        private static void PrintOidcMetadataSummary(OpenIdConnectMetadataDocument oidcDoc)
+        {
+            if (oidcDoc == null)
+            {
+                Console.WriteLine("No OIDC metadata received.");
+                return;
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("OIDC Summary:");
+            Console.WriteLine(new string('-', 80));
+            
+            // Issuer
+            if (!string.IsNullOrEmpty(oidcDoc.Issuer))
+            {
+                Console.WriteLine($"Issuer: {oidcDoc.Issuer}");
+            }
+
+            // Endpoints
+            if (oidcDoc.Endpoints != null && oidcDoc.Endpoints.Any())
+            {
+                Console.WriteLine();
+                Console.WriteLine($"Endpoints ({oidcDoc.Endpoints.Count}):");
+                foreach (var ep in oidcDoc.Endpoints)
+                {
+                    Console.WriteLine($"  {ep.Key}: {ep.Value}");
+                }
+            }
+
+            // Signing certificates
+            if (oidcDoc.SigningCertificates != null && oidcDoc.SigningCertificates.Any())
+            {
+                Console.WriteLine();
+                Console.WriteLine($"Signing Certificates ({oidcDoc.SigningCertificates.Count}):");
+                PrintCertificateInformation(oidcDoc.SigningCertificates);
+            }
+
+            // Signing keys from configuration
+            if (oidcDoc.Configuration?.SigningKeys != null && oidcDoc.Configuration.SigningKeys.Any())
+            {
+                Console.WriteLine();
+                Console.WriteLine($"Signing Keys ({oidcDoc.Configuration.SigningKeys.Count}):");
+                PrintKeyInformation(oidcDoc.Configuration.SigningKeys);
+            }
+
+            // Created timestamp
+            Console.WriteLine();
+            Console.WriteLine($"Created At: {oidcDoc.CreatedAt:u}");
         }
     }
 }
