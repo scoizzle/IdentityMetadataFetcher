@@ -42,9 +42,10 @@ namespace IdentityMetadataFetcher.Tests
 
             // Assert
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.OidcMetadata, Is.Not.Null);
-            Assert.That(result.Metadata, Is.Null);
-            Assert.That(result.OidcMetadata.Issuer, Is.Not.Null.And.Not.Empty);
+            Assert.That(result.Document, Is.Not.Null);
+            Assert.That(result.Document, Is.InstanceOf<OpenIdConnectMetadataDocument>());
+            var oidcDoc = result.Document as OpenIdConnectMetadataDocument;
+            Assert.That(oidcDoc.Issuer, Is.Not.Null.And.Not.Empty);
             Assert.That(result.RawMetadata, Is.Not.Null.And.Not.Empty);
             Assert.That(result.RawMetadata.TrimStart(), Does.StartWith("{"));
         }
@@ -67,9 +68,10 @@ namespace IdentityMetadataFetcher.Tests
 
             // Assert
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.OidcMetadata, Is.Not.Null);
-            Assert.That(result.Metadata, Is.Null);
-            Assert.That(result.OidcMetadata.Issuer, Is.Not.Null.And.Not.Empty);
+            Assert.That(result.Document, Is.Not.Null);
+            Assert.That(result.Document, Is.InstanceOf<OpenIdConnectMetadataDocument>());
+            var oidcDoc = result.Document as OpenIdConnectMetadataDocument;
+            Assert.That(oidcDoc.Issuer, Is.Not.Null.And.Not.Empty);
             Assert.That(result.RawMetadata, Is.Not.Null.And.Not.Empty);
         }
 
@@ -91,11 +93,12 @@ namespace IdentityMetadataFetcher.Tests
 
             // Assert
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.OidcMetadata, Is.Not.Null);
-            Assert.That(result.Metadata, Is.Null);
-            Assert.That(result.OidcMetadata.Configuration, Is.Not.Null);
-            Assert.That(result.OidcMetadata.Configuration.AuthorizationEndpoint, Is.Not.Null.And.Not.Empty);
-            Assert.That(result.OidcMetadata.Configuration.TokenEndpoint, Is.Not.Null.And.Not.Empty);
+            Assert.That(result.Document, Is.Not.Null);
+            Assert.That(result.Document, Is.InstanceOf<OpenIdConnectMetadataDocument>());
+            var oidcDoc = result.Document as OpenIdConnectMetadataDocument;
+            Assert.That(oidcDoc.Configuration, Is.Not.Null);
+            Assert.That(oidcDoc.Configuration.AuthorizationEndpoint, Is.Not.Null.And.Not.Empty);
+            Assert.That(oidcDoc.Configuration.TokenEndpoint, Is.Not.Null.And.Not.Empty);
         }
 
         [Test]
@@ -116,9 +119,11 @@ namespace IdentityMetadataFetcher.Tests
 
             // Assert
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.OidcMetadata, Is.Not.Null);
-            Assert.That(result.OidcMetadata.Configuration.SigningKeys, Is.Not.Null);
-            Assert.That(result.OidcMetadata.Configuration.SigningKeys.Count, Is.GreaterThan(0));
+            Assert.That(result.Document, Is.Not.Null);
+            Assert.That(result.Document, Is.InstanceOf<OpenIdConnectMetadataDocument>());
+            var oidcDoc = result.Document as OpenIdConnectMetadataDocument;
+            Assert.That(oidcDoc.Configuration.SigningKeys, Is.Not.Null);
+            Assert.That(oidcDoc.Configuration.SigningKeys.Count, Is.GreaterThan(0));
         }
 
         [Test]
@@ -139,11 +144,13 @@ namespace IdentityMetadataFetcher.Tests
 
             // Assert
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.OidcMetadata, Is.Not.Null);
-            Assert.That(result.OidcMetadata.Endpoints, Is.Not.Null);
-            Assert.That(result.OidcMetadata.Endpoints.ContainsKey("AuthorizationEndpoint"), Is.True);
-            Assert.That(result.OidcMetadata.Endpoints.ContainsKey("TokenEndpoint"), Is.True);
-            Assert.That(result.OidcMetadata.Endpoints.ContainsKey("JwksUri"), Is.True);
+            Assert.That(result.Document, Is.Not.Null);
+            Assert.That(result.Document, Is.InstanceOf<OpenIdConnectMetadataDocument>());
+            var oidcDoc = result.Document as OpenIdConnectMetadataDocument;
+            Assert.That(oidcDoc.Endpoints, Is.Not.Null);
+            Assert.That(oidcDoc.Endpoints.ContainsKey("AuthorizationEndpoint"), Is.True);
+            Assert.That(oidcDoc.Endpoints.ContainsKey("TokenEndpoint"), Is.True);
+            Assert.That(oidcDoc.Endpoints.ContainsKey("JwksUri"), Is.True);
         }
 
         [Test]
@@ -164,8 +171,8 @@ namespace IdentityMetadataFetcher.Tests
 
             // Assert
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Metadata, Is.Not.Null);
-            Assert.That(result.OidcMetadata, Is.Null);
+            Assert.That(result.Document, Is.Not.Null);
+            Assert.That(result.Document, Is.InstanceOf<WsFederationMetadataDocument>());
             Assert.That(result.RawMetadata, Is.Not.Null.And.Not.Empty);
             Assert.That(result.RawMetadata.TrimStart(), Does.StartWith("<"));
         }

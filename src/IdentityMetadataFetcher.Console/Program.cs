@@ -155,7 +155,7 @@ namespace IdentityMetadataFetcher.ConsoleApp
 
                     var result = await fetcher.FetchMetadataAsync(endpoint);
 
-                    if (result.Metadata == null && result.OidcMetadata == null)
+                    if (result.Document == null)
                     {
                         Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine("No metadata returned.");
@@ -163,13 +163,13 @@ namespace IdentityMetadataFetcher.ConsoleApp
                         return 2;
                     }
 
-                    if (result.Metadata != null)
+                    if (result.Document is WsFederationMetadataDocument wsFedDoc)
                     {
-                        PrintMetadataSummary(result.Metadata);
+                        PrintMetadataSummary(wsFedDoc);
                     }
-                    else if (result.OidcMetadata != null)
+                    else if (result.Document is OpenIdConnectMetadataDocument oidcDoc)
                     {
-                        PrintOidcMetadataSummary(result.OidcMetadata);
+                        PrintOidcMetadataSummary(oidcDoc);
                     }
 
                     if (showRaw && !string.IsNullOrWhiteSpace(result.RawMetadata))

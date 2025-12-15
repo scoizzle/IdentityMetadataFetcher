@@ -22,7 +22,7 @@ namespace IdentityMetadataFetcher.Services
         /// <summary>
         /// Stores metadata in the cache.
         /// </summary>
-        public void AddOrUpdateMetadata(string issuerId, WsFederationMetadataDocument metadata, string rawXml)
+        public void AddOrUpdateMetadata(string issuerId, MetadataDocument metadata, string rawMetadata)
         {
             if (string.IsNullOrWhiteSpace(issuerId))
                 throw new ArgumentException("issuerId cannot be null or empty", nameof(issuerId));
@@ -36,16 +36,25 @@ namespace IdentityMetadataFetcher.Services
                 {
                     IssuerId = issuerId,
                     Metadata = metadata,
-                    RawXml = rawXml,
+                    RawXml = rawMetadata,
                     CachedAt = DateTime.UtcNow
                 };
             }
         }
 
         /// <summary>
+        /// Stores WS-Federation metadata in the cache.
+        /// </summary>
+        [Obsolete("Use AddOrUpdateMetadata(string, MetadataDocument, string) instead.")]
+        public void AddOrUpdateMetadata(string issuerId, WsFederationMetadataDocument metadata, string rawXml)
+        {
+            AddOrUpdateMetadata(issuerId, (MetadataDocument)metadata, rawXml);
+        }
+
+        /// <summary>
         /// Retrieves metadata from the cache.
         /// </summary>
-        public WsFederationMetadataDocument GetMetadata(string issuerId)
+        public MetadataDocument GetMetadata(string issuerId)
         {
             if (string.IsNullOrWhiteSpace(issuerId))
                 throw new ArgumentException("issuerId cannot be null or empty", nameof(issuerId));
@@ -166,10 +175,10 @@ namespace IdentityMetadataFetcher.Services
         /// <summary>
         /// Gets or sets the parsed metadata document.
         /// </summary>
-        public WsFederationMetadataDocument Metadata { get; set; }
+        public MetadataDocument Metadata { get; set; }
 
         /// <summary>
-        /// Gets or sets the raw XML representation of the metadata.
+        /// Gets or sets the raw representation of the metadata (XML or JSON).
         /// </summary>
         public string RawXml { get; set; }
 

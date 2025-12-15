@@ -10,7 +10,7 @@ namespace IdentityMetadataFetcher.Models
     /// <summary>
     /// Represents an OpenID Connect metadata document.
     /// </summary>
-    public class OpenIdConnectMetadataDocument
+    public class OpenIdConnectMetadataDocument : MetadataDocument
     {
         private readonly OpenIdConnectConfiguration _configuration;
         private readonly List<X509Certificate2> _signingCertificates;
@@ -24,7 +24,7 @@ namespace IdentityMetadataFetcher.Models
         /// <summary>
         /// Gets the issuer identifier from the metadata.
         /// </summary>
-        public string Issuer => _configuration?.Issuer;
+        public override string Issuer => _configuration?.Issuer;
 
         /// <summary>
         /// Gets the raw JSON representation of the metadata.
@@ -32,19 +32,19 @@ namespace IdentityMetadataFetcher.Models
         public string RawJson { get; }
 
         /// <summary>
-        /// Gets the signing certificates extracted from the metadata.
+        /// Gets the raw metadata representation.
         /// </summary>
-        public IReadOnlyList<X509Certificate2> SigningCertificates => _signingCertificates.AsReadOnly();
+        public override string RawMetadata => RawJson;
 
         /// <summary>
-        /// Gets the timestamp when this document was created.
+        /// Gets the signing certificates extracted from the metadata.
         /// </summary>
-        public DateTime CreatedAt { get; }
+        public override IReadOnlyList<X509Certificate2> SigningCertificates => _signingCertificates.AsReadOnly();
 
         /// <summary>
         /// Gets additional endpoints from the metadata.
         /// </summary>
-        public IReadOnlyDictionary<string, string> Endpoints => _endpoints;
+        public override IReadOnlyDictionary<string, string> Endpoints => _endpoints;
 
         /// <summary>
         /// Initializes a new instance of the OpenIdConnectMetadataDocument class.
@@ -55,7 +55,6 @@ namespace IdentityMetadataFetcher.Models
         {
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             RawJson = rawJson ?? throw new ArgumentNullException(nameof(rawJson));
-            CreatedAt = DateTime.UtcNow;
 
             _signingCertificates = new List<X509Certificate2>();
             _endpoints = new Dictionary<string, string>();

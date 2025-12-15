@@ -10,7 +10,7 @@ namespace IdentityMetadataFetcher.Models
     /// <summary>
     /// Represents a WS-Federation metadata document.
     /// </summary>
-    public class WsFederationMetadataDocument
+    public class WsFederationMetadataDocument : MetadataDocument
     {
         private readonly WsFederationConfiguration _configuration;
         private readonly List<X509Certificate2> _signingCertificates;
@@ -24,7 +24,7 @@ namespace IdentityMetadataFetcher.Models
         /// <summary>
         /// Gets the issuer identifier from the metadata.
         /// </summary>
-        public string Issuer => _configuration?.Issuer;
+        public override string Issuer => _configuration?.Issuer;
 
         /// <summary>
         /// Gets the raw XML representation of the metadata.
@@ -32,19 +32,19 @@ namespace IdentityMetadataFetcher.Models
         public string RawXml { get; }
 
         /// <summary>
-        /// Gets the signing certificates extracted from the metadata.
+        /// Gets the raw metadata representation.
         /// </summary>
-        public IReadOnlyList<X509Certificate2> SigningCertificates => _signingCertificates.AsReadOnly();
+        public override string RawMetadata => RawXml;
 
         /// <summary>
-        /// Gets the timestamp when this document was created.
+        /// Gets the signing certificates extracted from the metadata.
         /// </summary>
-        public DateTime CreatedAt { get; }
+        public override IReadOnlyList<X509Certificate2> SigningCertificates => _signingCertificates.AsReadOnly();
 
         /// <summary>
         /// Gets additional endpoints from the metadata.
         /// </summary>
-        public IReadOnlyDictionary<string, string> Endpoints => _endpoints;
+        public override IReadOnlyDictionary<string, string> Endpoints => _endpoints;
 
         /// <summary>
         /// Initializes a new instance of the WsFederationMetadataDocument class.
@@ -55,7 +55,6 @@ namespace IdentityMetadataFetcher.Models
         {
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             RawXml = rawXml ?? throw new ArgumentNullException(nameof(rawXml));
-            CreatedAt = DateTime.UtcNow;
 
             _signingCertificates = new List<X509Certificate2>();
             _endpoints = new Dictionary<string, string>();

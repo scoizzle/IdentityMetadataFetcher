@@ -60,20 +60,19 @@ namespace IdentityMetadataFetcher.Services
                 var timeout = endpoint.Timeout ?? _options.DefaultTimeoutMs;
                 var metadataContent = DownloadMetadataXml(endpoint.Endpoint, timeout);
                 
+                MetadataDocument document;
                 if (IsJsonContent(metadataContent))
                 {
-                    var oidcMetadata = ParseOidcMetadata(metadataContent);
-                    result.IsSuccess = true;
-                    result.OidcMetadata = oidcMetadata;
-                    result.RawMetadata = metadataContent;
+                    document = ParseOidcMetadata(metadataContent);
                 }
                 else
                 {
-                    var metadata = ParseMetadata(metadataContent);
-                    result.IsSuccess = true;
-                    result.Metadata = metadata;
-                    result.RawMetadata = metadataContent;
+                    document = ParseMetadata(metadataContent);
                 }
+                
+                result.IsSuccess = true;
+                result.Document = document;
+                result.RawMetadata = metadataContent;
                 return result;
             }
             catch (Exception ex)
@@ -106,20 +105,19 @@ namespace IdentityMetadataFetcher.Services
                 var timeout = endpoint.Timeout ?? _options.DefaultTimeoutMs;
                 var metadataContent = await DownloadMetadataXmlAsync(endpoint.Endpoint, timeout);
                 
+                MetadataDocument document;
                 if (IsJsonContent(metadataContent))
                 {
-                    var oidcMetadata = ParseOidcMetadata(metadataContent);
-                    result.IsSuccess = true;
-                    result.OidcMetadata = oidcMetadata;
-                    result.RawMetadata = metadataContent;
+                    document = ParseOidcMetadata(metadataContent);
                 }
                 else
                 {
-                    var metadata = ParseMetadata(metadataContent);
-                    result.IsSuccess = true;
-                    result.Metadata = metadata;
-                    result.RawMetadata = metadataContent;
+                    document = ParseMetadata(metadataContent);
                 }
+                
+                result.IsSuccess = true;
+                result.Document = document;
+                result.RawMetadata = metadataContent;
                 return result;
             }
             catch (Exception ex)
