@@ -121,9 +121,12 @@ namespace MvcDemo.Services
                 // Claims
                 if (validationResult.Claims != null && validationResult.Claims.Any())
                 {
-                    foreach (var claim in validationResult.Claims)
+                    foreach (var kvp in validationResult.Claims)
                     {
-                        result.Claims[claim.Key] = claim.Value;
+                        if (!result.Claims.ContainsKey(kvp.Key))
+                        {
+                            result.Claims.Add(kvp.Key, kvp.Value);
+                        }
                     }
                 }
                 
@@ -438,7 +441,7 @@ namespace MvcDemo.Services
                             
                             if (!result.Claims.ContainsKey(shortKey))
                             {
-                                result.Claims[shortKey] = value;
+                                result.Claims.Add(shortKey, value);
                             }
                         }
                     }
@@ -798,9 +801,12 @@ namespace MvcDemo.Services
                 // Claims
                 if (validationResult.Claims != null && validationResult.Claims.Any())
                 {
-                    foreach (var claim in validationResult.Claims)
+                    foreach (var kvp in validationResult.Claims)
                     {
-                        result.Claims[claim.Key] = claim.Value;
+                        if (!result.Claims.ContainsKey(kvp.Key))
+                        {
+                            result.Claims.Add(kvp.Key, kvp.Value);
+                        }
                     }
                 }
                 
@@ -949,7 +955,7 @@ namespace MvcDemo.Services
                             
                             if (!result.Claims.ContainsKey(shortKey))
                             {
-                                result.Claims[shortKey] = value;
+                                result.Claims.Add(shortKey, value);
                             }
                         }
                     }
