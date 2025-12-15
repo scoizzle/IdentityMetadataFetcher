@@ -1,29 +1,38 @@
 namespace IdentityMetadataFetcher.Models
 {
     /// <summary>
-    /// Configuration options for metadata fetching operations.
+    /// Options for fetching metadata from an identity provider.
     /// </summary>
     public class MetadataFetchOptions
     {
         /// <summary>
-        /// Gets or sets the default timeout in milliseconds for HTTP requests.
+        /// Gets or sets the timeout for the HTTP request in seconds.
         /// </summary>
-        public int DefaultTimeoutMs { get; set; } = 30000; // 30 seconds
+        public int TimeoutSeconds { get; set; } = 30;
 
         /// <summary>
-        /// Gets or sets a value indicating whether to continue fetching from other endpoints
-        /// if one fails. Default is true.
+        /// Gets or sets the maximum number of retries for failed requests.
         /// </summary>
-        public bool ContinueOnError { get; set; } = true;
+        public int MaxRetries { get; set; } = 3;
 
         /// <summary>
-        /// Gets or sets a value indicating whether to validate SSL/TLS certificates.
+        /// Gets or sets the delay between retries in milliseconds.
         /// </summary>
-        public bool ValidateServerCertificate { get; set; } = true;
+        public int RetryDelayMilliseconds { get; set; } = 1000;
 
         /// <summary>
-        /// Gets or sets the maximum number of retry attempts for failed requests.
+        /// Gets or sets a value indicating whether to validate SSL certificates.
         /// </summary>
-        public int MaxRetries { get; set; } = 0;
+        public bool ValidateSslCertificate { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to cache successfully fetched metadata.
+        /// </summary>
+        public bool CacheMetadata { get; set; } = false;
+
+        /// <summary>
+        /// Gets or sets the cache duration in minutes.
+        /// </summary>
+        public int CacheDurationMinutes { get; set; } = 60;
     }
 }
