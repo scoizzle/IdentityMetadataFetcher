@@ -121,7 +121,7 @@ namespace MvcDemo.Services
                 {
                     foreach (var claim in validationResult.Claims)
                     {
-                        result.Claims[claim.Key] = claim.Value;
+                        result.Claims.Add(new KeyValuePair<string, string>(claim.Key, claim.Value));
                     }
                 }
                 
@@ -434,10 +434,8 @@ namespace MvcDemo.Services
                             // Use claim type without namespace for readability
                             var shortKey = key.Contains("/") ? key.Substring(key.LastIndexOf("/") + 1) : key;
                             
-                            if (!result.Claims.ContainsKey(shortKey))
-                            {
-                                result.Claims[shortKey] = value;
-                            }
+                            // Add all claims including duplicates
+                            result.Claims.Add(new KeyValuePair<string, string>(shortKey, value));
                         }
                     }
 
