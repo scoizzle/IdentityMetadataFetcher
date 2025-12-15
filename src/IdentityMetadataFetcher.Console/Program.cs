@@ -214,7 +214,7 @@ namespace IdentityMetadataFetcher.ConsoleApp
             Console.WriteLine("  --interval-min  Polling interval in minutes (default 15, minimum 1)");
         }
 
-        private static void PrintMetadataSummary(object metadata)
+        private static void PrintMetadataSummary(MetadataDocument metadata)
         {
             if (metadata == null)
             {
@@ -327,40 +327,12 @@ namespace IdentityMetadataFetcher.ConsoleApp
                 Console.WriteLine();
                 Console.WriteLine($"Created At: {oidcDoc.CreatedAt:u}");
             }
-            // Fallback for WsFederationConfiguration (if passed directly)
-            else if (metadata is WsFederationConfiguration fedMetadata)
-            {
-                Console.WriteLine();
-                Console.WriteLine("Summary:");
-                Console.WriteLine(new string('-', 80));
-                Console.WriteLine($"Issuer: {fedMetadata.Issuer}");
-
-                // Token endpoint
-                if (!string.IsNullOrEmpty(fedMetadata.TokenEndpoint))
-                {
-                    Console.WriteLine($"Token Endpoint: {fedMetadata.TokenEndpoint}");
-                }
-
-                // Signing keys
-                if (fedMetadata.SigningKeys != null && fedMetadata.SigningKeys.Any())
-                {
-                    Console.WriteLine();
-                    Console.WriteLine($"Signing Keys: {fedMetadata.SigningKeys.Count}");
-                    PrintKeyInformation(fedMetadata.SigningKeys);
-                }
-
-                // Additional properties
-                if (fedMetadata.KeyInfos != null && fedMetadata.KeyInfos.Any())
-                {
-                    Console.WriteLine($"Key Infos: {fedMetadata.KeyInfos.Count}");
-                }
-            }
             else
             {
                 Console.WriteLine();
                 Console.WriteLine("Summary:");
                 Console.WriteLine(new string('-', 80));
-                Console.WriteLine($"Metadata type: {metadata.GetType().Name}");
+                Console.WriteLine($"Unknown metadata type: {metadata.GetType().Name}");
             }
         }
 

@@ -643,17 +643,13 @@ The console utility automatically detects the metadata format and displays:
 
 **WS-Federation/SAML Metadata:**
 - Issuer
-- Token Endpoint
-- Endpoints (Passive STS, etc.)
+- Endpoints (Token Endpoint, Passive STS, etc.)
 - Signing Certificates
 - Signing Keys
 
 **OIDC Metadata:**
 - Issuer
-- Authorization Endpoint
-- Token Endpoint
-- UserInfo Endpoint
-- JWKs URI
+- Endpoints (Authorization, Token, UserInfo, JWKs URI, etc.)
 - Signing Certificates
 - Signing Keys
 
