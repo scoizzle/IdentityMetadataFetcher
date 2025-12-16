@@ -50,8 +50,17 @@ namespace MvcDemo.Controllers
 
             try
             {
-                // Validate the token
-                var validationResult = await TokenValidationService.ValidateSamlTokenAsync(model.IssuerId, model.SamlToken);
+                // Validate the token based on type
+                TokenValidationResultViewModel validationResult;
+                
+                if (model.TokenType == "JWT")
+                {
+                    validationResult = await TokenValidationService.ValidateJwtTokenAsync(model.IssuerId, model.SamlToken);
+                }
+                else
+                {
+                    validationResult = await TokenValidationService.ValidateSamlTokenAsync(model.IssuerId, model.SamlToken);
+                }
 
                 return View("Result", validationResult);
             }

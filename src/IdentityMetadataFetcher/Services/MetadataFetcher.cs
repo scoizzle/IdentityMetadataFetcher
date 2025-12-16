@@ -1,5 +1,6 @@
 using IdentityMetadataFetcher.Exceptions;
 using IdentityMetadataFetcher.Models;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Protocols.WsFederation;
 using System;
 using System.Collections.Generic;
@@ -14,7 +15,7 @@ using System.Xml.Linq;
 namespace IdentityMetadataFetcher.Services
 {
     /// <summary>
-    /// Service for fetching WSFED and SAML metadata from issuing authorities.
+    /// Service for fetching WSFED, SAML, and OIDC metadata from issuing authorities.
     /// </summary>
     public class MetadataFetcher : IMetadataFetcher
     {
@@ -57,11 +58,21 @@ namespace IdentityMetadataFetcher.Services
             try
             {
                 var timeout = endpoint.Timeout ?? _options.DefaultTimeoutMs;
-                var metadataXml = DownloadMetadataXml(endpoint.Endpoint, timeout);
-                var metadata = ParseMetadata(metadataXml);
+                var metadataContent = DownloadMetadataXml(endpoint.Endpoint, timeout);
+                
+                MetadataDocument document;
+                if (IsJsonContent(metadataContent))
+                {
+                    document = ParseOidcMetadata(metadataContent);
+                }
+                else
+                {
+                    document = ParseMetadata(metadataContent);
+                }
+                
                 result.IsSuccess = true;
-                result.Metadata = metadata;
-                result.RawMetadata = metadataXml;
+                result.Metadata = document;
+                result.RawMetadata = metadataContent;
                 return result;
             }
             catch (Exception ex)
@@ -92,11 +103,21 @@ namespace IdentityMetadataFetcher.Services
             try
             {
                 var timeout = endpoint.Timeout ?? _options.DefaultTimeoutMs;
-                var metadataXml = await DownloadMetadataXmlAsync(endpoint.Endpoint, timeout);
-                var metadata = ParseMetadata(metadataXml);
+                var metadataContent = await DownloadMetadataXmlAsync(endpoint.Endpoint, timeout);
+                
+                MetadataDocument document;
+                if (IsJsonContent(metadataContent))
+                {
+                    document = ParseOidcMetadata(metadataContent);
+                }
+                else
+                {
+                    document = ParseMetadata(metadataContent);
+                }
+                
                 result.IsSuccess = true;
-                result.Metadata = metadata;
-                result.RawMetadata = metadataXml;
+                result.Metadata = document;
+                result.RawMetadata = metadataContent;
                 return result;
             }
             catch (Exception ex)
@@ -284,6 +305,38 @@ namespace IdentityMetadataFetcher.Services
                     ex
                 );
             }
+        }
+
+        private OpenIdConnectMetadataDocument ParseOidcMetadata(string metadataJson)
+        {
+            if (string.IsNullOrWhiteSpace(metadataJson))
+                throw new MetadataFetchException("Downloaded metadata is empty or null");
+
+            try
+            {
+                var configuration = OpenIdConnectConfiguration.Create(metadataJson);
+                return new OpenIdConnectMetadataDocument(configuration, metadataJson);
+            }
+            catch (MetadataFetchException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new MetadataFetchException(
+                    $"Failed to parse OIDC metadata: {ex.Message}",
+                    ex
+                );
+            }
+        }
+
+        private bool IsJsonContent(string content)
+        {
+            if (string.IsNullOrWhiteSpace(content))
+                return false;
+
+            var trimmed = content.TrimStart();
+            return trimmed.StartsWith("{") || trimmed.StartsWith("[");
         }
     }
 }

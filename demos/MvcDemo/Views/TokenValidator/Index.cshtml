@@ -3,7 +3,7 @@
 @model TokenValidatorViewModel
 
 @{
-    ViewBag.Title = "SAML Token Validator";
+    ViewBag.Title = "Token Validator";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
@@ -13,10 +13,10 @@
             <div class="col-lg-8">
                 <h1 class="display-4 fw-bold mb-3">
                     <i class="fas fa-shield-alt me-3"></i>
-                    SAML Token Validator
+                    Token Validator
                 </h1>
                 <p class="lead mb-4">
-                    Validate SAML tokens with enterprise-grade security checks. Verify signatures, issuers, and expiration times using live metadata.
+                    Validate SAML and OIDC/JWT tokens with enterprise-grade security checks. Verify signatures, issuers, and expiration times using live metadata.
                 </p>
                 <div class="d-flex flex-wrap gap-2">
                     <span class="badge bg-light text-primary fs-6 px-3 py-2">
@@ -27,6 +27,9 @@
                     </span>
                     <span class="badge bg-light text-primary fs-6 px-3 py-2">
                         <i class="fas fa-user-check me-1"></i>Issuer Verification
+                    </span>
+                    <span class="badge bg-light text-success fs-6 px-3 py-2">
+                        <i class="fas fa-th me-1"></i>SAML & OIDC/JWT
                     </span>
                 </div>
             </div>
@@ -102,21 +105,39 @@
                             </div>
 
                             <div class="col-md-6 mb-4">
+                                <label for="TokenType" class="form-label fw-semibold">
+                                    <i class="fas fa-tags me-2 text-primary"></i>
+                                    Token Type <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-list-alt"></i>
+                                    </span>
+                                    <select id="TokenType" name="TokenType" class="form-select form-select-lg" required onchange="updateTokenLabel()">
+                                        <option value="SAML">SAML Token</option>
+                                        <option value="JWT">OIDC/JWT Token</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 mb-4">
                                 <label for="SamlToken" class="form-label fw-semibold">
                                     <i class="fas fa-code me-2 text-primary"></i>
-                                    SAML Token <span class="text-danger">*</span>
+                                    <span id="tokenLabel">SAML Token</span> <span class="text-danger">*</span>
                                 </label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light">
                                         <i class="fas fa-file-code"></i>
                                     </span>
                                     <textarea id="SamlToken" name="SamlToken" class="form-control form-control-lg"
-                                              rows="6" placeholder="Paste your SAML token here..." required></textarea>
+                                              rows="6" placeholder="Paste your token here..." required></textarea>
                                 </div>
                                 <div class="form-text">
-                                    <small class="text-muted">
+                                    <small class="text-muted" id="tokenHelp">
                                         <i class="fas fa-info-circle me-1"></i>
-                                        Supports: Raw XML, HTML-escaped XML, or Base64-encoded tokens
+                                        SAML: Raw XML, HTML-escaped XML, or Base64-encoded tokens
                                     </small>
                                 </div>
                             </div>
@@ -220,18 +241,23 @@
                             <div class="format-list">
                                 <div class="format-item p-3 mb-2 bg-light rounded">
                                     <i class="fas fa-code text-success me-2"></i>
-                                    <strong>Raw XML</strong><br>
+                                    <strong>SAML - Raw XML</strong><br>
                                     <small class="text-muted">Standard SAML XML format</small>
                                 </div>
                                 <div class="format-item p-3 mb-2 bg-light rounded">
                                     <i class="fas fa-globe text-info me-2"></i>
-                                    <strong>HTML-Escaped</strong><br>
+                                    <strong>SAML - HTML-Escaped</strong><br>
                                     <small class="text-muted">XML with HTML entities (&lt;, &gt;)</small>
                                 </div>
                                 <div class="format-item p-3 mb-2 bg-light rounded">
                                     <i class="fas fa-lock text-warning me-2"></i>
-                                    <strong>Base64-Encoded</strong><br>
+                                    <strong>SAML - Base64-Encoded</strong><br>
                                     <small class="text-muted">Encoded SAML XML strings</small>
+                                </div>
+                                <div class="format-item p-3 mb-2 bg-light rounded">
+                                    <i class="fas fa-key text-primary me-2"></i>
+                                    <strong>JWT/OIDC</strong><br>
+                                    <small class="text-muted">Complete JWT token (header.payload.signature)</small>
                                 </div>
                             </div>
                         </div>
@@ -328,6 +354,25 @@
     function clearForm() {
         document.getElementById('IssuerId').value = '';
         document.getElementById('SamlToken').value = '';
+        document.getElementById('TokenType').value = 'SAML';
+        updateTokenLabel();
+    }
+
+    function updateTokenLabel() {
+        const tokenType = document.getElementById('TokenType').value;
+        const tokenLabel = document.getElementById('tokenLabel');
+        const tokenHelp = document.getElementById('tokenHelp');
+        const tokenInput = document.getElementById('SamlToken');
+        
+        if (tokenType === 'JWT') {
+            tokenLabel.textContent = 'JWT Token';
+            tokenHelp.innerHTML = '<i class="fas fa-info-circle me-1"></i>JWT: Paste the complete JWT token (header.payload.signature)';
+            tokenInput.placeholder = 'Paste your JWT token here...';
+        } else {
+            tokenLabel.textContent = 'SAML Token';
+            tokenHelp.innerHTML = '<i class="fas fa-info-circle me-1"></i>SAML: Raw XML, HTML-escaped XML, or Base64-encoded tokens';
+            tokenInput.placeholder = 'Paste your SAML token here...';
+        }
     }
 
     // Add loading state to form submission

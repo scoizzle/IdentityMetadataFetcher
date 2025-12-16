@@ -1,4 +1,4 @@
-# SAML Metadata Fetcher - Quick Reference Guide
+# Identity Metadata Fetcher - Quick Reference Guide
 
 ## Installation & Setup
 
@@ -38,6 +38,24 @@ if (result.IsSuccess)
 ### Single Endpoint (Async)
 ```csharp
 var result = await fetcher.FetchMetadataAsync(endpoint);
+```
+
+### OIDC Endpoint
+```csharp
+var oidcEndpoint = new IssuerEndpoint
+{
+    Id = "google-oidc",
+    Endpoint = "https://accounts.google.com/.well-known/openid-configuration",
+    Name = "Google OIDC"
+};
+
+var result = await fetcher.FetchMetadataAsync(oidcEndpoint);
+if (result.IsSuccess && result.Metadata is OpenIdConnectMetadataDocument oidcDoc)
+{
+    var config = oidcDoc.Configuration;
+    Console.WriteLine($"Issuer: {config.Issuer}");
+    Console.WriteLine($"Token Endpoint: {config.TokenEndpoint}");
+}
 ```
 
 ### Multiple Endpoints (Sync)
@@ -174,8 +192,8 @@ result.FetchedAt              // DateTime - When was it fetched? (UTC)
 result.Endpoint               // IssuerEndpoint - Which endpoint?
 
 // On Success
-result.Metadata               // WsFederationConfiguration - Parsed metadata from Microsoft.IdentityModel.Protocols.WsFederation
-result.RawMetadata            // string - Original XML
+result.Metadata               // MetadataDocument - Parsed metadata (WsFederationMetadataDocument or OpenIdConnectMetadataDocument)
+result.RawMetadata            // string - Original XML or JSON
 
 // On Failure
 result.ErrorMessage           // string - Human-readable error

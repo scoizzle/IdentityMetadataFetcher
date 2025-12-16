@@ -1,4 +1,4 @@
-using Microsoft.IdentityModel.Protocols.WsFederation;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
@@ -8,18 +8,18 @@ using System.Security.Cryptography.X509Certificates;
 namespace IdentityMetadataFetcher.Models
 {
     /// <summary>
-    /// Represents a WS-Federation metadata document.
+    /// Represents an OpenID Connect metadata document.
     /// </summary>
-    public class WsFederationMetadataDocument : MetadataDocument
+    public class OpenIdConnectMetadataDocument : MetadataDocument
     {
-        private readonly WsFederationConfiguration _configuration;
+        private readonly OpenIdConnectConfiguration _configuration;
         private readonly List<X509Certificate2> _signingCertificates;
         private readonly Dictionary<string, string> _endpoints;
 
         /// <summary>
-        /// Gets the underlying WS-Federation configuration object.
+        /// Gets the underlying OpenID Connect configuration object.
         /// </summary>
-        public WsFederationConfiguration Configuration => _configuration;
+        public OpenIdConnectConfiguration Configuration => _configuration;
 
         /// <summary>
         /// Gets the issuer identifier from the metadata.
@@ -27,14 +27,14 @@ namespace IdentityMetadataFetcher.Models
         public override string Issuer => _configuration?.Issuer;
 
         /// <summary>
-        /// Gets the raw XML representation of the metadata.
+        /// Gets the raw JSON representation of the metadata.
         /// </summary>
-        public string RawXml { get; }
+        public string RawJson { get; }
 
         /// <summary>
         /// Gets the raw metadata representation.
         /// </summary>
-        public override string RawMetadata => RawXml;
+        public override string RawMetadata => RawJson;
 
         /// <summary>
         /// Gets the signing certificates extracted from the metadata.
@@ -47,14 +47,14 @@ namespace IdentityMetadataFetcher.Models
         public override IReadOnlyDictionary<string, string> Endpoints => _endpoints;
 
         /// <summary>
-        /// Initializes a new instance of the WsFederationMetadataDocument class.
+        /// Initializes a new instance of the OpenIdConnectMetadataDocument class.
         /// </summary>
-        /// <param name="configuration">The parsed WS-Federation configuration.</param>
-        /// <param name="rawXml">The raw XML of the metadata.</param>
-        public WsFederationMetadataDocument(WsFederationConfiguration configuration, string rawXml)
+        /// <param name="configuration">The parsed OpenID Connect configuration.</param>
+        /// <param name="rawJson">The raw JSON of the metadata.</param>
+        public OpenIdConnectMetadataDocument(OpenIdConnectConfiguration configuration, string rawJson)
         {
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            RawXml = rawXml ?? throw new ArgumentNullException(nameof(rawXml));
+            RawJson = rawJson ?? throw new ArgumentNullException(nameof(rawJson));
 
             _signingCertificates = new List<X509Certificate2>();
             _endpoints = new Dictionary<string, string>();
@@ -80,7 +80,7 @@ namespace IdentityMetadataFetcher.Models
                 catch (Exception ex)
                 {
                     System.Diagnostics.Trace.TraceWarning(
-                        $"WsFederationMetadataDocument: Failed to extract certificate from signing key: {ex.Message}");
+                        $"OpenIdConnectMetadataDocument: Failed to extract certificate from signing key: {ex.Message}");
                 }
             }
         }
@@ -90,11 +90,20 @@ namespace IdentityMetadataFetcher.Models
             if (_configuration == null)
                 return;
 
+            if (!string.IsNullOrWhiteSpace(_configuration.AuthorizationEndpoint))
+                _endpoints["AuthorizationEndpoint"] = _configuration.AuthorizationEndpoint;
+
             if (!string.IsNullOrWhiteSpace(_configuration.TokenEndpoint))
-            {
                 _endpoints["TokenEndpoint"] = _configuration.TokenEndpoint;
-                _endpoints["PassiveSts"] = _configuration.TokenEndpoint; // Alias for compatibility
-            }
+
+            if (!string.IsNullOrWhiteSpace(_configuration.UserInfoEndpoint))
+                _endpoints["UserInfoEndpoint"] = _configuration.UserInfoEndpoint;
+
+            if (!string.IsNullOrWhiteSpace(_configuration.EndSessionEndpoint))
+                _endpoints["EndSessionEndpoint"] = _configuration.EndSessionEndpoint;
+
+            if (!string.IsNullOrWhiteSpace(_configuration.JwksUri))
+                _endpoints["JwksUri"] = _configuration.JwksUri;
         }
 
         /// <summary>
@@ -102,7 +111,7 @@ namespace IdentityMetadataFetcher.Models
         /// </summary>
         public override string ToString()
         {
-            return $"WS-Federation Metadata: Issuer={Issuer}, Certificates={_signingCertificates.Count}";
+            return $"OpenID Connect Metadata: Issuer={Issuer}, Certificates={_signingCertificates.Count}";
         }
     }
 }

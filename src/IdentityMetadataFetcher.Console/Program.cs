@@ -168,7 +168,7 @@ namespace IdentityMetadataFetcher.ConsoleApp
                     if (showRaw && !string.IsNullOrWhiteSpace(result.RawMetadata))
                     {
                         Console.WriteLine();
-                        Console.WriteLine("Raw XML:");
+                        Console.WriteLine(result.RawMetadata.TrimStart().StartsWith("{") ? "Raw JSON:" : "Raw XML:");
                         Console.WriteLine(new string('-', 80));
                         Console.WriteLine(result.RawMetadata);
                     }
@@ -214,7 +214,7 @@ namespace IdentityMetadataFetcher.ConsoleApp
             Console.WriteLine("  --interval-min  Polling interval in minutes (default 15, minimum 1)");
         }
 
-        private static void PrintMetadataSummary(object metadata)
+        private static void PrintMetadataSummary(MetadataDocument metadata)
         {
             if (metadata == null)
             {
@@ -283,40 +283,56 @@ namespace IdentityMetadataFetcher.ConsoleApp
                 Console.WriteLine();
                 Console.WriteLine($"Created At: {wsFedDoc.CreatedAt:u}");
             }
-            // Fallback for WsFederationConfiguration (if passed directly)
-            else if (metadata is WsFederationConfiguration fedMetadata)
+            // Handle OpenIdConnectMetadataDocument
+            else if (metadata is OpenIdConnectMetadataDocument oidcDoc)
             {
                 Console.WriteLine();
-                Console.WriteLine("Summary:");
+                Console.WriteLine("OIDC Summary:");
                 Console.WriteLine(new string('-', 80));
-                Console.WriteLine($"Issuer: {fedMetadata.Issuer}");
-
-                // Token endpoint
-                if (!string.IsNullOrEmpty(fedMetadata.TokenEndpoint))
+                
+                // Issuer
+                if (!string.IsNullOrEmpty(oidcDoc.Issuer))
                 {
-                    Console.WriteLine($"Token Endpoint: {fedMetadata.TokenEndpoint}");
+                    Console.WriteLine($"Issuer: {oidcDoc.Issuer}");
                 }
 
-                // Signing keys
-                if (fedMetadata.SigningKeys != null && fedMetadata.SigningKeys.Any())
+                // Endpoints
+                if (oidcDoc.Endpoints != null && oidcDoc.Endpoints.Any())
                 {
                     Console.WriteLine();
-                    Console.WriteLine($"Signing Keys: {fedMetadata.SigningKeys.Count}");
-                    PrintKeyInformation(fedMetadata.SigningKeys);
+                    Console.WriteLine($"Endpoints ({oidcDoc.Endpoints.Count}):");
+                    foreach (var ep in oidcDoc.Endpoints)
+                    {
+                        Console.WriteLine($"  {ep.Key}: {ep.Value}");
+                    }
                 }
 
-                // Additional properties
-                if (fedMetadata.KeyInfos != null && fedMetadata.KeyInfos.Any())
+                // Signing certificates
+                if (oidcDoc.SigningCertificates != null && oidcDoc.SigningCertificates.Any())
                 {
-                    Console.WriteLine($"Key Infos: {fedMetadata.KeyInfos.Count}");
+                    Console.WriteLine();
+                    Console.WriteLine($"Signing Certificates ({oidcDoc.SigningCertificates.Count}):");
+                    PrintCertificateInformation(oidcDoc.SigningCertificates);
                 }
+
+                // Signing keys from configuration
+                if (oidcDoc.Configuration?.SigningKeys != null && oidcDoc.Configuration.SigningKeys.Any())
+                {
+                    Console.WriteLine();
+                    Console.WriteLine($"Signing Keys ({oidcDoc.Configuration.SigningKeys.Count}):");
+                    PrintKeyInformation(oidcDoc.Configuration.SigningKeys);
+                }
+
+                // Created timestamp
+                Console.WriteLine();
+                Console.WriteLine($"Created At: {oidcDoc.CreatedAt:u}");
             }
             else
             {
                 Console.WriteLine();
                 Console.WriteLine("Summary:");
                 Console.WriteLine(new string('-', 80));
-                Console.WriteLine($"Metadata type: {metadata.GetType().Name}");
+                Console.WriteLine($"Unknown metadata type: {metadata.GetType().Name}");
             }
         }
 
@@ -415,5 +431,6 @@ namespace IdentityMetadataFetcher.ConsoleApp
                 certIndex++;
             }
         }
+
     }
 }

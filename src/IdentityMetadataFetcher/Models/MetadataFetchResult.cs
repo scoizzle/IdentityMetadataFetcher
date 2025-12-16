@@ -20,10 +20,10 @@ namespace IdentityMetadataFetcher.Models
         /// <summary>
         /// Gets or sets the parsed metadata document if fetch was successful.
         /// </summary>
-        public WsFederationMetadataDocument Metadata { get; set; }
+        public MetadataDocument Metadata { get; set; }
 
         /// <summary>
-        /// Gets or sets the raw metadata XML if fetch was successful.
+        /// Gets or sets the raw metadata (XML or JSON) if fetch was successful.
         /// </summary>
         public string RawMetadata { get; set; }
 
@@ -48,9 +48,9 @@ namespace IdentityMetadataFetcher.Models
         }
 
         /// <summary>
-        /// Creates a successful result.
+        /// Creates a successful result for any metadata document type.
         /// </summary>
-        public static MetadataFetchResult Success(IssuerEndpoint endpoint, WsFederationMetadataDocument metadata, string rawMetadata)
+        public static MetadataFetchResult Success(IssuerEndpoint endpoint, MetadataDocument metadata, string rawMetadata)
         {
             return new MetadataFetchResult
             {

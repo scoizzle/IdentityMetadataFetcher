@@ -4,6 +4,7 @@ namespace MvcDemo.Models
     {
         public string IssuerId { get; set; }
         public string SamlToken { get; set; }
+        public string TokenType { get; set; } = "SAML";  // "SAML" or "JWT"
     }
 
     public class TokenValidationResultViewModel

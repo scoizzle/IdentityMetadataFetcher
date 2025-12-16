@@ -1,12 +1,14 @@
 using IdentityMetadataFetcher.Iis.Modules;
+using IdentityMetadataFetcher.Models;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.IdentityModel.Tokens.Saml2;
 using MvcDemo.Models;
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.IdentityModel.Tokens.Saml2;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 
 namespace MvcDemo.Services
 {
@@ -119,9 +121,9 @@ namespace MvcDemo.Services
                 // Claims
                 if (validationResult.Claims != null && validationResult.Claims.Any())
                 {
-                    foreach (var claim in validationResult.Claims)
+                    foreach (var kvp in validationResult.Claims)
                     {
-                        result.Claims.Add(new KeyValuePair<string, string>(claim.Key, claim.Value));
+                        result.Claims.Add(kvp);
                     }
                 }
                 
@@ -691,6 +693,334 @@ namespace MvcDemo.Services
                 System.Diagnostics.Trace.TraceWarning(
                     $"TokenValidationService: Error extracting audiences from token: {ex.Message}");
                 return audiences;
+            }
+        }
+
+        /// <summary>
+        /// Validates a JWT (OIDC) token using the issuer's OIDC metadata.
+        /// </summary>
+        public static async Task<TokenValidationResultViewModel> ValidateJwtTokenAsync(string issuerId, string jwtToken)
+        {
+            var result = new TokenValidationResultViewModel
+            {
+                IssuerId = issuerId,
+                IsValid = false
+            };
+
+            if (string.IsNullOrWhiteSpace(issuerId))
+            {
+                result.Message = "Issuer ID is required";
+                result.ErrorDetails = "Please select an issuer from the dropdown list";
+                return result;
+            }
+
+            if (string.IsNullOrWhiteSpace(jwtToken))
+            {
+                result.Message = "JWT token is required";
+                result.ErrorDetails = "Please paste a JWT token into the text area";
+                return result;
+            }
+
+            try
+            {
+                // Get metadata cache from the HTTP module
+                var cache = MetadataPollingHttpModule.MetadataCache;
+                if (cache == null)
+                {
+                    result.Message = "Metadata cache not initialized";
+                    result.ErrorDetails = "The metadata polling service has not been initialized yet";
+                    return result;
+                }
+
+                // Retrieve metadata for the issuer
+                var metadata = cache.GetMetadata(issuerId);
+                if (metadata == null)
+                {
+                    // Metadata not found - attempt to trigger a poll
+                    await TriggerMetadataPollingAsync(issuerId);
+
+                    // After polling, check again
+                    metadata = cache.GetMetadata(issuerId);
+                    if (metadata == null)
+                    {
+                        result.Message = "Issuer metadata not available";
+                        result.ErrorDetails = string.Format(
+                            "The metadata for issuer '{0}' could not be fetched. Please check the issuer configuration.",
+                            issuerId);
+                        return result;
+                    }
+                }
+
+                // Check if this is OIDC metadata
+                if (!(metadata is OpenIdConnectMetadataDocument oidcMetadata))
+                {
+                    result.Message = "Invalid metadata type";
+                    result.ErrorDetails = "The selected issuer does not have OIDC metadata. JWT validation requires OIDC metadata.";
+                    return result;
+                }
+
+                // Validate the JWT token
+                var validationResult = ValidateJwtToken(jwtToken.Trim(), oidcMetadata, issuerId);
+                if (!validationResult.IsValid)
+                {
+                    result.Message = validationResult.Message;
+                    result.ErrorDetails = validationResult.ErrorDetails;
+                    result.SignatureValid = validationResult.SignatureValid;
+                    result.SignatureValidMessage = validationResult.SignatureValidMessage;
+                    result.IssuerVerified = validationResult.IssuerVerified;
+                    result.IssuerVerifiedMessage = validationResult.IssuerVerifiedMessage;
+                    result.TokenNotExpired = validationResult.TokenNotExpired;
+                    result.TokenNotExpiredMessage = validationResult.TokenNotExpiredMessage;
+                    result.TokenNotYetValid = validationResult.TokenNotYetValid;
+                    result.TokenNotYetValidMessage = validationResult.TokenNotYetValidMessage;
+                    return result;
+                }
+
+                // Successfully validated - copy all properties
+                result.IsValid = true;
+                result.Message = validationResult.Message;
+                result.IssuerName = GetIssuerName(issuerId);
+                
+                // Token properties
+                result.TokenIssuer = validationResult.TokenIssuer;
+                result.IssueInstant = validationResult.IssueInstant;
+                result.NotBefore = validationResult.NotBefore;
+                result.NotOnOrAfter = validationResult.NotOnOrAfter;
+                
+                // Audiences
+                if (validationResult.Audiences != null && validationResult.Audiences.Any())
+                {
+                    result.Audiences.AddRange(validationResult.Audiences);
+                }
+                
+                // Claims
+                if (validationResult.Claims != null && validationResult.Claims.Any())
+                {
+                    foreach (var kvp in validationResult.Claims)
+                    {
+                        result.Claims.Add(kvp);
+                    }
+                }
+                
+                // Validation flags
+                result.SignatureValid = validationResult.SignatureValid;
+                result.SignatureValidMessage = validationResult.SignatureValidMessage;
+                result.IssuerVerified = validationResult.IssuerVerified;
+                result.IssuerVerifiedMessage = validationResult.IssuerVerifiedMessage;
+                result.TokenNotExpired = validationResult.TokenNotExpired;
+                result.TokenNotExpiredMessage = validationResult.TokenNotExpiredMessage;
+                result.TokenNotYetValid = validationResult.TokenNotYetValid;
+                result.TokenNotYetValidMessage = validationResult.TokenNotYetValidMessage;
+                
+                // Certificate information
+                result.SigningCertificateCount = validationResult.SigningCertificateCount;
+                result.PrimarySigningCertificateThumbprint = validationResult.PrimarySigningCertificateThumbprint;
+                result.PrimarySigningCertificateExpiration = validationResult.PrimarySigningCertificateExpiration;
+                
+                return result;
+            }
+            catch (Exception ex)
+            {
+                result.Message = "Token validation error";
+                result.ErrorDetails = string.Format("An unexpected error occurred: {0}", ex.Message);
+                System.Diagnostics.Trace.TraceError(
+                    string.Format("TokenValidationService: Unexpected error during JWT validation: {0}", ex));
+                return result;
+            }
+        }
+
+        /// <summary>
+        /// Performs JWT token validation using JwtSecurityTokenHandler.
+        /// </summary>
+        private static TokenValidationResultViewModel ValidateJwtToken(string jwtToken, OpenIdConnectMetadataDocument oidcMetadata, string expectedIssuerId)
+        {
+            var result = new TokenValidationResultViewModel { IsValid = false };
+
+            try
+            {
+                // Get signing keys from OIDC metadata
+                var signingKeys = oidcMetadata.Configuration?.SigningKeys;
+                if (signingKeys == null || !signingKeys.Any())
+                {
+                    result.Message = "No signing keys in metadata";
+                    result.ErrorDetails = "The issuer's OIDC metadata does not contain any signing keys for validation";
+                    result.SignatureValid = false;
+                    result.SignatureValidMessage = "No keys available";
+                    return result;
+                }
+
+                // Store certificate info
+                result.SigningCertificateCount = signingKeys.Count;
+                var firstX509Key = signingKeys.FirstOrDefault(k => k is X509SecurityKey) as X509SecurityKey;
+                if (firstX509Key != null && firstX509Key.Certificate != null)
+                {
+                    result.PrimarySigningCertificateThumbprint = firstX509Key.Certificate.Thumbprint;
+                    result.PrimarySigningCertificateExpiration = firstX509Key.Certificate.NotAfter;
+                }
+
+                // Create JWT token handler
+                var jwtHandler = new JwtSecurityTokenHandler();
+                
+                // Check if handler can read this token format
+                if (!jwtHandler.CanReadToken(jwtToken))
+                {
+                    result.Message = "Unsupported token format";
+                    result.ErrorDetails = "The token is not in a valid JWT format";
+                    result.SignatureValid = false;
+                    result.SignatureValidMessage = "Invalid token format";
+                    return result;
+                }
+
+                // Build token validation parameters
+                var tokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKeys = signingKeys,
+                    ValidateIssuer = true,
+                    ValidIssuer = oidcMetadata.Issuer,
+                    ValidateAudience = false,  // We'll validate manually if needed
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.FromMinutes(5)
+                };
+
+                // Validate the token
+                try
+                {
+                    SecurityToken validatedToken;
+                    var principal = jwtHandler.ValidateToken(jwtToken, tokenValidationParameters, out validatedToken);
+                    
+                    // At this point, signature is valid
+                    result.SignatureValid = true;
+                    result.SignatureValidMessage = "Cryptographically verified using issuer's keys";
+
+                    // Extract token details
+                    var jwtSecurityToken = validatedToken as JwtSecurityToken;
+                    if (jwtSecurityToken != null)
+                    {
+                        result.TokenIssuer = jwtSecurityToken.Issuer;
+                        result.IssuerVerified = true;
+                        result.IssuerVerifiedMessage = "Issuer matches OIDC metadata";
+                        
+                        result.IssueInstant = jwtSecurityToken.IssuedAt;
+                        result.NotBefore = jwtSecurityToken.ValidFrom;
+                        result.NotOnOrAfter = jwtSecurityToken.ValidTo;
+
+                        // Check expiration status
+                        var now = DateTime.UtcNow;
+                        if (now >= jwtSecurityToken.ValidFrom && now < jwtSecurityToken.ValidTo)
+                        {
+                            result.TokenNotExpired = true;
+                            result.TokenNotExpiredMessage = $"Token is valid until {jwtSecurityToken.ValidTo:yyyy-MM-dd HH:mm:ss UTC}";
+                            result.TokenNotYetValid = true;
+                            result.TokenNotYetValidMessage = "Token is currently valid";
+                        }
+                        else if (now < jwtSecurityToken.ValidFrom)
+                        {
+                            result.TokenNotExpired = true;
+                            result.TokenNotYetValid = false;
+                            result.TokenNotYetValidMessage = $"Token becomes valid at {jwtSecurityToken.ValidFrom:yyyy-MM-dd HH:mm:ss UTC}";
+                        }
+                        else
+                        {
+                            result.TokenNotExpired = false;
+                            result.TokenNotExpiredMessage = $"Token expired on {jwtSecurityToken.ValidTo:yyyy-MM-dd HH:mm:ss UTC}";
+                            result.TokenNotYetValid = true;
+                        }
+
+                        // Extract audiences
+                        if (jwtSecurityToken.Audiences != null)
+                        {
+                            result.Audiences.AddRange(jwtSecurityToken.Audiences);
+                        }
+                    }
+
+                    // Extract claims from the principal
+                    if (principal != null && principal.Claims != null)
+                    {
+                        foreach (var claim in principal.Claims)
+                        {
+                            var key = claim.Type;
+                            var value = claim.Value;
+                            
+                            // Use claim type without namespace for readability
+                            var shortKey = key.Contains("/") ? key.Substring(key.LastIndexOf("/") + 1) : key;
+                            
+                            // Add all claims including duplicates
+                            result.Claims.Add(new KeyValuePair<string, string>(shortKey, value));
+                        }
+                    }
+
+                    // Token validation successful
+                    result.IsValid = true;
+                    result.Message = "JWT validation passed";
+                    result.IssuerName = expectedIssuerId;
+                    return result;
+                }
+                catch (SecurityTokenSignatureKeyNotFoundException ex)
+                {
+                    result.Message = "Invalid token signature";
+                    result.ErrorDetails = $"The token signature could not be verified with available keys: {ex.Message}";
+                    result.SignatureValid = false;
+                    result.SignatureValidMessage = "Key mismatch or invalid signature";
+                    System.Diagnostics.Trace.TraceError($"TokenValidationService: JWT signature key not found: {ex.Message}");
+                    return result;
+                }
+                catch (SecurityTokenInvalidSignatureException ex)
+                {
+                    result.Message = "Invalid token signature";
+                    result.ErrorDetails = $"The token has an invalid or tampered signature: {ex.Message}";
+                    result.SignatureValid = false;
+                    result.SignatureValidMessage = "Signature validation failed - token may be tampered";
+                    System.Diagnostics.Trace.TraceError($"TokenValidationService: Invalid JWT signature: {ex.Message}");
+                    return result;
+                }
+                catch (SecurityTokenExpiredException ex)
+                {
+                    result.Message = "Token expired";
+                    result.ErrorDetails = $"The JWT has expired and is no longer valid";
+                    result.TokenNotExpired = false;
+                    result.TokenNotExpiredMessage = "Token has passed its expiration date";
+                    System.Diagnostics.Trace.TraceWarning($"TokenValidationService: JWT expired: {ex.Message}");
+                    return result;
+                }
+                catch (SecurityTokenNotYetValidException ex)
+                {
+                    result.Message = "Token not yet valid";
+                    result.ErrorDetails = $"The JWT is not yet valid - check the NotBefore condition";
+                    result.TokenNotYetValid = false;
+                    result.TokenNotYetValidMessage = "Token's start validity has not been reached";
+                    System.Diagnostics.Trace.TraceWarning($"TokenValidationService: JWT not yet valid: {ex.Message}");
+                    return result;
+                }
+                catch (SecurityTokenInvalidIssuerException ex)
+                {
+                    result.Message = "Invalid issuer";
+                    result.ErrorDetails = $"The token issuer does not match the expected issuer: {ex.Message}";
+                    result.IssuerVerified = false;
+                    result.IssuerVerifiedMessage = "Token issuer mismatch";
+                    System.Diagnostics.Trace.TraceError($"TokenValidationService: Invalid JWT issuer: {ex.Message}");
+                    return result;
+                }
+                catch (SecurityTokenValidationException ex)
+                {
+                    result.Message = "Token validation failed";
+                    result.ErrorDetails = $"JWT validation failed: {ex.Message}";
+                    System.Diagnostics.Trace.TraceError($"TokenValidationService: JWT validation error: {ex.Message}");
+                    return result;
+                }
+                catch (Exception ex)
+                {
+                    result.Message = "Unexpected validation error";
+                    result.ErrorDetails = $"An unexpected error occurred during validation: {ex.Message}";
+                    System.Diagnostics.Trace.TraceError($"TokenValidationService: Unexpected JWT error: {ex.Message}");
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Message = "Validation error";
+                result.ErrorDetails = $"An error occurred during JWT token validation: {ex.Message}";
+                return result;
             }
         }
     }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 namespace IdentityMetadataFetcher.Services
 {
     /// <summary>
-    /// Interface for fetching WSFED and SAML metadata from issuing authorities.
+    /// Interface for fetching WSFED, SAML, and OIDC metadata from issuing authorities.
     /// </summary>
     public interface IMetadataFetcher
     {
