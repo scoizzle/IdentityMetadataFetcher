@@ -76,6 +76,7 @@ jobs:
           Write-Warning "NUGET_API_KEY secret is not configured. Skipping NuGet publish."
           Write-Warning "To enable NuGet publishing, configure the NUGET_API_KEY secret at:"
           Write-Warning "https://github.com/scoizzle/IdentityMetadataFetcher/settings/secrets/actions"
+          exit 0
         }
         else {
           dotnet nuget push ./nupkgs/*.nupkg --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
