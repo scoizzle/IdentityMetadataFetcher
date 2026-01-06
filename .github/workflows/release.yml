@@ -15,6 +15,21 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     
+    - name: Extract version from tag
+      id: extract_version
+      run: |
+        if ("${{ github.ref_type }}" -eq "tag") {
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          Write-Output "VERSION=$version" >> $env:GITHUB_ENV
+          Write-Output "Using version from tag: $version"
+        } else {
+          # For workflow_dispatch, use a default version
+          $version = "1.0.0"
+          Write-Output "VERSION=$version" >> $env:GITHUB_ENV
+          Write-Output "Using default version (workflow_dispatch): $version"
+        }
+      shell: pwsh
+    
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
     
@@ -31,18 +46,48 @@ jobs:
       run: nuget restore IdentityMetadataFetcher.sln
     
     - name: Build Release
-      run: msbuild IdentityMetadataFetcher.sln /p:Configuration=Release /p:Platform="Any CPU" /m
+      run: >-
+        msbuild IdentityMetadataFetcher.sln
+        /p:Configuration=Release
+        /p:Platform="Any CPU"
+        /p:Version=$env:VERSION
+        /p:AssemblyVersion=$env:VERSION
+        /p:FileVersion=$env:VERSION
+        /m
     
     - name: Run tests
       run: |
         dotnet test tests/IdentityMetadataFetcher.Tests/IdentityMetadataFetcher.Tests.csproj --configuration Release --logger "trx" --framework net481
         dotnet test tests/IdentityMetadataFetcher.Iis.Tests/IdentityMetadataFetcher.Iis.Tests.csproj --configuration Release --logger "trx" --framework net481
     
+    - name: Create NuGet packages
+      run: |
+        New-Item -ItemType Directory -Force -Path nupkgs
+        dotnet pack src/IdentityMetadataFetcher/IdentityMetadataFetcher.csproj --configuration Release --no-build /p:Version=$env:VERSION --output ./nupkgs
+        dotnet pack src/IdentityMetadataFetcher.Iis/IdentityMetadataFetcher.Iis.csproj --configuration Release --no-build /p:Version=$env:VERSION --output ./nupkgs
+      shell: pwsh
+    
+    - name: Publish to NuGet.org
+      if: github.ref_type == 'tag'
+      env:
+        NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+      run: |
+        if ([string]::IsNullOrEmpty($env:NUGET_API_KEY)) {
+          Write-Warning "NUGET_API_KEY secret is not configured. Skipping NuGet publish."
+          Write-Warning "To enable NuGet publishing, configure the NUGET_API_KEY secret at:"
+          Write-Warning "https://github.com/scoizzle/IdentityMetadataFetcher/settings/secrets/actions"
+        }
+        else {
+          dotnet nuget push ./nupkgs/*.nupkg --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
+          Write-Output "Successfully published packages to NuGet.org"
+        }
+      shell: pwsh
+    
     - name: Package binaries
       run: |
-        mkdir -p release/net462
-        mkdir -p release/net472
-        mkdir -p release/net481
+        New-Item -ItemType Directory -Force -Path release/net462
+        New-Item -ItemType Directory -Force -Path release/net472
+        New-Item -ItemType Directory -Force -Path release/net481
         
         # Copy core library
         copy src/IdentityMetadataFetcher/bin/Release/net462/IdentityMetadataFetcher.dll release/net462/
@@ -76,6 +121,8 @@ jobs:
       with:
         files: |
           IdentityMetadataFetcher-${{ github.ref_name }}.zip
+          nupkgs/*.nupkg
+          nupkgs/*.snupkg
         generate_release_notes: true
         draft: false
         prerelease: false

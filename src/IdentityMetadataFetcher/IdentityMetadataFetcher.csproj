@@ -7,6 +7,24 @@
     <LangVersion>latest</LangVersion>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    
+    <!-- NuGet Package Metadata -->
+    <PackageId>IdentityMetadataFetcher</PackageId>
+    <!-- Version is overridden by build process from git tags (e.g., /p:Version=1.2.3) -->
+    <Version>1.0.0</Version>
+    <Authors>Scot Murphy</Authors>
+    <Company>Scot Murphy</Company>
+    <Description>A production-ready .NET Framework library for fetching and parsing SAML, WS-Federation, and OpenID Connect metadata from identity provider endpoints. Supports both synchronous and asynchronous operations with comprehensive error handling, configurable timeouts, and retry logic.</Description>
+    <PackageTags>authentication;identity;metadata;saml;openid;oidc;ws-federation;wsfed;azure-ad;identity-provider;federation</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/scoizzle/IdentityMetadataFetcher</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/scoizzle/IdentityMetadataFetcher.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,6 +32,10 @@
     <PackageReference Include="Microsoft.IdentityModel.Protocols.WsFederation" Version="8.15.0" />
     <PackageReference Include="Microsoft.IdentityModel.Tokens.Saml" Version="8.15.0" />
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

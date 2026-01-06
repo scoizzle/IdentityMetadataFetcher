@@ -7,6 +7,24 @@
     <LangVersion>latest</LangVersion>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    
+    <!-- NuGet Package Metadata -->
+    <PackageId>IdentityMetadataFetcher.Iis</PackageId>
+    <!-- Version is overridden by build process from git tags (e.g., /p:Version=1.2.3) -->
+    <Version>1.0.0</Version>
+    <Authors>Scot Murphy</Authors>
+    <Company>Scot Murphy</Company>
+    <Description>IIS HTTP Module for IdentityMetadataFetcher that provides automatic background polling of SAML/WS-Federation metadata endpoints with in-memory caching. Includes optional auto-apply feature for runtime System.IdentityModel configuration updates and automatic recovery from certificate rotation failures.</Description>
+    <PackageTags>iis;asp-net;authentication;identity;metadata;saml;ws-federation;wsfed;http-module;azure-ad;certificate-rotation</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/scoizzle/IdentityMetadataFetcher</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/scoizzle/IdentityMetadataFetcher.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,6 +41,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\IdentityMetadataFetcher\IdentityMetadataFetcher.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
