@@ -55,36 +55,30 @@ jobs:
     
     - name: Create NuGet packages
       run: |
-        mkdir -p nupkgs
+        New-Item -ItemType Directory -Force -Path nupkgs
         dotnet pack src/IdentityMetadataFetcher/IdentityMetadataFetcher.csproj --configuration Release --no-build /p:Version=$env:VERSION --output ./nupkgs
         dotnet pack src/IdentityMetadataFetcher.Iis/IdentityMetadataFetcher.Iis.csproj --configuration Release --no-build /p:Version=$env:VERSION --output ./nupkgs
       shell: pwsh
     
     - name: Publish to NuGet.org
-      if: github.ref_type == 'tag' && secrets.NUGET_API_KEY != ''
+      if: github.ref_type == 'tag'
       run: |
-        try {
+        if ("${{ secrets.NUGET_API_KEY }}" -eq "") {
+          Write-Warning "NUGET_API_KEY secret is not configured. Skipping NuGet publish."
+          Write-Warning "To enable NuGet publishing, please configure the NUGET_API_KEY secret."
+          Write-Warning "See NUGET_SETUP.md for instructions."
+        }
+        else {
           dotnet nuget push ./nupkgs/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
           Write-Output "Successfully published packages to NuGet.org"
-        }
-        catch {
-          if ("${{ secrets.NUGET_API_KEY }}" -eq "") {
-            Write-Warning "NUGET_API_KEY secret is not configured. Skipping NuGet publish."
-            Write-Warning "To enable NuGet publishing, please configure the NUGET_API_KEY secret."
-            Write-Warning "See NUGET_SETUP.md for instructions."
-          }
-          else {
-            Write-Error "Failed to publish packages: $_"
-            throw
-          }
         }
       shell: pwsh
     
     - name: Package binaries
       run: |
-        mkdir -p release/net462
-        mkdir -p release/net472
-        mkdir -p release/net481
+        New-Item -ItemType Directory -Force -Path release/net462
+        New-Item -ItemType Directory -Force -Path release/net472
+        New-Item -ItemType Directory -Force -Path release/net481
         
         # Copy core library
         copy src/IdentityMetadataFetcher/bin/Release/net462/IdentityMetadataFetcher.dll release/net462/
