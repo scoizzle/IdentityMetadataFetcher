@@ -80,7 +80,8 @@ jobs:
           exit 0
         }
         else {
-          dotnet nuget push ./nupkgs/*.nupkg --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
+          $outputDir = Join-Path $PWD "nupkgs"
+          dotnet nuget push "$outputDir/*.nupkg" --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
           Write-Output "Successfully published packages to NuGet.org"
         }
       shell: pwsh
