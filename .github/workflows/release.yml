@@ -62,9 +62,10 @@ jobs:
     
     - name: Create NuGet packages
       run: |
-        New-Item -ItemType Directory -Force -Path nupkgs
-        dotnet pack src/IdentityMetadataFetcher/IdentityMetadataFetcher.csproj --configuration Release --no-build /p:Version=$env:VERSION --output ./nupkgs
-        dotnet pack src/IdentityMetadataFetcher.Iis/IdentityMetadataFetcher.Iis.csproj --configuration Release --no-build /p:Version=$env:VERSION --output ./nupkgs
+        $outputDir = Join-Path $PWD "nupkgs"
+        New-Item -ItemType Directory -Force -Path $outputDir
+        dotnet pack src/IdentityMetadataFetcher/IdentityMetadataFetcher.csproj --configuration Release --no-build /p:Version=$env:VERSION --output $outputDir
+        dotnet pack src/IdentityMetadataFetcher.Iis/IdentityMetadataFetcher.Iis.csproj --configuration Release --no-build /p:Version=$env:VERSION --output $outputDir
       shell: pwsh
     
     - name: Publish to NuGet.org
