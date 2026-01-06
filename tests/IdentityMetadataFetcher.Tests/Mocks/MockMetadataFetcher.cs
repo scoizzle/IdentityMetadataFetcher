@@ -44,7 +44,7 @@ namespace IdentityMetadataFetcher.Tests.Mocks
             }
 
             var rawXml = $@"<?xml version=""1.0"" encoding=""utf-8""?>
-<EntityDescriptor xmlns=""urn:oasis:names:tc:SAML:2.0:metadata"" ID=""{Guid.NewGuid()}"">
+<EntityDescriptor xmlns=""urn:oasis:names:tc:SAML:2.0:metadata"" entityID=""https://example.com/issuer"" ID=""{Guid.NewGuid()}"">
     <SPSSODescriptor protocolSupportEnumeration=""urn:oasis:names:tc:SAML:2.0:protocol"">
         <SingleLogoutService Binding=""urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"" Location=""https://example.com/logout"" />
         <AssertionConsumerService Binding=""urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"" Location=""https://example.com/acs"" index=""0"" isDefault=""true"" />
