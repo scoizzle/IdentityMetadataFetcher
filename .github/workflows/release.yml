@@ -46,7 +46,14 @@ jobs:
       run: nuget restore IdentityMetadataFetcher.sln
     
     - name: Build Release
-      run: msbuild IdentityMetadataFetcher.sln /p:Configuration=Release /p:Platform="Any CPU" /p:Version=$env:VERSION /p:AssemblyVersion=$env:VERSION /p:FileVersion=$env:VERSION /m
+      run: >-
+        msbuild IdentityMetadataFetcher.sln
+        /p:Configuration=Release
+        /p:Platform="Any CPU"
+        /p:Version=$env:VERSION
+        /p:AssemblyVersion=$env:VERSION
+        /p:FileVersion=$env:VERSION
+        /m
     
     - name: Run tests
       run: |
@@ -62,14 +69,16 @@ jobs:
     
     - name: Publish to NuGet.org
       if: github.ref_type == 'tag'
+      env:
+        NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
       run: |
-        if ("${{ secrets.NUGET_API_KEY }}" -eq "") {
+        if ([string]::IsNullOrEmpty($env:NUGET_API_KEY)) {
           Write-Warning "NUGET_API_KEY secret is not configured. Skipping NuGet publish."
           Write-Warning "To enable NuGet publishing, please configure the NUGET_API_KEY secret."
           Write-Warning "See NUGET_SETUP.md for instructions."
         }
         else {
-          dotnet nuget push ./nupkgs/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+          dotnet nuget push ./nupkgs/*.nupkg --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
           Write-Output "Successfully published packages to NuGet.org"
         }
       shell: pwsh
