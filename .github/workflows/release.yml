@@ -81,7 +81,9 @@ jobs:
         }
         else {
           $outputDir = Join-Path $PWD "nupkgs"
-          dotnet nuget push "$outputDir/*.nupkg" --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
+          Get-ChildItem "$outputDir/*.nupkg" | ForEach-Object {
+            dotnet nuget push $_.FullName --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
+          }
           Write-Output "Successfully published packages to NuGet.org"
         }
       shell: pwsh
