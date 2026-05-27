@@ -50,7 +50,7 @@ namespace IdentityMetadataFetcher.Iis.Services
                 try
                 {
                     // Avoid duplicate entries
-                    registry.AddTrustedIssuer(NormalizeThumbprint(cert.Thumbprint), issuerDisplayName ?? entry.IssuerId);
+                    registry.AddTrustedIssuer(NormalizeThumbprint(cert.Thumbprint), entry.Metadata.Issuer);
                 }
                 catch (InvalidOperationException ex)
                 {
