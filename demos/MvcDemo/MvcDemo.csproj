@@ -19,8 +19,10 @@
     <IISExpressWindowsAuthentication />
     <IISExpressUseClassicPipelineMode />
     <UseGlobalApplicationHostFile />
-    <FileUpgradeFlags>40</FileUpgradeFlags>
-    <UpgradeBackupLocation>C:\Users\scoizzle\source\repos\IdentityMetadataFetcher\Backup14\</UpgradeBackupLocation>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
     <OldToolsVersion>Current</OldToolsVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -58,10 +60,10 @@
     <PackageReference Include="Microsoft.AspNet.Mvc" Version="5.3.0" />
     <PackageReference Include="Microsoft.AspNet.Razor" Version="3.3.0" />
     <PackageReference Include="Microsoft.AspNet.WebPages" Version="3.3.0" />
-    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.18.0" />
-    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.18.0" />
-    <PackageReference Include="Microsoft.IdentityModel.Protocols.WsFederation" Version="8.18.0" />
-    <PackageReference Include="Microsoft.IdentityModel.Tokens.Saml" Version="8.18.0" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.22.0" />
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.22.0" />
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.WsFederation" Version="8.22.0" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens.Saml" Version="8.22.0" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
   </ItemGroup>
   <ItemGroup>
