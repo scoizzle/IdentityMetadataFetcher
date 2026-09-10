@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  release:
-    name: Create Release
+  build:
+    name: Build and Package
     runs-on: windows-latest
     
     steps:
@@ -68,26 +68,6 @@ jobs:
         dotnet pack src/IdentityMetadataFetcher.Iis/IdentityMetadataFetcher.Iis.csproj --configuration Release --no-build /p:Version=$env:VERSION --output $outputDir
       shell: pwsh
     
-    - name: Publish to NuGet.org
-      if: github.ref_type == 'tag'
-      env:
-        NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-      run: |
-        if ([string]::IsNullOrEmpty($env:NUGET_API_KEY)) {
-          Write-Warning "NUGET_API_KEY secret is not configured. Skipping NuGet publish."
-          Write-Warning "To enable NuGet publishing, configure the NUGET_API_KEY secret at:"
-          Write-Warning "https://github.com/scoizzle/IdentityMetadataFetcher/settings/secrets/actions"
-          exit 0
-        }
-        else {
-          $outputDir = Join-Path $PWD "nupkgs"
-          Get-ChildItem "$outputDir/*.nupkg" | ForEach-Object {
-            dotnet nuget push $_.FullName --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
-          }
-          Write-Output "Successfully published packages to NuGet.org"
-        }
-      shell: pwsh
-    
     - name: Package binaries
       run: |
         New-Item -ItemType Directory -Force -Path release/net462
@@ -121,15 +101,42 @@ jobs:
         Compress-Archive -Path release/* -DestinationPath IdentityMetadataFetcher-${{ github.ref_name }}.zip
       shell: pwsh
     
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
       with:
-        files: |
+        name: release-artifacts
+        path: |
           IdentityMetadataFetcher-${{ github.ref_name }}.zip
-          nupkgs/*.nupkg
-          nupkgs/*.snupkg
-        generate_release_notes: true
-        draft: false
-        prerelease: false
+          nupkgs/
+
+  publish-nuget:
+    name: Publish to NuGet
+    runs-on: windows-latest
+    needs: build
+    if: github.event_name == 'release'
+    permissions:
+      contents: read
+    
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: release-artifacts
+    
+    - name: Publish to NuGet.org
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+      run: |
+        if ([string]::IsNullOrEmpty($env:NUGET_API_KEY)) {
+          Write-Warning "NUGET_API_KEY secret is not configured. Skipping NuGet publish."
+          Write-Warning "To enable NuGet publishing, configure the NUGET_API_KEY secret at:"
+          Write-Warning "https://github.com/scoizzle/IdentityMetadataFetcher/settings/secrets/actions"
+          exit 0
+        }
+        else {
+          Get-ChildItem "nupkgs/*.nupkg" | ForEach-Object {
+            dotnet nuget push $_.FullName --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
+          }
+          Write-Output "Successfully published packages to NuGet.org"
+        }
+      shell: pwsh
